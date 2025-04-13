@@ -1,7 +1,7 @@
 import streamlit as st
 
 from database import *
-from nav_bar import nav_bar
+from utils import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="Detectarea fraudei bancare", page_icon="🔥")
