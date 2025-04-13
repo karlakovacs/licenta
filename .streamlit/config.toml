@@ -1,0 +1,7 @@
+[client]
+# showErrorDetails = "none"
+showSidebarNavigation = false
+
+[theme]
+# primaryColor = "#000000"
+# backgroundColor = "green"

@@ -1,0 +1,11 @@
+__pycache__/
+
+.streamlit/secrets.toml
+
+Z/
+
+catboost_info/
+
+data/
+
+pyproject.toml
