@@ -9,12 +9,12 @@ TIPURI_CATEGORIALE = ["object", "category", "bool"]
 
 
 @st.cache_data
-def get_coloane_categoriale(X: pd.DataFrame):
-	coloane = X.select_dtypes(include=TIPURI_CATEGORIALE).columns
-	return coloane if len(coloane) > 0 else None
+def get_coloane_categoriale(X: pd.DataFrame) -> list[str]:
+	coloane: list[str] = list(X.select_dtypes(include=TIPURI_CATEGORIALE).columns)
+	return coloane
 
 
-def plot_pie_chart(serie: pd.Series, max_categorii: int = 25, is_grid: bool = False):
+def plot_pie_chart(serie: pd.Series, max_categorii: int = 25) -> go.Figure:
 	categorie = "Categorie"
 	numar_aparitii = "Număr de apariții"
 	titlu = f"Distribuția valorilor pentru '{serie.name}'"
@@ -39,7 +39,7 @@ def plot_pie_chart(serie: pd.Series, max_categorii: int = 25, is_grid: bool = Fa
 
 		fig.update_layout(title=titlu, height=500)
 
-		st.plotly_chart(fig, use_container_width=is_grid)
+		return fig
 
 
 def afisare_nunique(df: pd.DataFrame):

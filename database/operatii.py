@@ -31,12 +31,33 @@ def login_utilizator(user_info):
 	return utilizator.id
 
 
-def get_utilizator(id_utilizator):
+def get_utilizator(id_google):
 	db = get_session()
-	utilizator = db.query(Utilizator).filter(Utilizator.id == id_utilizator).first()
-	# cautare dupa google id
-	# return utilizator.id
-	st.write(utilizator.__dict__)
+	utilizator = db.query(Utilizator).filter(Utilizator.id_google == id_google).first()
+	return utilizator.id
+	# st.write(utilizator.__dict__)
+
+
+def creare_set_date(
+	id_utilizator: int,
+	denumire: str,
+	sursa: str,
+	url: str,
+) -> SetDate:
+	db = get_session()
+
+	set_date = SetDate(
+		id_utilizator=id_utilizator, denumire=denumire, sursa=sursa, url=url, data_creare=datetime.now(timezone.utc)
+	)
+	db.add(set_date)
+	db.commit()
+	db.refresh(set_date)
+	return set_date.id
+
+
+def get_seturi_date_utilizator(id_utilizator: int):
+	db = get_session()
+	return db.query(SetDate).filter(SetDate.id_utilizator == id_utilizator).order_by(SetDate.data_creare.desc()).all()
 
 
 def creare_preprocesare(id_utilizator: int, valori: dict):
@@ -44,7 +65,7 @@ def creare_preprocesare(id_utilizator: int, valori: dict):
 	try:
 		preprocesare = Preprocesare(
 			id_utilizator=id_utilizator,
-			set_date=valori.get("set_date"),
+			id_set_date=valori.get("id_set_date"),
 			optiune_selectie=valori.get("optiune_selectie"),
 			nr_variabile=valori.get("nr_variabile"),
 			optiune_dezechilibru=valori.get("optiune_dezechilibru"),
@@ -113,22 +134,6 @@ def creare_rulare(
 		db.close()
 
 
-def creare_grafic(id_rulare: int, tip: str, file_path: str):
-	db = get_session()
-	try:
-		grafic = Grafic(id_rulare=id_rulare, tip=tip, url=file_path)
-
-		db.add(grafic)
-		db.commit()
-		db.refresh(grafic)
-		# return grafic.id
-	except Exception as e:
-		db.rollback()
-		raise e
-	finally:
-		db.close()
-
-
 def get_preprocesari_rulari_grafice(id_utilizator: int) -> list:
 	db = get_session()
 	try:
@@ -166,9 +171,7 @@ def get_preprocesari_rulari_grafice(id_utilizator: int) -> list:
 				}
 
 				for grafic in rulare.grafice:
-					rulare_dict["grafice"].append(
-						{"id_grafic": grafic.id, "tip": grafic.tip, "url": grafic.url}
-					)
+					rulare_dict["grafice"].append({"id_grafic": grafic.id, "sursa": grafic.sursa, "url": grafic.url})
 
 				preprocesare_dict["rulari"].append(rulare_dict)
 

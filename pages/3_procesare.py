@@ -10,18 +10,18 @@ nav_bar()
 st.title("Procesarea datelor")
 
 
-nume_dataset = st.session_state.get("nume_dataset", None)
+denumire_dataset = st.session_state.get("denumire_dataset", None)
 sursa = st.session_state.get("sursa_date", "predefinit")
 
 df: pd.DataFrame = None
 
 if sursa != "predefinit":
-	df = citire_date_temp(nume_dataset)
+	df = citire_date_temp(denumire_dataset)
 else:
-	df = citire_date_predefinite(nume_dataset)
+	df = citire_date_predefinite(denumire_dataset)
 
 if df is not None:
-	st.header(nume_dataset)
+	st.header(denumire_dataset)
 	st.dataframe(df.head())
 
 	tinta = st.session_state.tinta

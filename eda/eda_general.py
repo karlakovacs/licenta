@@ -9,19 +9,13 @@ TIPURI_NUMERICE = [np.number]  # [float, int]
 TIPURI_CATEGORIALE = ["object", "category", "bool"]
 
 
-def afisare_descriere(df: pd.DataFrame):
+def descriere_variabile(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 	describe_numeric = df.describe(include=TIPURI_NUMERICE)
 	describe_categorical = df.describe(include=TIPURI_CATEGORIALE)
-	col1, col2 = st.columns(2)
-	with col1:
-		st.subheader("Variabile numerice")
-		st.dataframe(describe_numeric)
-	with col2:
-		st.subheader("Variabile categoriale & booleene")
-		st.dataframe(describe_categorical)
+	return describe_numeric, describe_categorical
 
 
-def plot_tipuri_variabile(X: pd.DataFrame):
+def plot_tipuri_variabile(X: pd.DataFrame) -> go.Figure:
 	titlu = "Distribuția tipurilor de variabile"
 	tip_coloana = "Tip de coloană"
 	nr_variabile = "Număr de variabile"
@@ -49,14 +43,13 @@ def plot_tipuri_variabile(X: pd.DataFrame):
 		title=titlu,
 		xaxis_title=tip_coloana,
 		yaxis_title=nr_variabile,
-		# template="plotly_white",
 		height=500,
 	)
 
-	st.plotly_chart(fig, use_container_width=False)
+	return fig
 
 
-def plot_matrice_corelatie(df: pd.DataFrame, coloane_selectate: list):
+def plot_matrice_corelatie(df: pd.DataFrame, coloane_selectate: list) -> go.Figure:
 	if len(coloane_selectate) < 2:
 		st.warning("Selectează cel puțin două coloane pentru a genera heatmap-ul.")
 		return
@@ -89,7 +82,7 @@ def plot_matrice_corelatie(df: pd.DataFrame, coloane_selectate: list):
 		template="plotly_white",
 	)
 
-	st.plotly_chart(fig, use_container_width=False)
+	return fig
 
 
 def get_df_encoded(X: pd.DataFrame):
@@ -105,12 +98,14 @@ def calcul_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series):
 	variabila = "Variabilă"
 	corelatie_absoluta = "Corelație absolută"
 	X_encoded = get_df_encoded(X)
+	if not pd.api.types.is_numeric_dtype(y):
+		y = y.astype("category")
 	corelatii_tinta = X_encoded.corrwith(y).abs().sort_values(ascending=False).reset_index()
 	corelatii_tinta.columns = [variabila, corelatie_absoluta]
 	return corelatii_tinta
 
 
-def plot_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series):
+def plot_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series) -> go.Figure:
 	variabila = "Variabilă"
 	corelatie_absoluta = "Corelație absolută"
 	titlu = "Variabile puternic corelate cu ținta"
@@ -140,14 +135,13 @@ def plot_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series):
 		height=600,
 	)
 
-	st.plotly_chart(fig, use_container_width=False)
+	return fig
 
 
-def plot_valori_lipsa(df: pd.DataFrame):
+def df_valori_lipsa(df: pd.DataFrame) -> pd.DataFrame:
 	variabila = "Variabilă"
 	valori_lipsa = "Valori lipsă"
 	procent = "Procent"
-	titlu = "Procentul valorilor lipsă per coloană"
 	missing_vals = df.isnull().sum()
 	missing_percent = (missing_vals / len(df)) * 100
 
@@ -158,19 +152,38 @@ def plot_valori_lipsa(df: pd.DataFrame):
 			procent: missing_percent.values,
 		}
 	)
-	missing_df = missing_df[missing_df[valori_lipsa] > 0].sort_values(procent, ascending=True)
+	missing_df = missing_df[missing_df[valori_lipsa] > 0].sort_values(procent, ascending=False).reset_index()
+	missing_df.drop(columns=["index"], inplace=True)
 
 	if missing_df.empty:
 		st.success("Nu există valori lipsă în dataset!")
-		return
+		return None
+
+	return missing_df
+
+
+def plot_valori_lipsa(missing_df: pd.DataFrame, nr_variabile: int = 10) -> go.Figure | None:
+	variabila = "Variabilă"
+	procent = "Procent"
+	titlu = "Procentul valorilor lipsă per coloană"
+
+	if missing_df is None:
+		return None
+
+	# df_top = missing_df.head(nr_variabile)
+	missing_df = missing_df.sort_values(procent, ascending=False)
+	df_top = missing_df.head(nr_variabile)
 
 	fig = go.Figure()
+
 	fig.add_trace(
 		go.Bar(
-			y=missing_df[variabila],
-			x=missing_df[procent],
+			y=df_top[variabila][::-1],
+			x=df_top[procent][::-1],
 			orientation="h",
-			marker_color="orange",
+			marker=dict(
+				color="orange"
+			),
 		)
 	)
 
@@ -178,8 +191,8 @@ def plot_valori_lipsa(df: pd.DataFrame):
 		title=titlu,
 		xaxis_title=procent,
 		yaxis_title=variabila,
-		bargap=0.2,
+		bargap=0.1,
 		margin=dict(l=100, r=20, t=50, b=50),
 	)
 
-	st.plotly_chart(fig, use_container_width=True)
+	return fig

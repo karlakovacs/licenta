@@ -10,6 +10,4 @@ st.set_page_config(layout="wide", page_title="Detectarea fraudei bancare", page_
 st.title("Binary Classification Toolkit")
 nav_bar()
 
-id_utilizator = 1
-st.session_state.id_utilizator = id_utilizator
-# get_utilizator(id_utilizator)
+st.session_state.id_utilizator = get_utilizator(id_google="test")
