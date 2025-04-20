@@ -98,11 +98,11 @@ if df is not None:
 	st.metric(label="**📂 Memorie ocupată de DataFrame**", value=f"{memorie_totala_mb:.2f} MB")
 
 	st.subheader("Selectează variabila țintă")
-	coloane = df.columns.tolist()
+	coloane_binare = [col for col in df.columns if df[col].nunique(dropna=False) == 2]
 	tinta = st.selectbox(
 		"Alege coloana țintă",
-		coloane,
-		index=coloane.index("isFraud") if st.session_state.set_date["sursa"] == "predefinit" else None,
+		coloane_binare,
+		index=coloane_binare.index("isFraud") if st.session_state.set_date["sursa"] == "predefinit" else 0,
 	)
 
 	if df[tinta].nunique() > 2:
@@ -129,5 +129,3 @@ if df is not None:
 
 else:
 	st.warning("Setul de date nu a fost încărcat sau este invalid.")
-
-# verificare sa avem mai mult de 1 coloana (gen sa fie aia binara si minim alta)

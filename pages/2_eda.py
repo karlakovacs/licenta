@@ -155,15 +155,15 @@ def tab_corelatie_tinta(X, y):
 
 # dictionar taburi
 TAB_FUNCTII = {
-	# "Descrierea setului de date": lambda: tab_descriere(df),
+	"Descrierea setului de date": lambda: tab_descriere(df),
 	"Valori lipsa": lambda: tab_valori_lipsa(df),
 	"Distribuția tipurilor de variabile": lambda: tab_tipuri_variabile(X),
 	"Distribuția variabilei țintă": lambda: tab_distributie_tinta(y),
-	# "Pie charts (pentru variabilele categoriale)": lambda: tab_pie_charts(X),
-	# "Histograme (pentru variabilele numerice)": lambda: tab_histograme(X),
-	# "Box plots (pentru variabilele numerice)": lambda: tab_box_plots(X),
-	# "Matricea de corelație": lambda: tab_matrice_corelatie(df),
-	# "Variabile puternic corelate cu ținta": lambda: tab_corelatie_tinta(X, y),
+	"Pie charts (pentru variabilele categoriale)": lambda: tab_pie_charts(X),
+	"Histograme (pentru variabilele numerice)": lambda: tab_histograme(X),
+	"Box plots (pentru variabilele numerice)": lambda: tab_box_plots(X),
+	"Matricea de corelație": lambda: tab_matrice_corelatie(df),
+	"Variabile puternic corelate cu ținta": lambda: tab_corelatie_tinta(X, y),
 }
 
 if df is not None:

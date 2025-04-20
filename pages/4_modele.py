@@ -28,6 +28,6 @@ for grup in MODELE:
 
 st.write(modele_selectate)
 
-if st.button("Selectare"):
+if st.button("Selectare", type="primary"):
 	st.session_state.modele_selectate = modele_selectate
 	st.success("Modelele au fost salvate!")
