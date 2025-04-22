@@ -36,10 +36,10 @@ METRICI = [
 ]
 
 
-# def afisare_raport_clasificare(y_true, y_pred):
-# 	report = classification_report(y_true, y_pred, output_dict=True)
-# 	df = pd.DataFrame(report).transpose()
-# 	st.write(df)
+def afisare_raport_clasificare(y_true, y_pred):
+	report = classification_report(y_true, y_pred, output_dict=True)
+	df = pd.DataFrame(report).transpose()
+	st.write(df)
 
 
 def calcul_metrici(y_true, y_pred, y_prob, nume_model):

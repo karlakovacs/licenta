@@ -1,33 +1,32 @@
 import streamlit as st
 
-from ml import MODELE
+from ml import CATEGORII_MODELE, MODELE_HINTURI
 from utils import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="Modele", page_icon="🧠")
 nav_bar()
-st.title("Modele de ML și DL")
+st.title("Modele de Machine Learning & Deep Learning")
 
-if "modele_selectate" not in st.session_state:
-	st.session_state.modele_selectate = []
+st.session_state.setdefault("modele_selectate", [])
+
+st.subheader("Selectează modelele dorite")
 
 modele_selectate = []
-
-for grup in MODELE:
+for grup in CATEGORII_MODELE:
 	categorie = grup["categorie"]
 	modele = grup["modele"]
 
-	selectii = st.pills(
-		f"**{categorie}**",
-		options=modele,
-		selection_mode="multi",
-		default=[model for model in modele if model in st.session_state.modele_selectate],
-	)
+	with st.container(border=True):
+		st.subheader(categorie)
 
-	modele_selectate += selectii
+		selectii = []
+		for model in modele:
+			if st.checkbox(model, value=model in st.session_state.modele_selectate, help=MODELE_HINTURI[model], key=f"{categorie}_{model}"):
+				selectii.append(model)
 
-st.write(modele_selectate)
+		modele_selectate += selectii
 
-if st.button("Selectare", type="primary"):
+if st.button("Salvează selecția", type="primary", use_container_width=True):
 	st.session_state.modele_selectate = modele_selectate
-	st.success("Modelele au fost salvate!")
+	st.toast("Modelele au fost salvate!", icon="✅")

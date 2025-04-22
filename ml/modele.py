@@ -58,36 +58,11 @@ class Base:
 	def get_shap_values(self, X_train, X_test, sample_size=25):
 		shap_explainer = self.get_shap_explainer(X_train, sample_size)
 		return shap_explainer(
-			X_test.sample(
-				n=sample_size if X_test.shape[0] > sample_size else X_test.shape[0], random_state=42
-			)
+			X_test.sample(n=sample_size if X_test.shape[0] > sample_size else X_test.shape[0], random_state=42)
 		)
 
 		# X_test_array = np.array(X_test) if isinstance(self.model, models.Sequential) else X_test
 		# return shap_explainer(X_test_array[:sample_size])
-
-	def get_params_utilizator(self):
-		params = {}
-		for param, details in self.hyperparams.items():
-			unique_key = f"{param}_{uuid.uuid4()}"
-			if details["type"] == "numerical":
-				params[param] = st.slider(
-					param,
-					details["min"],
-					details["max"],
-					details["default"],
-					details["step"],
-					key=unique_key,
-				)
-			else:
-				params[param] = st.selectbox(
-					param,
-					details["values"],
-					index=details["values"].index(details["default"]),
-					key=unique_key,
-				)
-		self.params = params
-		return params
 
 	def train(self, X_train, y_train, X_test, y_test=None):
 		start_time = time.time()
@@ -110,7 +85,7 @@ class LR(Base):
 				"type": "categorical",
 				"values": ["l1", "l2", "elasticnet", "none"],
 				"default": "l2",
-				"optimal": "l2",
+				"help": "Tipul de regularizare aplicată pentru a preveni overfitting.",
 			},
 			"C": {
 				"type": "numerical",
@@ -118,13 +93,13 @@ class LR(Base):
 				"max": 10.0,
 				"step": 0.0001,
 				"default": 1.0,
-				"optimal": 0.1,
+				"help": "Inversează puterea regularizării. Valori mai mici înseamnă regularizare mai puternică.",
 			},
 			"solver": {
 				"type": "categorical",
 				"values": ["lbfgs", "liblinear", "sag", "saga"],
 				"default": "lbfgs",
-				"optimal": "lbfgs",
+				"help": "Algoritmul utilizat pentru optimizarea funcției de cost.",
 			},
 			"max_iter": {
 				"type": "numerical",
@@ -132,7 +107,7 @@ class LR(Base):
 				"max": 10000,
 				"step": 100,
 				"default": 1000,
-				"optimal": 5000,
+				"help": "Numărul maxim de iterații pentru ca solverul să conveargă.",
 			},
 		}
 
@@ -148,13 +123,13 @@ class LDA(Base):
 				"type": "categorical",
 				"values": ["svd", "lsqr", "eigen"],
 				"default": "svd",
-				"optimal": "lsqr",
+				"help": "Algoritmul folosit pentru calculul LDA. `svd` nu suportă shrinkage.",
 			},
 			"shrinkage": {
 				"type": "categorical",
 				"values": [None, "auto"] + [round(i * 0.1, 1) for i in range(1, 10)],
 				"default": None,
-				"optimal": "auto",
+				"help": "Regularizare pentru stabilitate. Funcționează doar cu `lsqr` sau `eigen`.",
 			},
 			"n_components": {
 				"type": "numerical",
@@ -162,7 +137,7 @@ class LDA(Base):
 				"max": 10,
 				"step": 1,
 				"default": None,
-				"optimal": 2,
+				"help": "Numărul de componente LDA păstrate (maxim = număr de clase - 1).",
 			},
 		}
 
@@ -180,13 +155,13 @@ class QDA(Base):
 				"max": 1.0,
 				"step": 0.01,
 				"default": 0.0,
-				"optimal": 0.1,
+				"help": "Coeficient de regularizare pentru covarianță. Valori > 0 reduc overfittingul.",
 			},
 			"store_covariance": {
 				"type": "categorical",
 				"values": [True, False],
 				"default": False,
-				"optimal": False,
+				"help": "Dacă se salvează matricea de covarianță pentru fiecare clasă (True = consum mai mare de memorie).",
 			},
 			"tol": {
 				"type": "numerical",
@@ -194,9 +169,10 @@ class QDA(Base):
 				"max": 1e-2,
 				"step": 1e-5,
 				"default": 1e-4,
-				"optimal": 1e-3,
+				"help": "Toleranța pentru stabilitatea inversării matricei. Afectează clasificarea când datele sunt apropiate.",
 			},
 		}
+
 
 
 class KNN(Base):
@@ -212,21 +188,28 @@ class KNN(Base):
 				"max": 50,
 				"step": 1,
 				"default": 5,
-				"optimal": 10,
+				"help": "Numărul de vecini folosiți pentru clasificare. Valori mai mari pot netezi decizia.",
 			},
 			"weights": {
 				"type": "categorical",
 				"values": ["uniform", "distance"],
 				"default": "uniform",
-				"optimal": "distance",
+				"help": "`uniform` tratează toți vecinii egal, `distance` acordă mai multă importanță celor apropiați.",
 			},
 			"metric": {
 				"type": "categorical",
 				"values": ["minkowski", "euclidean", "manhattan"],
 				"default": "minkowski",
-				"optimal": "euclidean",
+				"help": "Funcția de distanță folosită. `euclidean` și `manhattan` sunt cazuri speciale ale `minkowski`.",
 			},
-			"p": {"type": "numerical", "min": 1, "max": 5, "step": 1, "default": 2, "optimal": 2},
+			"p": {
+				"type": "numerical",
+				"min": 1,
+				"max": 5,
+				"step": 1,
+				"default": 2,
+				"help": "Parametru pentru distanța Minkowski: 1 = manhattan, 2 = euclidean.",
+			},
 		}
 
 
@@ -243,19 +226,19 @@ class SVM(Base):
 				"max": 100.0,
 				"step": 0.01,
 				"default": 1.0,
-				"optimal": 10.0,
+				"help": "Controlul penalizării pentru clasificările greșite. Valori mari → overfitting.",
 			},
 			"kernel": {
 				"type": "categorical",
 				"values": ["linear", "poly", "rbf", "sigmoid"],
 				"default": "rbf",
-				"optimal": "rbf",
+				"help": "Tipul de kernel folosit pentru a transforma datele. `rbf` e alegerea implicită.",
 			},
 			"gamma": {
 				"type": "categorical",
 				"values": ["scale", "auto"] + [round(10**i, 5) for i in range(-4, 2)],
 				"default": "scale",
-				"optimal": "scale",
+				"help": "Definirea influenței unui singur exemplu. `scale` e stabil și recomandat.",
 			},
 			"degree": {
 				"type": "numerical",
@@ -263,7 +246,7 @@ class SVM(Base):
 				"max": 6,
 				"step": 1,
 				"default": 3,
-				"optimal": 3,
+				"help": "Gradul polinomului (doar dacă kernel='poly').",
 			},
 			"tol": {
 				"type": "numerical",
@@ -271,7 +254,7 @@ class SVM(Base):
 				"max": 1e-2,
 				"step": 1e-5,
 				"default": 1e-3,
-				"optimal": 1e-4,
+				"help": "Toleranța pentru oprirea algoritmului. Valori mai mici = antrenare mai precisă.",
 			},
 		}
 
@@ -287,7 +270,7 @@ class DT(Base):
 				"type": "categorical",
 				"values": ["gini", "entropy", "log_loss"],
 				"default": "gini",
-				"optimal": "entropy",
+				"help": "Criteriul pentru a măsura calitatea unei împărțiri. `gini` este cel mai rapid.",
 			},
 			"max_depth": {
 				"type": "numerical",
@@ -295,7 +278,7 @@ class DT(Base):
 				"max": 50,
 				"step": 1,
 				"default": None,
-				"optimal": 10,
+				"help": "Adâncimea maximă a arborelui. Controlează complexitatea modelului.",
 			},
 			"min_samples_split": {
 				"type": "numerical",
@@ -303,7 +286,7 @@ class DT(Base):
 				"max": 20,
 				"step": 1,
 				"default": 2,
-				"optimal": 5,
+				"help": "Numărul minim de eșantioane necesare pentru a împărți un nod.",
 			},
 			"min_samples_leaf": {
 				"type": "numerical",
@@ -311,13 +294,13 @@ class DT(Base):
 				"max": 10,
 				"step": 1,
 				"default": 1,
-				"optimal": 2,
+				"help": "Numărul minim de eșantioane într-o frunză. Ajută la reducerea overfitting-ului.",
 			},
 			"max_features": {
 				"type": "categorical",
 				"values": ["auto", "sqrt", "log2", None],
 				"default": None,
-				"optimal": "sqrt",
+				"help": "Numărul de caracteristici luate în considerare la fiecare split. `sqrt` e frecvent folosit.",
 			},
 		}
 
@@ -335,7 +318,7 @@ class RF(Base):
 				"max": 500,
 				"step": 10,
 				"default": 100,
-				"optimal": 200,
+				"help": "Numărul de arbori în pădure. Mai mulți arbori pot îmbunătăți performanța, dar cresc timpul de rulare.",
 			},
 			"max_depth": {
 				"type": "numerical",
@@ -343,7 +326,7 @@ class RF(Base):
 				"max": 50,
 				"step": 1,
 				"default": None,
-				"optimal": 10,
+				"help": "Adâncimea maximă a fiecărui arbore. Limitează complexitatea individuală.",
 			},
 			"min_samples_split": {
 				"type": "numerical",
@@ -351,7 +334,7 @@ class RF(Base):
 				"max": 20,
 				"step": 1,
 				"default": 2,
-				"optimal": 5,
+				"help": "Numărul minim de eșantioane necesare pentru a diviza un nod.",
 			},
 			"min_samples_leaf": {
 				"type": "numerical",
@@ -359,19 +342,19 @@ class RF(Base):
 				"max": 10,
 				"step": 1,
 				"default": 1,
-				"optimal": 2,
+				"help": "Numărul minim de eșantioane într-o frunză. Reduce overfitting-ul.",
 			},
 			"max_features": {
 				"type": "categorical",
 				"values": ["sqrt", "log2", None],
 				"default": "sqrt",
-				"optimal": "sqrt",
+				"help": "Numărul de caracteristici luate în considerare pentru split. `sqrt` este uzual pentru clasificare.",
 			},
 			"bootstrap": {
 				"type": "categorical",
 				"values": [True, False],
 				"default": True,
-				"optimal": True,
+				"help": "Dacă să se folosească bootstrap sampling. True este comportamentul standard.",
 			},
 		}
 
@@ -381,7 +364,6 @@ class BRF(Base):
 		super().__init__()
 		self.model = BalancedRandomForestClassifier()
 
-	# TODO
 	def get_hyperparams(self):
 		return {
 			"n_estimators": {
@@ -390,45 +372,58 @@ class BRF(Base):
 				"max": 500,
 				"step": 10,
 				"default": 100,
-				"optimal": 200,
+				"help": "Numărul total de arbori în pădure. Mai mulți arbori pot îmbunătăți performanța, dar cresc timpul de antrenare.",
 			},
-			# "max_depth": {
-			# 	"type": "numerical",
-			# 	"min": 1,
-			# 	"max": 50,
-			# 	"step": 1,
-			# 	"default": None,
-			# 	"optimal": 10,
-			# },
-			# "min_samples_split": {
-			# 	"type": "numerical",
-			# 	"min": 2,
-			# 	"max": 20,
-			# 	"step": 1,
-			# 	"default": 2,
-			# 	"optimal": 5,
-			# },
-			# "min_samples_leaf": {
-			# 	"type": "numerical",
-			# 	"min": 1,
-			# 	"max": 10,
-			# 	"step": 1,
-			# 	"default": 1,
-			# 	"optimal": 2,
-			# },
-			# "max_features": {
-			# 	"type": "categorical",
-			# 	"values": ["sqrt", "log2", None],
-			# 	"default": "sqrt",
-			# 	"optimal": "sqrt",
-			# },
-			# "bootstrap": {
-			# 	"type": "categorical",
-			# 	"values": [True, False],
-			# 	"default": True,
-			# 	"optimal": True,
-			# },
+			"max_depth": {
+				"type": "numerical",
+				"min": 1,
+				"max": 50,
+				"step": 1,
+				"default": None,
+				"help": "Adâncimea maximă a arborilor. Un `None` permite extinderea completă până la frunze pure.",
+			},
+			"min_samples_split": {
+				"type": "numerical",
+				"min": 2,
+				"max": 20,
+				"step": 1,
+				"default": 2,
+				"help": "Numărul minim de eșantioane pentru a împărți un nod.",
+			},
+			"min_samples_leaf": {
+				"type": "numerical",
+				"min": 1,
+				"max": 10,
+				"step": 1,
+				"default": 1,
+				"help": "Numărul minim de eșantioane necesare într-o frunză.",
+			},
+			"max_features": {
+				"type": "categorical",
+				"values": ["sqrt", "log2", None],
+				"default": "sqrt",
+				"help": "Numărul de caracteristici luate în calcul la fiecare split. `sqrt` este o alegere comună.",
+			},
+			"replacement": {
+				"type": "categorical",
+				"values": [True, False],
+				"default": False,
+				"help": "Dacă eșantionarea pentru fiecare arbore se face cu înlocuire. Poate afecta diversitatea arborilor.",
+			},
+			"bootstrap": {
+				"type": "categorical",
+				"values": [True, False],
+				"default": True,
+				"help": "Dacă să se folosească bootstrap sampling pentru eșantionare.",
+			},
+			"sampling_strategy": {
+				"type": "categorical",
+				"values": ["auto", "not majority", "all"],
+				"default": "auto",
+				"help": "Strategia de undersampling a clasei majore. `auto` înseamnă echilibrare completă.",
+			},
 		}
+
 
 class AB(Base):
 	def __init__(self):
@@ -443,7 +438,7 @@ class AB(Base):
 				"max": 500,
 				"step": 10,
 				"default": 50,
-				"optimal": 200,
+				"help": "Numărul total de estimatori adăugați secvențial. Valori mai mari pot reduce bias-ul dar cresc timpul de antrenare.",
 			},
 			"learning_rate": {
 				"type": "numerical",
@@ -451,13 +446,13 @@ class AB(Base):
 				"max": 2.0,
 				"step": 0.001,
 				"default": 1.0,
-				"optimal": 0.1,
+				"help": "Factor de ponderare aplicat fiecărui estimator nou. Rate mai mici implică mai mulți estimatori.",
 			},
 			"algorithm": {
 				"type": "categorical",
-				"values": ["SAMME"],
-				"default": "SAMME",
-				"optimal": "SAMME",
+				"values": ["SAMME", "SAMME.R"],
+				"default": "SAMME.R",
+				"help": "Algoritmul de boosting. `SAMME.R` folosește probabilități și este de obicei mai precis.",
 			},
 		}
 
@@ -475,7 +470,7 @@ class GBC(Base):
 				"max": 500,
 				"step": 10,
 				"default": 100,
-				"optimal": 200,
+				"help": "Numărul de arbori de decizie antrenați secvențial. Un număr mai mare poate crește acuratețea, dar și riscul de overfitting.",
 			},
 			"learning_rate": {
 				"type": "numerical",
@@ -483,7 +478,7 @@ class GBC(Base):
 				"max": 1.0,
 				"step": 0.001,
 				"default": 0.1,
-				"optimal": 0.05,
+				"help": "Cât de mult contribuie fiecare arbore la modelul final. Valori mai mici cer mai mulți arbori, dar pot duce la o generalizare mai bună.",
 			},
 			"max_depth": {
 				"type": "numerical",
@@ -491,7 +486,7 @@ class GBC(Base):
 				"max": 50,
 				"step": 1,
 				"default": 3,
-				"optimal": 5,
+				"help": "Adâncimea maximă a fiecărui arbore. Controlează complexitatea individuală a arborilor.",
 			},
 			"min_samples_split": {
 				"type": "numerical",
@@ -499,7 +494,7 @@ class GBC(Base):
 				"max": 20,
 				"step": 1,
 				"default": 2,
-				"optimal": 5,
+				"help": "Numărul minim de exemple necesare pentru a împărți un nod. Valori mai mari fac arborii mai puțin adânci.",
 			},
 			"min_samples_leaf": {
 				"type": "numerical",
@@ -507,7 +502,7 @@ class GBC(Base):
 				"max": 10,
 				"step": 1,
 				"default": 1,
-				"optimal": 2,
+				"help": "Numărul minim de exemple într-o frunză. Ajută la regularizare și reduce overfitting-ul.",
 			},
 			"subsample": {
 				"type": "numerical",
@@ -515,7 +510,7 @@ class GBC(Base):
 				"max": 1.0,
 				"step": 0.1,
 				"default": 1.0,
-				"optimal": 0.8,
+				"help": "Proporția din datele de antrenament folosită pentru fiecare arbore. Valori sub 1.0 introduc stochasticitate și pot îmbunătăți generalizarea.",
 			},
 		}
 
@@ -533,7 +528,7 @@ class XGB(Base):
 				"max": 500,
 				"step": 10,
 				"default": 100,
-				"optimal": 200,
+				"help": "Numărul total de arbori antrenați secvențial.",
 			},
 			"learning_rate": {
 				"type": "numerical",
@@ -541,7 +536,7 @@ class XGB(Base):
 				"max": 1.0,
 				"step": 0.001,
 				"default": 0.1,
-				"optimal": 0.05,
+				"help": "Ratează cât de mult contribuie fiecare arbore la modelul final.",
 			},
 			"max_depth": {
 				"type": "numerical",
@@ -549,7 +544,7 @@ class XGB(Base):
 				"max": 50,
 				"step": 1,
 				"default": 3,
-				"optimal": 5,
+				"help": "Adâncimea maximă a fiecărui arbore individual.",
 			},
 			"gamma": {
 				"type": "numerical",
@@ -557,7 +552,7 @@ class XGB(Base):
 				"max": 10.0,
 				"step": 0.1,
 				"default": 0.0,
-				"optimal": 0.1,
+				"help": "Cerința minimă de reducere a pierderii pentru a face o împărțire.",
 			},
 			"subsample": {
 				"type": "numerical",
@@ -565,7 +560,7 @@ class XGB(Base):
 				"max": 1.0,
 				"step": 0.1,
 				"default": 1.0,
-				"optimal": 0.8,
+				"help": "Proporția din datele de antrenament folosită pentru fiecare arbore.",
 			},
 			"colsample_bytree": {
 				"type": "numerical",
@@ -573,7 +568,7 @@ class XGB(Base):
 				"max": 1.0,
 				"step": 0.1,
 				"default": 1.0,
-				"optimal": 0.8,
+				"help": "Proporția din caracteristici folosită pentru construirea fiecărui arbore.",
 			},
 		}
 
@@ -591,7 +586,7 @@ class LGBM(Base):
 				"max": 256,
 				"step": 1,
 				"default": 31,
-				"optimal": 40,
+				"help": "Numărul maxim de frunze pe care le poate avea un arbore. Mai multe frunze pot duce la overfitting.",
 			},
 			"learning_rate": {
 				"type": "numerical",
@@ -599,7 +594,7 @@ class LGBM(Base):
 				"max": 1.0,
 				"step": 0.001,
 				"default": 0.1,
-				"optimal": 0.05,
+				"help": "Cât de mult contribuie fiecare arbore la predicția finală.",
 			},
 			"n_estimators": {
 				"type": "numerical",
@@ -607,7 +602,7 @@ class LGBM(Base):
 				"max": 500,
 				"step": 10,
 				"default": 100,
-				"optimal": 200,
+				"help": "Numărul total de arbori antrenați în model.",
 			},
 			"max_depth": {
 				"type": "numerical",
@@ -615,7 +610,7 @@ class LGBM(Base):
 				"max": 50,
 				"step": 1,
 				"default": -1,
-				"optimal": 10,
+				"help": "Adâncimea maximă a arborilor. -1 înseamnă fără limită.",
 			},
 			"subsample": {
 				"type": "numerical",
@@ -623,7 +618,7 @@ class LGBM(Base):
 				"max": 1.0,
 				"step": 0.1,
 				"default": 1.0,
-				"optimal": 0.8,
+				"help": "Proporția de date folosită pentru fiecare arbore. Reduce overfitting.",
 			},
 			"colsample_bytree": {
 				"type": "numerical",
@@ -631,7 +626,7 @@ class LGBM(Base):
 				"max": 1.0,
 				"step": 0.1,
 				"default": 1.0,
-				"optimal": 0.8,
+				"help": "Proporția de coloane folosită pentru construirea fiecărui arbore.",
 			},
 			"reg_alpha": {
 				"type": "numerical",
@@ -639,7 +634,7 @@ class LGBM(Base):
 				"max": 10.0,
 				"step": 0.1,
 				"default": 0.0,
-				"optimal": 0.1,
+				"help": "Regularizare L1 (Lasso). Controlează complexitatea modelului.",
 			},
 			"reg_lambda": {
 				"type": "numerical",
@@ -647,7 +642,7 @@ class LGBM(Base):
 				"max": 10.0,
 				"step": 0.1,
 				"default": 0.0,
-				"optimal": 0.1,
+				"help": "Regularizare L2 (Ridge). Ajută la prevenirea overfitting-ului.",
 			},
 		}
 
@@ -665,7 +660,7 @@ class CB(Base):
 				"max": 1000,
 				"step": 10,
 				"default": 100,
-				"optimal": 500,
+				"help": "Numărul total de arbori de decizie antrenați.",
 			},
 			"learning_rate": {
 				"type": "numerical",
@@ -673,7 +668,7 @@ class CB(Base):
 				"max": 1.0,
 				"step": 0.001,
 				"default": 0.1,
-				"optimal": 0.05,
+				"help": "Rata cu care modelul învață. Valori mai mici oferă antrenare mai lentă dar stabilă.",
 			},
 			"depth": {
 				"type": "numerical",
@@ -681,7 +676,7 @@ class CB(Base):
 				"max": 16,
 				"step": 1,
 				"default": 6,
-				"optimal": 8,
+				"help": "Adâncimea arborilor. Afectează complexitatea și riscul de overfitting.",
 			},
 			"l2_leaf_reg": {
 				"type": "numerical",
@@ -689,28 +684,20 @@ class CB(Base):
 				"max": 10.0,
 				"step": 0.1,
 				"default": 3.0,
-				"optimal": 5.0,
+				"help": "Regularizare L2 pentru frunze. Controlează cât de mult penalizează complexitatea.",
 			},
 			"bootstrap_type": {
 				"type": "categorical",
 				"values": ["Bayesian", "Bernoulli", "MVS", "No"],
 				"default": "Bayesian",
-				"optimal": "Bayesian",
+				"help": "Strategia de sampling pentru bootstrap. Bayesian oferă rezultate stabile.",
 			},
 			"grow_policy": {
 				"type": "categorical",
 				"values": ["SymmetricTree", "Depthwise", "Lossguide"],
 				"default": "SymmetricTree",
-				"optimal": "Lossguide",
+				"help": "Politica de creștere a arborilor. Lossguide e mai eficient pentru seturi mari.",
 			},
-			# "subsample": {
-			#     "type": "numerical",
-			#     "min": 0.1,
-			#     "max": 1.0,
-			#     "step": 0.1,
-			#     "default": 1.0,
-			#     "optimal": 0.8,
-			# },
 		}
 
 
@@ -727,7 +714,7 @@ class MLP(Base):
 				"max": 10,
 				"step": 1,
 				"default": 5,
-				"optimal": 5,
+				"help": "Numărul total de straturi ascunse.",
 			},
 			"units_per_layer": {
 				"type": "list_numerical",
@@ -735,7 +722,7 @@ class MLP(Base):
 				"max": 512,
 				"step": 8,
 				"default": [128, 64, 64, 32, 16],
-				"optimal": [128, 64, 64, 32, 16],
+				"help": "Numărul de neuroni per strat. Lungimea listei trebuie să fie egală cu `n_layers`.",
 			},
 			"dropout_rates": {
 				"type": "list_numerical",
@@ -743,25 +730,25 @@ class MLP(Base):
 				"max": 0.5,
 				"step": 0.05,
 				"default": [0.3, 0.3, 0.3, 0.3, 0.3],
-				"optimal": [0.3, 0.3, 0.3, 0.3, 0.3],
+				"help": "Ratele de dropout pentru regularizare. Trebuie să corespundă cu `n_layers`.",
 			},
 			"activation": {
 				"type": "categorical",
 				"values": ["relu", "tanh", "sigmoid", "leaky_relu"],
 				"default": "relu",
-				"optimal": "relu",
+				"help": "Funcția de activare aplicată după fiecare strat.",
 			},
 			"optimizer": {
 				"type": "categorical",
 				"values": ["adam", "sgd", "rmsprop", "adamax"],
 				"default": "adam",
-				"optimal": "adam",
+				"help": "Algoritmul folosit pentru optimizarea ponderilor.",
 			},
 			"loss": {
 				"type": "categorical",
 				"values": ["binary_crossentropy", "categorical_crossentropy", "mse"],
 				"default": "binary_crossentropy",
-				"optimal": "binary_crossentropy",
+				"help": "Funcția de loss care ghidează antrenarea.",
 			},
 			"batch_size": {
 				"type": "numerical",
@@ -769,7 +756,7 @@ class MLP(Base):
 				"max": 256,
 				"step": 8,
 				"default": 32,
-				"optimal": 64,
+				"help": "Câte instanțe sunt procesate simultan în timpul antrenării.",
 			},
 			"epochs": {
 				"type": "numerical",
@@ -777,56 +764,27 @@ class MLP(Base):
 				"max": 100,
 				"step": 1,
 				"default": 10,
-				"optimal": 20,
+				"help": "Numărul de treceri complete prin datele de antrenare.",
 			},
 		}
 
-	def get_params_utilizator(self):
-		params = {}
-		for param, details in self.hyperparams.items():
-			if details["type"] == "numerical":
-				params[param] = st.slider(
-					param, details["min"], details["max"], details["default"], details["step"]
-				)
-			elif details["type"] == "list_numerical":
-				params[param] = []
-				for i in range(params.get("n_layers", details["default"])):
-					value = st.slider(
-						f"{param} (Strat {i + 1})",
-						details["min"],
-						details["max"],
-						details["default"][min(i, len(details["default"]) - 1)],
-						details["step"],
-					)
-					params[param].append(value)
-			else:
-				params[param] = st.selectbox(
-					param, details["values"], index=details["values"].index(details["default"])
-				)
-		self.params = params
-		return params
-
 	def build_model(self, input_shape):
-		from keras.layers import BatchNormalization, Dense, Dropout  # type: ignore
+		from keras.layers import BatchNormalization, Dense, Dropout, Input  # type: ignore
 		from keras.metrics import AUC  # type: ignore
 		from keras.models import Sequential  # type: ignore
-		
+
 		self.model = Sequential()
 		for i in range(self.params["n_layers"]):
 			if i == 0:
+				self.model.add(Input(shape=input_shape))
 				self.model.add(
 					Dense(
-						self.params["units_per_layer"][i],
+						self.params["units_per_layer"][0],
 						activation=self.params["activation"],
-						input_shape=input_shape,
 					)
 				)
 			else:
-				self.model.add(
-					Dense(
-						self.params["units_per_layer"][i], activation=self.params["activation"]
-					)
-				)
+				self.model.add(Dense(self.params["units_per_layer"][i], activation=self.params["activation"]))
 
 			self.model.add(BatchNormalization())
 			self.model.add(Dropout(self.params["dropout_rates"][i]))
@@ -839,7 +797,35 @@ class MLP(Base):
 			metrics=[AUC(name="auc")],
 		)
 
+	# def train(self, X_train, y_train, X_val, y_val):
+	# 	self.build_model((X_train.shape[1],))
+	# 	start_time = time.time()
+
+	# 	history = self.model.fit(
+	# 		X_train,
+	# 		y_train,
+	# 		validation_data=(X_val, y_val),
+	# 		epochs=self.params["epochs"],
+	# 		batch_size=self.params["batch_size"],
+	# 		verbose=1,
+	# 	)
+
+	# 	# history_dict = history.history
+	# 	# final_loss = history_dict["loss"][-1]
+	# 	# final_auc = history_dict["auc"][-1] if "auc" in history_dict else None
+
+	# 	self.training_time = time.time() - start_time
+	# 	self.y_prob = self.model.predict(X_val)
+	# 	self.y_pred = (self.y_prob > 0.5).astype(int)
+	# 	training_time = time.time() - start_time
+	# 	return training_time
+
 	def train(self, X_train, y_train, X_val, y_val):
+		import time
+
+		import plotly.graph_objects as go
+		import streamlit as st
+
 		self.build_model((X_train.shape[1],))
 		start_time = time.time()
 
@@ -849,15 +835,53 @@ class MLP(Base):
 			validation_data=(X_val, y_val),
 			epochs=self.params["epochs"],
 			batch_size=self.params["batch_size"],
-			verbose=1,
+			verbose=0,
+			callbacks=[StreamlitTrainingCallback(epochs)],
 		)
-
-		# history_dict = history.history
-		# final_loss = history_dict["loss"][-1]
-		# final_auc = history_dict["auc"][-1] if "auc" in history_dict else None
 
 		self.training_time = time.time() - start_time
 		self.y_prob = self.model.predict(X_val)
 		self.y_pred = (self.y_prob > 0.5).astype(int)
-		training_time = time.time() - start_time
-		return training_time
+
+		h = history.history
+		epochs = list(range(1, len(h["loss"]) + 1))
+		fig = go.Figure()
+
+		fig.add_trace(go.Scatter(x=epochs, y=h["loss"], mode="lines+markers", name="Train Loss"))
+		fig.add_trace(go.Scatter(x=epochs, y=h["val_loss"], mode="lines+markers", name="Val Loss"))
+		fig.add_trace(go.Scatter(x=epochs, y=h["auc"], mode="lines", name="Train AUC"))
+		fig.add_trace(go.Scatter(x=epochs, y=h["val_auc"], mode="lines", name="Val AUC"))
+
+		fig.update_layout(
+			title="Evoluția în timpul antrenării",
+			xaxis_title="Epocă",
+			yaxis_title="Valoare",
+			legend_title="Metrică",
+			height=500,
+		)
+
+		st.plotly_chart(fig, use_container_width=True)
+
+		return self.training_time
+
+
+from tensorflow.keras.callbacks import Callback  # type: ignore
+
+
+class StreamlitTrainingCallback(Callback):
+	def __init__(self, total_epochs):
+		super().__init__()
+		self.total_epochs = total_epochs
+		self.progress_bar = st.progress(0)
+		self.log_area = st.empty()
+		self.logs = []
+
+	def on_epoch_end(self, epoch, logs=None):
+		logs = logs or {}
+		pct = (epoch + 1) / self.total_epochs
+
+		self.progress_bar.progress(pct, text=f"Epoca {epoch + 1}/{self.total_epochs}")
+
+		text = f"Epoca {epoch + 1} | loss={logs.get('loss', 0):.4f} | val_loss={logs.get('val_loss', 0):.4f}"
+		self.logs.append(text)
+		self.log_area.code("\n".join(self.logs), language="text")

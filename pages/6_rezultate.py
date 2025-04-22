@@ -1,6 +1,13 @@
 import streamlit as st
 
-from ml import afisare_metrici, calcul_metrici, plot_curba_pr, plot_curba_roc, plot_matrice_confuzie
+from ml import (
+	afisare_metrici,
+	afisare_raport_clasificare,
+	calcul_metrici,
+	plot_curba_pr,
+	plot_curba_roc,
+	plot_matrice_confuzie,
+)
 from utils import citire_date_temp, nav_bar
 
 
@@ -18,15 +25,15 @@ X_train, X_test, y_test = (
 for key in ["matrici_confuzie", "curbe_roc", "curbe_pr", "metrici_modele"]:
 	st.session_state.setdefault(key, {})
 
-tabs = st.tabs([f"📊 {key}" for key in modele_antrenate])
+tabs = st.tabs([key for key in modele_antrenate])
 for tab, (key, model) in zip(tabs, modele_antrenate.items()):
 	with tab:
 		st.header(key)
 		y_pred = model.y_pred
 		y_prob = model.y_prob
 
-		# st.subheader("Raport de clasificare")
-		# afisare_raport_clasificare()
+		st.subheader("Raport de clasificare")
+		afisare_raport_clasificare()
 
 		st.subheader("Metrici")
 		if key not in st.session_state.metrici_modele:
@@ -47,31 +54,3 @@ for tab, (key, model) in zip(tabs, modele_antrenate.items()):
 		if key not in st.session_state.curbe_pr:
 			plot_curba_pr(y_test, y_prob, key)
 		st.plotly_chart(st.session_state.curbe_pr[key], use_container_width=False)
-
-# if "incarcat_rezultate" not in st.session_state:
-# 	id_preprocesare = st.session_state.id_preprocesare
-# 	timpi_executie: dict = st.session_state.timpi_executie
-# 	hiperparametri: dict = st.session_state.hiperparametri
-# 	id_rulari: dict = {}
-
-# 	for key in st.session_state.metrici_modele.keys():
-# 		denumire_model = re.search(r"\((.*?)\)", key).group(1)
-# 		id_rulari[key] = creare_rulare(
-# 			id_preprocesare,
-# 			denumire_model,
-# 			st.session_state.metrici_modele[key],
-# 			timpi_executie[key],
-# 			hiperparametri[key],
-# 		)
-
-# 	for key in st.session_state.metrici_modele.keys():
-# 		denumire_model = re.search(r"\((.*?)\)", key).group(1).lower()
-# 		file_path = incarcare_grafic_json_supabase(st.session_state.matrici_confuzie[key])
-# 		creare_grafic(id_rulari[key], "Matrice de confuzie", file_path)
-# 		file_path = incarcare_grafic_json_supabase(st.session_state.curbe_roc[key])
-# 		creare_grafic(id_rulari[key], "Curba ROC", file_path)
-# 		file_path = incarcare_grafic_json_supabase(st.session_state.curbe_pr[key])
-# 		creare_grafic(id_rulari[key], "Curba PR", file_path)
-
-# 	st.session_state.id_rulari = id_rulari
-# 	st.session_state.incarcat_rezultate = True

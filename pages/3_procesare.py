@@ -598,8 +598,6 @@ def ui_impartire(X, y, tinta):
 			salvare_date_temp(data, name)
 		st.success("Seturile au fost salvate.")
 
-	return X_train, X_test, y_train, y_test
-
 
 ########################################################
 
