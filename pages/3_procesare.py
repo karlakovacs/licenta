@@ -75,32 +75,21 @@ def completare_valori_lipsa(
 	strategie_cat: str = "mod",
 	valoare_fixa_num: float = None,
 	valoare_fixa_cat: str = None,
-	optiuni_individuale: dict = None,
 ) -> pd.DataFrame:
 	df_copy = df.copy()
 
-	if optiuni_individuale:
-		# completare per coloana
-		for col, opt in optiuni_individuale.items():
-			df_copy[col] = fillna_coloana(
-				df_copy[col],
-				opt["strategie"],
-				valoare_fixa=opt.get("valoare"),
-			)
-	else:
-		# completare globala
-		num_cols = df_copy.select_dtypes(include=TIPURI_NUMERICE).columns[
-			df_copy.select_dtypes(include=TIPURI_NUMERICE).isnull().any()
-		]
-		cat_cols = df_copy.select_dtypes(include=TIPURI_CATEGORIALE).columns[
-			df_copy.select_dtypes(include=TIPURI_CATEGORIALE).isnull().any()
-		]
+	num_cols = df_copy.select_dtypes(include=TIPURI_NUMERICE).columns[
+		df_copy.select_dtypes(include=TIPURI_NUMERICE).isnull().any()
+	]
+	cat_cols = df_copy.select_dtypes(include=TIPURI_CATEGORIALE).columns[
+		df_copy.select_dtypes(include=TIPURI_CATEGORIALE).isnull().any()
+	]
 
-		for col in num_cols:
-			df_copy[col] = fillna_coloana(df_copy[col], strategie_num, valoare_fixa_num)
+	for col in num_cols:
+		df_copy[col] = fillna_coloana(df_copy[col], strategie_num, valoare_fixa_num)
 
-		for col in cat_cols:
-			df_copy[col] = fillna_coloana(df_copy[col], strategie_cat, valoare_fixa_cat)
+	for col in cat_cols:
+		df_copy[col] = fillna_coloana(df_copy[col], strategie_cat, valoare_fixa_cat)
 
 	return df_copy
 
@@ -130,33 +119,11 @@ def drop_coloane_inutile(df: pd.DataFrame, coloane_de_eliminat: list[str]):
 	return df
 
 
-def eliminare_varinata_mica(df: pd.DataFrame, threshold: float) -> tuple[pd.DataFrame, list[str]]:
-	df_var = df.select_dtypes(include=TIPURI_NUMERICE)
-	selector = VarianceThreshold(threshold=threshold)
-	selector.fit(df_var)
-	coloane_pastrate = df_var.columns[selector.get_support(indices=True)].tolist()
-	coloane_eliminate = list(set(df_var.columns) - set(coloane_pastrate))
-	restul = df.select_dtypes(exclude=TIPURI_NUMERICE)
-	df_nou = pd.concat([df[coloane_pastrate], restul], axis=1)
-	return df_nou, coloane_eliminate
-
-
-def eliminare_corelate(df: pd.DataFrame, prag: float = 0.9) -> pd.DataFrame:
-	corr_matrix = df.corr(numeric_only=True).abs()
-	upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-	de_sters = [col for col in upper.columns if any(upper[col] > prag)]
-	return df.drop(columns=de_sters), de_sters
-
-
-def eliminare_coloane_cu_valori_lipsa(df: pd.DataFrame, prag_pct: int) -> tuple[pd.DataFrame, list]:
+def eliminare_coloane_cu_valori_lipsa(df: pd.DataFrame, prag_pct: int = 50) -> tuple[pd.DataFrame, list]:
 	pct_lipsa = df.isnull().mean() * 100
 	coloane_de_sters = pct_lipsa[pct_lipsa > prag_pct].index.tolist()
 	return df.drop(columns=coloane_de_sters), coloane_de_sters
 
-
-def elimina_constante(df: pd.DataFrame) -> tuple[pd.DataFrame, list]:
-	constante = [col for col in df.columns if df[col].nunique() == 1]
-	return df.drop(columns=constante), constante
 
 
 def detectare_outlieri_z_score(serie: pd.Series, threshold: float = 3.0) -> pd.Series:
@@ -207,16 +174,6 @@ def eliminare_randuri_cu_valori_lipsa(df: pd.DataFrame, max_valori_lipsa: int) -
 	nr_eliminate = nr_initial - df_cleaned.shape[0]
 	return df_cleaned, nr_eliminate
 
-
-def selectare_caracteristici_catboost(X, y, num_features):
-	cat_cols = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
-	model = CatBoostClassifier(verbose=0, random_state=42)
-	model.fit(X, y, cat_features=cat_cols)
-
-	feat_importance_df = model.get_feature_importance(prettified=True)
-	top_features = feat_importance_df.nlargest(num_features, "Importances")
-	X = X[top_features["Feature Id"].tolist()]
-	return X, top_features
 
 
 def gestionare_dezechilibru(X, y, strategie):
@@ -271,335 +228,247 @@ def impartire_train_test(X: pd.DataFrame, y: pd.Series, coloana_tinta: str, prop
 ######################## UI #########################
 
 
+def ui_eliminare_coloane(df: pd.DataFrame):
+	st.session_state["procesare"].setdefault("coloane_eliminate", [])
+
+	coloane_eliminate = st.multiselect(
+		"Alege coloanele de eliminat",
+		options=df.columns,
+		# default=st.session_state["procesare"]["coloane_eliminate"],
+		help="Coloane care nu aduc valoare, cum ar fi ID-uri, coduri, etc.",
+		key="coloane_eliminate",
+	)
+
+	if coloane_eliminate:
+		st.session_state["procesare"]["coloane_eliminate"] = coloane_eliminate
+
+
 def ui_eliminare_randuri(df: pd.DataFrame):
-	if st.checkbox("Șterge rânduri duplicate"):
-		df, nr_duplicate = eliminare_duplicate(df)
-		if nr_duplicate > 0:
+	are_duplicate = df.duplicated().any()
+	are_nan = df.isnull().any().any()
+
+	if are_duplicate:
+		elim_dup = st.checkbox(
+			"Șterge rânduri duplicate",
+			# value=st.session_state["procesare"].get("eliminare_duplicate", False),
+			help="Elimină rândurile complet duplicate, dacă există.",
+			key="elim_dup",
+		)
+		if elim_dup:
 			st.session_state["procesare"]["eliminare_duplicate"] = True
-			st.success(f"{nr_duplicate} rânduri duplicate eliminate.")
 		else:
-			st.info("Nu există rânduri duplicate.")
+			st.session_state["procesare"].pop("eliminare_duplicate", None)
+	else:
+		st.info("Setul de date nu conține rânduri duplicate.")
 
-	if st.checkbox("Elimină rândurile cu multe valori lipsă"):
-		max_valori_lipsa = st.slider("Maxim valori lipsă per rând acceptate", 0, df.shape[1], 2)
-
-		if st.button("Aplică", type="primary", key="randuri_nan"):
-			df, nr_null_rows = eliminare_randuri_cu_valori_lipsa(df, max_valori_lipsa)
-
-			if nr_null_rows > 0:
-				st.session_state["procesare"]["eliminare_randuri_nan"] = {"max_valori_lipsa": max_valori_lipsa}
-				st.success(f"{nr_null_rows} rânduri cu multe valori lipsă eliminate.")
-			else:
-				st.info("Niciun rând nu a fost eliminat pe baza valorilor lipsă.")
-
-	return df
+	if are_nan:
+		elim_nan = st.checkbox(
+			"Elimină rânduri cu peste 50% valori lipsă",
+			value=st.session_state["procesare"].get("eliminare_randuri_nan", False),
+			help="Elimină rândurile care au prea multe valori lipsă.",
+		)
+		if elim_nan:
+			st.session_state["procesare"]["eliminare_randuri_nan"] = True
+		else:
+			st.session_state["procesare"].pop("eliminare_randuri_nan", None)
+	else:
+		st.info("Nu există valori lipsă în setul de date.")
 
 
 def ui_outlieri(df: pd.DataFrame):
-	metoda_detectie = st.selectbox("Metodă de detecție", ["Z-score", "IQR"])
-	actiune = st.radio("Acțiune asupra outlierilor", ["Eliminare", "Înlocuire cu NaN"])
+	metoda_detectie = st.radio(
+		"Metodă de detecție",
+		["Z-score", "IQR"],
+		index=0,
+		help="Alege cum sunt detectați outlierii: Z-score detectează valori extreme pe baza deviației standard, iar IQR pe baza intervalului intercuartilic.",
+	)
+	actiune = st.radio(
+		"Acțiune asupra outlierilor",
+		["Eliminare", "Înlocuire cu NaN"],
+		index=0,
+		help="Poți fie să elimini complet observațiile cu outlieri, fie să înlocuiești valorile extreme cu NaN.",
+	)
 
-	if st.button("Aplică", type="primary", key="outlieri"):
-		df, coloane_modificate = tratare_outlieri(df, metoda=metoda_detectie, actiune=actiune)
-
-		if coloane_modificate:
-			st.session_state["procesare"]["outlieri"] = {"metoda_detectie": metoda_detectie, "actiune": actiune}
-			st.success(f"Am detectat și tratat outlieri în coloanele: {', '.join(coloane_modificate)}")
-		else:
-			st.info("Nu au fost detectați outlieri în coloanele numerice.")
-	return df
+	st.session_state["procesare"]["outlieri"] = {
+		"metoda": metoda_detectie,
+		"actiune": actiune,
+	}
 
 
 def ui_valori_lipsa_coloane(df: pd.DataFrame):
-	if not df.isna().any().any():
-		st.info("Nu există valori lipsă.")
-		return df
-
-	st.subheader("Alege cum vrei să completezi valorile lipsă:")
-	mod_completare = st.radio(
-		"Mod de completare",
-		["Completare automată pe tipuri", "Completare personalizată per coloană"],
-		horizontal=True,
-	)
-
-	if mod_completare == "Completare automată pe tipuri":
-		strategie_num = st.selectbox("Strategie pentru numerice", ["medie", "mediana", "mod", "valoare fixă"])
-		strategie_cat = st.selectbox("Strategie pentru categoriale", ["mod", "valoare fixă"])
-
-		valoare_fixa_num = None
-		valoare_fixa_cat = None
-
-		if strategie_num == "valoare fixă":
-			valoare_fixa_num = st.number_input("Valoare fixă pentru numerice")
-
-		if strategie_cat == "valoare fixă":
-			valoare_fixa_cat = st.text_input("Valoare fixă pentru categoriale")
-
-		df = completare_valori_lipsa(
-			df,
-			strategie_num=strategie_num,
-			strategie_cat=strategie_cat,
-			valoare_fixa_num=valoare_fixa_num,
-			valoare_fixa_cat=valoare_fixa_cat,
-			optiuni_individuale=None,
+	are_nan = df.isnull().any().any()
+	if are_nan:
+		strategie_numerice = st.selectbox(
+			"Strategie pentru variabilele numerice",
+			["medie", "mediană", "mod", "valoare fixă"],
+			help="Alege cum să completezi valorile lipsă din coloanele numerice.",
 		)
-		st.session_state["procesare"]["valori_lipsa"] = {
-			"mod": "automat",
-			"strategie_numerice": strategie_num,
-			"strategie_categoriale": strategie_cat,
-			"valoare_fixa_numerice": valoare_fixa_num,
-			"valoare_fixa_categoriale": valoare_fixa_cat,
-		}
 
+		strategie_categoriale = st.selectbox(
+			"Strategie pentru variabilele categoriale",
+			["mod", "valoare fixă"],
+			help="Alege cum să completezi valorile lipsă din coloanele categoriale.",
+		)
+
+		valoare_fixa_numerice = None
+		valoare_fixa_categoriale = None
+
+		if strategie_numerice == "valoare fixă":
+			valoare_fixa_numerice = st.number_input(
+				"Valoare fixă pentru variabilele numerice", help="Valoare numerică fixă folosită la completare."
+			)
+
+		if strategie_categoriale == "valoare fixă":
+			valoare_fixa_categoriale = st.text_input(
+				"Valoare fixă pentru variabilele categoriale", help="Valoare textuală fixă folosită la completare."
+			)
+
+		st.session_state["procesare"]["valori_lipsa"] = {
+			"strategie_numerice": strategie_numerice,
+			"strategie_categoriale": strategie_categoriale,
+			"valoare_fixa_numerice": valoare_fixa_numerice,
+			"valoare_fixa_categoriale": valoare_fixa_categoriale,
+		}
 	else:
-		st.header("Setează manual pentru fiecare coloană")
-		optiuni_individuale = {}
-
-		for col in df.columns[df.isnull().any()]:
-			col_type = str(df[col].dtype)
-			is_numeric = col_type in TIPURI_NUMERICE
-			chei = ["medie", "mediana", "mod", "valoare fixă"] if is_numeric else ["mod", "valoare fixă"]
-
-			with st.container():
-				st.subheader(f"**`{col}` ({col_type})**")
-				strategie = st.selectbox(f"Strategie pentru `{col}`", chei, key=f"{col}_strategie")
-
-				val = None
-				if strategie == "valoare fixă":
-					if is_numeric:
-						val = st.number_input(f"Valoare fixă pentru `{col}`", key=f"{col}_valoare")
-					else:
-						val = st.text_input(f"Valoare fixă pentru `{col}`", key=f"{col}_valoare")
-
-				optiuni_individuale[col] = {
-					"strategie": strategie,
-					"valoare": val,
-				}
-
-		df = completare_valori_lipsa(df, optiuni_individuale=optiuni_individuale)
-		st.session_state["procesare"]["valori_lipsa"] = {
-			"mod": "individual",
-			"strategie_per_coloana": optiuni_individuale,
-		}
-
-	st.success("Valorile lipsă au fost completate.")
-	return df
+		st.info("Nu există valori lipsă în setul de date.")
 
 
-def ui_coloane_binare(df: pd.DataFrame) -> pd.DataFrame:
-	coloane_binare = [col for col in df.columns if df[col].nunique(dropna=True) == 2 and df[col].dtype != "bool"]
+def ui_coloane_binare(df: pd.DataFrame):
+	coloane_eliminate = set(st.session_state["procesare"].get("coloane_eliminate", []))
+
+	coloane_binare = [
+		col
+		for col in df.columns
+		if col not in coloane_eliminate and df[col].nunique(dropna=True) == 2 and df[col].dtype != "bool"
+	]
 
 	if not coloane_binare:
 		st.info("Nu există coloane binare ce necesită conversie.")
-		return df
+		return
 
 	st.markdown("Selectează valoarea care va fi considerată `True` pentru fiecare coloană binară:")
-	conversii = {
-		col: st.selectbox(f"`{col}` - valoarea `True`:", df[col].dropna().unique().tolist(), key=f"true_val_{col}")
-		for col in coloane_binare
-	}
 
-	if st.button("Aplică", key="binar"):
-		df = convertire_binar_in_bool(df, conversii)
-		st.session_state["procesare"]["coloane_binare"] = {"conversii": conversii}
-		st.success("Coloanele binare au fost convertite în `bool`.")
+	conversii_initiale = st.session_state["procesare"].get("coloane_binare", {})
+	conversii = {}
+	for col in coloane_binare:
+		valori_unice = df[col].dropna().unique().tolist()
+		conversii[col] = st.selectbox(
+			f"`{col}`",
+			options=valori_unice,
+			index=valori_unice.index(conversii_initiale.get(col, valori_unice[0])),
+			key=f"true_val_{col}",
+			help=f"Alege care valoare din `{valori_unice}` va deveni `True`.",
+		)
+	st.session_state["procesare"]["coloane_binare"] = conversii
 
-	return df
 
+def ui_datetime(df: pd.DataFrame):
+	coloane_eliminate = set(st.session_state["procesare"].get("coloane_eliminate", []))
 
-def ui_datetime(df: pd.DataFrame) -> pd.DataFrame:
-	coloane_object = df.select_dtypes(include="object").columns.tolist()
+	coloane_object = list(set(df.select_dtypes(include="object").columns) - coloane_eliminate)
+
 	if not coloane_object:
 		st.info("Nu există coloane de tip `object` care ar putea fi transformate în datetime.")
-		return df
+		return
 
-	coloane_datetime = st.multiselect("Alege coloane de tip datetime", coloane_object)
-
-	if not coloane_datetime:
-		return df
+	coloane_datetime = st.multiselect(
+		"Alege coloane de tip datetime",
+		coloane_object,
+		default=st.session_state["procesare"]["datetime"].get("coloane", []),
+	)
 
 	datetime_format = st.text_input(
 		"Formatul datetime (ex: `%Y-%m-%d %H:%M:%S`, `%d/%m/%Y`, etc.)",
-		value="%Y-%m-%d",
+		value=st.session_state["procesare"]["datetime"].get("format", "%Y-%m-%d"),
 	)
 
 	componente = st.multiselect(
 		"Componente de extras",
 		["an", "luna", "zi", "ora", "minute", "zi_saptamana", "este_weekend"],
-		default=["an", "luna", "zi"],
+		default=st.session_state["procesare"]["datetime"].get("componente_extrase", ["an", "luna", "zi"]),
 	)
 
-	if st.button("Aplică", key="datetime"):
-		df = procesare_datetime(df, coloane_datetime, datetime_format, componente)
-		st.session_state["procesare"]["datetime"] = {
-			"coloane": coloane_datetime,
-			"format": datetime_format,
-			"componente_extrase": componente,
-		}
-		st.success("Conversie și extragere de componente realizate.")
-
-	return df
+	st.session_state["procesare"]["datetime"] = {
+		"coloane": coloane_datetime,
+		"format": datetime_format,
+		"componente_extrase": componente,
+	}
 
 
-def ui_selectie_coloane(X: pd.DataFrame, y: pd.Series):
-	# Eliminare manuală
-	coloane_de_eliminat = st.multiselect("Alege coloanele de eliminat", X.columns, help="de ex id, nume")
-	if coloane_de_eliminat and st.button("Aplică", type="primary", key="coloane_inutile"):
-		X = drop_coloane_inutile(X, coloane_de_eliminat)
-		st.session_state["procesare"]["eliminare_coloane_manual"] = coloane_de_eliminat
-		st.success(f"Am eliminat coloanele: {', '.join(coloane_de_eliminat)}")
-
-	# Variance Threshold
-	if st.checkbox("Elimină coloane cu varianță mică"):
-		threshold = st.slider("Prag pentru VarianceThreshold", 0.0, 1.0, 0.01, step=0.01)
-		try:
-			X, sterse = eliminare_varinata_mica(X, threshold)
-			if sterse:
-				st.session_state["procesare"]["varianta_mica"] = {"prag": threshold, "eliminate": sterse}
-				st.success(f"Coloanele eliminate: {', '.join(sterse)}")
-			else:
-				st.info("Nicio coloană nu a fost eliminată — toate au varianță peste prag.")
-		except Exception as e:
-			st.error(f"Eroare: {e}")
-
-	# Corelație
-	if st.checkbox("Elimină coloane extrem de corelate"):
-		X, eliminate = eliminare_corelate(X, prag=0.9)
-		if eliminate:
-			st.session_state["procesare"]["corelatii_mari"] = eliminate
-			st.success(f"Coloanele eliminate (corelație > 0.9): {', '.join(eliminate)}")
-		else:
-			st.info("Nicio coloană nu a fost eliminată.")
-
-	# Selectie CatBoost
-	numar_coloane = st.slider(
-		"Selectează numărul de caracteristici păstrate", min_value=1, max_value=X.shape[1], value=min(10, X.shape[1])
+def ui_encoding(df: pd.DataFrame):
+	coloane_eliminate = set(st.session_state["procesare"].get("coloane_eliminate", []))
+	coloane_datetime = set(st.session_state["procesare"].get("datetime", {}).get("coloane", []))
+	coloane_categoriale = list(
+		set(df.select_dtypes(include=["object", "category"]).columns) - coloane_eliminate - coloane_datetime
 	)
-	if st.button("Aplică", type="primary", key="selectie"):
-		X, top_features = selectare_caracteristici_catboost(X, y, numar_coloane)
 
-		st.session_state["procesare"]["selectie"] = {
-			"numar_coloane": numar_coloane,
-			"top_features": top_features["Feature Id"].tolist(),
-		}
-
-		fig = go.Figure()
-		fig.add_trace(
-			go.Bar(
-				x=top_features["Importances"][::-1],
-				y=top_features["Feature Id"][::-1],
-				orientation="h",
-				marker=dict(color="orange"),
-			)
-		)
-		fig.update_layout(
-			title="Importanța caracteristicilor (CatBoost)",
-			xaxis_title="Importanță",
-			yaxis_title="Caracteristică",
-			margin=dict(l=80, r=20, t=50, b=50),
-			height=400,
-		)
-		st.plotly_chart(fig, use_container_width=True)
-		st.success("Am selectat automat cele mai importante caracteristici.")
-
-	return X
-
-
-# TODO: schimbat logica la label... aleg cele mai comune dupa value counts sau cum?
-def ui_encoding(X: pd.DataFrame):
-	coloane_categoriale = X.select_dtypes(include=["object", "category"]).columns.tolist()
 	if not coloane_categoriale:
 		st.info("Nu există coloane categoriale de procesat.")
-		return X
+		return
 
 	nr_max_categorii = st.slider("Max categorii per coloană", 2, 15, 10)
 
 	st.subheader("Label Encoding")
-	coloane_label = st.multiselect("Coloane pentru Label Encoding", coloane_categoriale - coloane_one_hot, key="coloane_label")
+	coloane_label = st.multiselect("Coloane pentru Label Encoding", coloane_categoriale, key="coloane_label")
 
 	label_mappings = {}
 	for col in coloane_label:
-		vals = X[col].dropna().unique().tolist()
+		vals = df[col].dropna().unique().tolist()
 		if len(vals) > nr_max_categorii:
-			vals = vals[:nr_max_categorii]
+			vals = df[col].dropna().value_counts().index.tolist()[:nr_max_categorii]
 		ordered = sort_items(vals)
 		label_mappings[col] = ordered
-
-	if label_mappings and st.button("Aplică Label Encoding", type="primary"):
-		X = label_encoding(X, label_mappings)
-		st.session_state["procesare"]["label_encoding"] = label_mappings
-		st.success("Label Encoding aplicat.")
 
 	st.divider()
 
 	st.subheader("One-Hot Encoding")
-	coloane_one_hot = st.multiselect("Coloane pentru One-Hot Encoding", coloane_categoriale - coloane_label, key="coloane_one_hot")
+	coloane_one_hot = st.multiselect("Coloane pentru One-Hot Encoding", coloane_categoriale, key="coloane_one_hot")
 
-	if coloane_one_hot and st.button("Aplică One-Hot Encoding", type="primary"):
-		X = one_hot_encoding(X, coloane_one_hot, nr_max_categorii)
-		st.session_state["procesare"]["one_hot_encoding"] = {
-			"coloane": coloane_one_hot,
-			"max_categorii": nr_max_categorii,
-		}
-		st.success("One-Hot Encoding aplicat.")
-
-	return X
+	st.session_state["procesare"]["encoding"] = {
+		"max_categorii": nr_max_categorii,
+		"label_encoding": label_mappings,
+		"one_hot_encoding": coloane_one_hot,
+	}
 
 
-def ui_dezechilibru(X: pd.DataFrame, y: pd.Series):
+def ui_dezechilibru():
 	optiune_dezechilibru = st.selectbox(
 		"Strategia de gestionare a dezechilibrului dintre clase:",
 		["Undersampling", "Oversampling", "ADASYN", "Niciuna"],
+		key="dezechilibru",
 	)
-
-	if st.button("Aplică", type="primary", key="dezechilibru"):
-		X, y = gestionare_dezechilibru(X, y, optiune_dezechilibru)
-		st.session_state["procesare"]["dezechilibru"] = {"strategie": optiune_dezechilibru}
-		st.success("Dezechilibrul a fost tratat.")
-
-	return X, y
+	st.session_state["procesare"]["dezechilibru"] = optiune_dezechilibru
 
 
-def ui_scalare(X: pd.DataFrame):
+def ui_scalare():
 	optiune_scalare = st.selectbox(
-		"Alege metoda de scalare:", ["StandardScaler", "MinMaxScaler", "RobustScaler", "Niciuna"]
+		"Alege metoda de scalare:", ["StandardScaler", "MinMaxScaler", "RobustScaler", "Niciuna"], key="scalare"
 	)
-
-	if st.button("Aplică", type="primary", key="scalare"):
-		X = aplicare_scalare(X, optiune_scalare)
-		st.success("Datele au fost scalate.")
-		st.session_state["procesare"]["scalare"] = {"scaler": optiune_scalare}
-
-	return X
+	st.session_state["procesare"]["scalare"] = optiune_scalare
 
 
-def ui_impartire(X, y, tinta):
+def ui_impartire():
+	impartire_existenta = st.session_state["procesare"].get("impartire", {})
+
 	proportie_test = st.slider(
 		"Alege procentajul pentru setul de testare:",
 		min_value=0.1,
 		max_value=0.4,
 		step=0.1,
-		value=0.2,
+		value=impartire_existenta.get("proportie_test", 0.2),
+		key="impartire_proportie_test",
 	)
-	stratificat = st.checkbox("Împărțire stratificată", value=True)
 
-	if st.button("Aplică", type="primary", key="impartire"):
-		X_train, X_test, y_train, y_test = impartire_train_test(X, y, tinta, proportie_test, stratificat)
+	stratificat = st.checkbox(
+		"Împărțire stratificată",
+		value=impartire_existenta.get("stratificat", True),
+		key="impartire_stratificat",
+	)
 
-		st.session_state["procesare"]["impartire"] = {
-			"tinta": tinta,
-			"proportie_test": proportie_test,
-			"stratificat": stratificat,
-		}
-
-		st.success("Seturile de antrenare și testare au fost create.")
-
-		for name, data in zip(["X_train", "X_test", "y_train", "y_test"], [X_train, X_test, y_train, y_test]):
-			salvare_date_temp(data, name)
-		st.success("Seturile au fost salvate.")
-
-
-########################################################
+	st.session_state["procesare"]["impartire"] = {
+		"proportie_test": proportie_test,
+		"stratificat": stratificat,
+	}
 
 
 def main():
@@ -615,45 +484,52 @@ def main():
 		df = citire_date_predefinite(set_date["denumire"])
 
 	if df is None:
-		st.warning("Nasol")
+		st.error("Setul de date nu a putut fi încărcat")
 		st.stop()
 
 	st.header(set_date["denumire"])
 	st.dataframe(df.head())
 
+	with st.expander("🧹 Eliminarea coloanelor inutile"):
+		ui_eliminare_coloane(df)
+
 	with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
-		df = ui_eliminare_randuri(df)
+		ui_eliminare_randuri(df)
 
 	with st.expander("🔬 Detectarea și tratarea outlierilor"):
-		df = ui_outlieri(df)
+		ui_outlieri(df)
 
 	with st.expander("🧩 Înlocuirea valorilor lipsă"):
-		df = ui_valori_lipsa_coloane(df)
+		ui_valori_lipsa_coloane(df)
 
 	with st.expander("🟢 Procesarea coloanelor binare"):
-		df = ui_coloane_binare(df)
+		ui_coloane_binare(df)
 
 	with st.expander("📅 Procesarea coloanelor datetime"):
-		df = ui_datetime(df)
-
-	tinta = set_date["tinta"]
-	X = df.drop(columns=[tinta])
-	y = df[tinta]
-
-	with st.expander("🖱️ Selecția coloanelor"):
-		X = ui_selectie_coloane(X, y)
+		ui_datetime(df)
 
 	with st.expander("🏷️ Encoding pentru coloanele categoriale"):
-		X = ui_encoding(X)
+		ui_encoding(df)
 
 	with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
-		X, y = ui_dezechilibru(X, y)
+		ui_dezechilibru()
 
 	with st.expander("📏 Scalarea datelor"):
-		X = ui_scalare(X)
+		ui_scalare()
 
 	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
-		ui_impartire(X, y, tinta)
+		ui_impartire()
+
+	st.write(st.session_state["set_date"])
+	st.write(st.session_state["procesare"])
+
+	if st.button("Aplică toți pașii de procesare", type="primary"):
+		st.success("Preprocesarea a fost aplicată cu succes!")
+		st.dataframe(df.head())
+
+	# for name, data in zip(["X_train", "X_test", "y_train", "y_test"], [X_train, X_test, y_train, y_test]):
+	# 	salvare_date_temp(data, name)
+	# st.success("Seturile au fost salvate.")
 
 
 if __name__ == "__main__":
