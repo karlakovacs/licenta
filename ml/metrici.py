@@ -36,10 +36,10 @@ METRICI = [
 ]
 
 
-def afisare_raport_clasificare(y_true, y_pred):
+def calcul_raport_clasificare(y_true, y_pred):
 	report = classification_report(y_true, y_pred, output_dict=True)
 	df = pd.DataFrame(report).transpose()
-	st.write(df)
+	return df
 
 
 def calcul_metrici(y_true, y_pred, y_prob, nume_model):
@@ -83,7 +83,7 @@ def calcul_metrici(y_true, y_pred, y_prob, nume_model):
 		fnr,
 	]
 
-	st.session_state.metrici_modele[nume_model] = metrici
+	return metrici
 
 
 def afisare_metrici(metrici):
@@ -119,7 +119,7 @@ def plot_matrice_confuzie(y_true, y_pred, nume_model):
 		height=500,
 	)
 
-	st.session_state.matrici_confuzie[nume_model] = fig
+	return fig
 
 
 def plot_curba_roc(y_true, y_prob, nume_model):
@@ -157,7 +157,7 @@ def plot_curba_roc(y_true, y_prob, nume_model):
 		height=500,
 	)
 
-	st.session_state.curbe_roc[nume_model] = fig
+	return fig
 
 
 def plot_curba_pr(y_true, y_prob, nume_model):
@@ -186,4 +186,4 @@ def plot_curba_pr(y_true, y_prob, nume_model):
 		height=500,
 	)
 
-	st.session_state.curbe_pr[nume_model] = fig
+	return fig

@@ -12,67 +12,60 @@ st.set_page_config(layout="wide", page_title="XAI", page_icon="💡")
 nav_bar()
 st.title("Explainable AI")
 
-modele_antrenate = st.session_state.modele_antrenate
-X_train, X_test, y_test = (
-	citire_date_temp("X_train"),
-	citire_date_temp("X_test"),
-	citire_date_temp("y_test"),
-)
 
-for key in ["bar", "waterfall", "violin", "lime"]:
-	st.session_state.setdefault(key, {})
+def main():
+	modele_antrenate = st.session_state.modele_antrenate
+	X_train, X_test = (
+		citire_date_temp("X_train"),
+		citire_date_temp("X_test"),
+	)
 
-tabs = st.tabs([f"💡 {key}" for key in modele_antrenate])
-for tab, (key, model) in zip(tabs, modele_antrenate.items()):
-	with tab:
-		st.header(key)
+	st.session_state.setdefault("grafice_xai", {})
 
-		shap_results = None
-		shap_results = model.get_shap_values(X_train, X_test)
+	if not modele_antrenate:
+		st.warning("Antrenati modelele mai intai")
+		return
 
-		if shap_results is not None:
-			st.subheader("SHAP Bar Plot")
-			if key not in st.session_state.bar:
-				bar_plot(shap_results, key)
-				time.sleep(5)
-			st.pyplot(st.session_state.bar[key], use_container_width=False)
+	tabs = st.tabs(list(modele_antrenate.keys()))
+	for tab, (nume_model, info) in zip(tabs, modele_antrenate.items()):
+		with tab:
+			st.header(nume_model)
 
-			st.subheader("SHAP Waterfall Plot")
-			if key not in st.session_state.waterfall:
-				waterfall_plot(shap_results, key)
-				time.sleep(5)
-			st.pyplot(st.session_state.waterfall[key], use_container_width=False)
+			model = info["model"]
+			shap_results = model.get_shap_values(X_train, X_test)
+			lime_results = get_explanation(model, X_train, X_test)
 
-			st.subheader("SHAP Violin Plot")
-			if key not in st.session_state.violin:
-				violin_plot(shap_results, key)
-				time.sleep(5)
-			st.pyplot(st.session_state.violin[key], use_container_width=False)
+			if nume_model not in st.session_state.grafice_xai:
+				st.session_state.grafice_xai[nume_model] = {}
 
-		lime_results = None
-		lime_results = get_explanation(model, X_train, X_test)
+			rezultate = st.session_state.grafice_xai[nume_model]
 
-		if lime_results is not None:
-			st.subheader("LIME Plot")
-			if key not in st.session_state.lime:
-				explanation_plot(lime_results, key)
-				time.sleep(5)
-			components.html(st.session_state.lime[key], height=600)
+			if shap_results is not None:
+				st.subheader("SHAP Bar Plot")
+				if "bar" not in rezultate:
+					rezultate["bar"] = bar_plot(shap_results)
+					time.sleep(1)
+				st.pyplot(rezultate["bar"], use_container_width=False)
 
-# if "incarcat_xai" not in st.session_state:
-# 	id_rulari = st.session_state.id_rulari
+				st.subheader("SHAP Waterfall Plot")
+				if "waterfall" not in rezultate:
+					rezultate["waterfall"] = waterfall_plot(shap_results)
+					time.sleep(1)
+				st.pyplot(rezultate["waterfall"], use_container_width=False)
 
-# 	for key in id_rulari.keys():
-# 		file_path = incarcare_grafic_plt_supabase(st.session_state.bar[key], "png")
-# 		creare_grafic(id_rulari[key], "SHAP Bar", file_path)
+				st.subheader("SHAP Violin Plot")
+				if "violin" not in rezultate:
+					rezultate["violin"] = violin_plot(shap_results)
+					time.sleep(1)
+				st.pyplot(rezultate["violin"], use_container_width=False)
 
-# 		file_path = incarcare_grafic_plt_supabase(st.session_state.waterfall[key])
-# 		creare_grafic(id_rulari[key], "SHAP Waterfall", file_path)
+			if lime_results is not None:
+				st.subheader("LIME Plot")
+				if "lime" not in rezultate:
+					rezultate["lime"] = explanation_plot(lime_results)
+					time.sleep(1)
+				components.html(rezultate["lime"], height=600)
 
-# 		file_path = incarcare_grafic_plt_supabase(st.session_state.violin[key])
-# 		creare_grafic(id_rulari[key], "SHAP Violin", file_path)
 
-# 		file_path = incarcare_grafic_html_supabase(st.session_state.lime[key])
-# 		creare_grafic(id_rulari[key], "LIME", file_path)
-
-# 	st.session_state.incarcat_xai = True
+if __name__ == "__main__":
+	main()

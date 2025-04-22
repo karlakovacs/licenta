@@ -1,5 +1,4 @@
 import time
-import uuid
 
 from catboost import CatBoostClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
@@ -11,7 +10,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-import streamlit as st
 from xgboost import XGBClassifier
 
 
@@ -448,12 +446,6 @@ class AB(Base):
 				"default": 1.0,
 				"help": "Factor de ponderare aplicat fiecărui estimator nou. Rate mai mici implică mai mulți estimatori.",
 			},
-			"algorithm": {
-				"type": "categorical",
-				"values": ["SAMME", "SAMME.R"],
-				"default": "SAMME.R",
-				"help": "Algoritmul de boosting. `SAMME.R` folosește probabilități și este de obicei mai precis.",
-			},
 		}
 
 
@@ -763,7 +755,7 @@ class MLP(Base):
 				"min": 1,
 				"max": 100,
 				"step": 1,
-				"default": 10,
+				"default": 5,
 				"help": "Numărul de treceri complete prin datele de antrenare.",
 			},
 		}
@@ -797,34 +789,10 @@ class MLP(Base):
 			metrics=[AUC(name="auc")],
 		)
 
-	# def train(self, X_train, y_train, X_val, y_val):
-	# 	self.build_model((X_train.shape[1],))
-	# 	start_time = time.time()
-
-	# 	history = self.model.fit(
-	# 		X_train,
-	# 		y_train,
-	# 		validation_data=(X_val, y_val),
-	# 		epochs=self.params["epochs"],
-	# 		batch_size=self.params["batch_size"],
-	# 		verbose=1,
-	# 	)
-
-	# 	# history_dict = history.history
-	# 	# final_loss = history_dict["loss"][-1]
-	# 	# final_auc = history_dict["auc"][-1] if "auc" in history_dict else None
-
-	# 	self.training_time = time.time() - start_time
-	# 	self.y_prob = self.model.predict(X_val)
-	# 	self.y_pred = (self.y_prob > 0.5).astype(int)
-	# 	training_time = time.time() - start_time
-	# 	return training_time
-
 	def train(self, X_train, y_train, X_val, y_val):
-		import time
+		import gc
 
-		import plotly.graph_objects as go
-		import streamlit as st
+		from tensorflow.keras import backend as K  # type: ignore
 
 		self.build_model((X_train.shape[1],))
 		start_time = time.time()
@@ -836,52 +804,18 @@ class MLP(Base):
 			epochs=self.params["epochs"],
 			batch_size=self.params["batch_size"],
 			verbose=0,
-			callbacks=[StreamlitTrainingCallback(epochs)],
 		)
+
+		# history_dict = history.history
+		# final_loss = history_dict["loss"][-1]
+		# final_auc = history_dict["auc"][-1] if "auc" in history_dict else None
 
 		self.training_time = time.time() - start_time
 		self.y_prob = self.model.predict(X_val)
 		self.y_pred = (self.y_prob > 0.5).astype(int)
+		training_time = time.time() - start_time
 
-		h = history.history
-		epochs = list(range(1, len(h["loss"]) + 1))
-		fig = go.Figure()
-
-		fig.add_trace(go.Scatter(x=epochs, y=h["loss"], mode="lines+markers", name="Train Loss"))
-		fig.add_trace(go.Scatter(x=epochs, y=h["val_loss"], mode="lines+markers", name="Val Loss"))
-		fig.add_trace(go.Scatter(x=epochs, y=h["auc"], mode="lines", name="Train AUC"))
-		fig.add_trace(go.Scatter(x=epochs, y=h["val_auc"], mode="lines", name="Val AUC"))
-
-		fig.update_layout(
-			title="Evoluția în timpul antrenării",
-			xaxis_title="Epocă",
-			yaxis_title="Valoare",
-			legend_title="Metrică",
-			height=500,
-		)
-
-		st.plotly_chart(fig, use_container_width=True)
-
-		return self.training_time
-
-
-from tensorflow.keras.callbacks import Callback  # type: ignore
-
-
-class StreamlitTrainingCallback(Callback):
-	def __init__(self, total_epochs):
-		super().__init__()
-		self.total_epochs = total_epochs
-		self.progress_bar = st.progress(0)
-		self.log_area = st.empty()
-		self.logs = []
-
-	def on_epoch_end(self, epoch, logs=None):
-		logs = logs or {}
-		pct = (epoch + 1) / self.total_epochs
-
-		self.progress_bar.progress(pct, text=f"Epoca {epoch + 1}/{self.total_epochs}")
-
-		text = f"Epoca {epoch + 1} | loss={logs.get('loss', 0):.4f} | val_loss={logs.get('val_loss', 0):.4f}"
-		self.logs.append(text)
-		self.log_area.code("\n".join(self.logs), language="text")
+		K.clear_session()
+		gc.collect()
+		
+		return training_time

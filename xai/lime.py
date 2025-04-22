@@ -3,7 +3,6 @@ import lime
 import lime.lime_tabular
 import numpy as np
 import pandas as pd
-import streamlit as st
 
 
 def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta=0):
@@ -32,7 +31,7 @@ def explanation_plot(explanation, key):
 	lime_html = (
 		f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
 	)
-	st.session_state.lime[key] = lime_html
+	return lime_html
 
 	# explanation_list = explanation.as_list()
 	# features, importances = zip(*explanation_list)

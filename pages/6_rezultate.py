@@ -2,8 +2,8 @@ import streamlit as st
 
 from ml import (
 	afisare_metrici,
-	afisare_raport_clasificare,
 	calcul_metrici,
+	calcul_raport_clasificare,
 	plot_curba_pr,
 	plot_curba_roc,
 	plot_matrice_confuzie,
@@ -15,42 +15,57 @@ st.set_page_config(layout="wide", page_title="Rezultate", page_icon="🎯")
 nav_bar()
 st.title("Rezultate")
 
-modele_antrenate = st.session_state.modele_antrenate
-X_train, X_test, y_test = (
-	citire_date_temp("X_train"),
-	citire_date_temp("X_test"),
-	citire_date_temp("y_test"),
-)
 
-for key in ["matrici_confuzie", "curbe_roc", "curbe_pr", "metrici_modele"]:
-	st.session_state.setdefault(key, {})
+def main():
+	modele_antrenate: dict = st.session_state.get("modele_antrenate", None)
 
-tabs = st.tabs([key for key in modele_antrenate])
-for tab, (key, model) in zip(tabs, modele_antrenate.items()):
-	with tab:
-		st.header(key)
-		y_pred = model.y_pred
-		y_prob = model.y_prob
+	if not modele_antrenate:
+		st.warning("Antrenati modelele mai intai")
+		return
 
-		st.subheader("Raport de clasificare")
-		afisare_raport_clasificare()
+	y_test = citire_date_temp("y_test")
 
-		st.subheader("Metrici")
-		if key not in st.session_state.metrici_modele:
-			calcul_metrici(y_test, y_pred, y_prob, key)
-		afisare_metrici(st.session_state.metrici_modele[key])
+	st.session_state.setdefault("rezultate_modele", {})
 
-		st.subheader("Matrice de confuzie")
-		if key not in st.session_state.matrici_confuzie:
-			plot_matrice_confuzie(y_test, y_pred, key)
-		st.plotly_chart(st.session_state.matrici_confuzie[key], use_container_width=False)
+	tabs = st.tabs(list(modele_antrenate.keys()))
+	for tab, (nume_model, info) in zip(tabs, modele_antrenate.items()):
+		with tab:
+			st.header(nume_model)
 
-		st.subheader("Curba ROC")
-		if key not in st.session_state.curbe_roc:
-			plot_curba_roc(y_test, y_prob, key)
-		st.plotly_chart(st.session_state.curbe_roc[key], use_container_width=False)
+			model = info["model"]
+			y_pred = model.y_pred
+			y_prob = model.y_prob
 
-		st.subheader("Curba PR")
-		if key not in st.session_state.curbe_pr:
-			plot_curba_pr(y_test, y_prob, key)
-		st.plotly_chart(st.session_state.curbe_pr[key], use_container_width=False)
+			if nume_model not in st.session_state.rezultate_modele:
+				st.session_state.rezultate_modele[nume_model] = {}
+
+			rezultate = st.session_state.rezultate_modele[nume_model]
+
+			st.subheader("Raport de clasificare")
+			if "raport_clasificare" not in rezultate:
+				rezultate["raport_clasificare"] = calcul_raport_clasificare(y_test, y_pred)
+			st.write(rezultate["raport_clasificare"])
+
+			st.subheader("Metrici")
+			if "metrici" not in rezultate:
+				rezultate["metrici"] = calcul_metrici(y_test, y_pred, y_prob, nume_model)
+			afisare_metrici(rezultate["metrici"])
+
+			st.subheader("Matrice de confuzie")
+			if "matrice_confuzie" not in rezultate:
+				rezultate["matrice_confuzie"] = plot_matrice_confuzie(y_test, y_pred, nume_model)
+			st.plotly_chart(rezultate["matrice_confuzie"], use_container_width=False)
+
+			st.subheader("Curba ROC")
+			if "roc" not in rezultate:
+				rezultate["roc"] = plot_curba_roc(y_test, y_prob, nume_model)
+			st.plotly_chart(rezultate["roc"], use_container_width=False)
+
+			st.subheader("Curba PR")
+			if "pr" not in rezultate:
+				rezultate["pr"] = plot_curba_pr(y_test, y_prob, nume_model)
+			st.plotly_chart(rezultate["pr"], use_container_width=False)
+
+
+if __name__ == "__main__":
+	main()
