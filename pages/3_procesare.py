@@ -52,7 +52,7 @@ def ui_outlieri(df: pd.DataFrame):
 	if len(coloane_numerice) == 0:
 		st.info("Setul de date nu conține coloane numerice care pot fi analizate pentru outlieri.")
 		return
-	
+
 	eliminare_outlieri = st.checkbox(
 		"Aplică procesarea outlierilor",
 		help="Activează acest pas pentru a detecta și elimina valorile extreme din setul de date.",
@@ -113,11 +113,15 @@ def ui_valori_lipsa_coloane(df: pd.DataFrame):
 def ui_coloane_binare(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
 
-	coloane_binare = [
-		col
-		for col in df.columns
-		if col not in coloane_eliminate and df[col].nunique(dropna=True) == 2 and df[col].dtype != "bool"
-	]
+	if "coloane_binare" not in st.session_state:
+		coloane_binare = [
+			col
+			for col in df.columns
+			if col not in coloane_eliminate and df[col].nunique(dropna=True) == 2 and df[col].dtype != "bool"
+		]
+		st.session_state["coloane_binare"] = coloane_binare
+	
+	coloane_binare = st.session_state.get("coloane_binare", None)
 
 	if not coloane_binare:
 		st.info("Nu există coloane binare ce necesită conversie.")
@@ -138,7 +142,7 @@ def ui_coloane_binare(df: pd.DataFrame):
 
 def ui_datetime(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
-	coloane_object_raw = set(df.select_dtypes(include="object").columns)
+	coloane_object_raw = set(df.select_dtypes(include=["object", "category"]).columns)
 	coloane_object = list(coloane_object_raw - coloane_eliminate)
 
 	if not coloane_object:
@@ -165,6 +169,7 @@ def ui_datetime(df: pd.DataFrame):
 
 def ui_encoding(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
+	coloane_binare = set(st.session_state.get("coloane_binare", []))
 	coloane_datetime = set(st.session_state.get("datetime_coloane", []))
 	coloane_categoriale_raw = set(df.select_dtypes(include=["object", "category"]).columns)
 	coloane_categoriale = list(coloane_categoriale_raw - coloane_eliminate - coloane_datetime)
@@ -172,15 +177,14 @@ def ui_encoding(df: pd.DataFrame):
 	if not coloane_categoriale:
 		st.info("Nu există coloane categoriale de procesat.")
 	else:
-		st.slider("Max categorii per coloană", 2, 15, 10, key="encoding_max_categorii")
-
-		st.divider()
-		st.subheader("Label Encoding", help="TODO")
-		st.multiselect("Coloane pentru Label Encoding", options=coloane_categoriale, key="encoding_coloane_label")
-
-		st.divider()
-		st.subheader("One-Hot Encoding", help="TODO")
-		st.multiselect("Coloane pentru One-Hot Encoding", options=coloane_categoriale, key="encoding_coloane_one_hot")
+		encoding_dorit = st.checkbox(
+			"Aplică encoding variabilelor categoriale",
+			key="encoding_dorit",
+			help="Toate variabilele categorice vor fi encodate automat folosind one-hot encoding, cu excepția celor specificate la `Label Encoding`.",
+		)
+		if encoding_dorit:
+			st.slider("Max categorii per coloană", 2, 15, 10, key="encoding_max_categorii")
+			st.multiselect("Coloane pentru Label Encoding", options=coloane_categoriale, key="encoding_coloane_label")
 
 
 def ui_dezechilibru():
@@ -269,11 +273,12 @@ def creare_dict_procesare():
 			"componente": st.session_state.get("datetime_componente", []),
 		}
 
-	procesare["encoding"] = {
-		"max_categorii": st.session_state.get("encoding_max_categorii", 10),
-		"coloane_label": st.session_state.get("encoding_coloane_label", []),
-		"coloane_one_hot": st.session_state.get("encoding_coloane_one_hot", []),
-	}
+	if st.session_state.get("encoding_dorit"):
+		procesare["encoding"] = {
+			"max_categorii": st.session_state.get("encoding_max_categorii", 10),
+			"coloane_label": st.session_state.get("encoding_coloane_label", []),
+			# "coloane_one_hot": st.session_state.get("encoding_coloane_one_hot", []),
+		}
 
 	procesare["dezechilibru"] = st.session_state.get("dezechilibru", "Niciuna")
 
@@ -282,7 +287,7 @@ def creare_dict_procesare():
 	procesare["impartire"] = {
 		"proportie_test": st.session_state.get("impartire_proportie_test", 0.2),
 		"stratificat": st.session_state.get("impartire_stratificat", True),
-		"tinta": st.session_state["set_date"].get("tinta", None)
+		"tinta": st.session_state["set_date"].get("tinta", None),
 	}
 
 	st.session_state["procesare"] = procesare

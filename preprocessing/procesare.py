@@ -3,7 +3,6 @@ from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, OneHotEncoder, RobustScaler, StandardScaler
-import streamlit as st
 
 from database import *
 from utils import *
@@ -96,13 +95,17 @@ def aplicare_datetime(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 
 
 def aplicare_encoding(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
-	max_categorii = setari["max_categorii"]
-	coloane_label = setari["coloane_label"]
-	coloane_one_hot = setari["coloane_one_hot"]
+	max_categorii = setari.get("max_categorii", 10)
+	coloane_label = setari.get("coloane_label", [])
+
+	df = df.copy()
 
 	for col in coloane_label:
 		encoder = LabelEncoder()
 		df[col] = encoder.fit_transform(df[col].astype(str))
+
+	potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
+	coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
 
 	if coloane_one_hot:
 		encoder = OneHotEncoder(
@@ -110,6 +113,7 @@ def aplicare_encoding(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 		)
 		encoded = encoder.fit_transform(df[coloane_one_hot].astype(str))
 		encoded_df = pd.DataFrame(encoded, columns=encoder.get_feature_names_out(coloane_one_hot), index=df.index)
+
 		df = df.drop(columns=coloane_one_hot)
 		df = pd.concat([df, encoded_df], axis=1)
 

@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 
 from ml import get_model
@@ -18,7 +20,6 @@ def main():
 	X_train = citire_date_temp("X_train")
 	y_train = citire_date_temp("y_train")
 	X_test = citire_date_temp("X_test")
-	y_test = citire_date_temp("y_test")
 
 	modele_antrenate = {}
 
@@ -83,7 +84,7 @@ def main():
 			for model in modele_selectate:
 				try:
 					instanta = modele_antrenate[model]["model"]
-					timp = instanta.train(X_train, y_train, X_test, y_test)
+					timp = instanta.train_and_test(X_train, y_train, X_test)
 					modele_antrenate[model]["timp"] = timp
 					st.success(f"`{model}` antrenat în {timp:.2f}s")
 				except Exception as e:

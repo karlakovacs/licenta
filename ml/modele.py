@@ -2,8 +2,12 @@ import time
 
 from catboost import CatBoostClassifier
 from imblearn.ensemble import BalancedRandomForestClassifier
+
+# from keras import layers, metrics, models
+from keras.layers import BatchNormalization, Dense, Dropout, Input  # type: ignore
+from keras.metrics import AUC  # type: ignore
+from keras.models import Sequential  # type: ignore
 from lightgbm import LGBMClassifier
-import shap
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -13,69 +17,53 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 
-class Base:
+class BaseModel:
 	def __init__(self):
 		self.model = None
+		self.tip = None
 		self.params = None
-		self.hyperparams = self.get_hyperparams()
 		self.y_pred = None
 		self.y_prob = None
 
 	def get_hyperparams(self):
 		raise NotImplementedError()
 
-	def get_shap_explainer(self, X_train, sample_size):
-		if isinstance(self.model, (LogisticRegression, LinearDiscriminantAnalysis)):
-			return shap.LinearExplainer(self.model, X_train)
-		elif isinstance(
-			self.model,
-			(QuadraticDiscriminantAnalysis, KNeighborsClassifier, SVC, AdaBoostClassifier),
-		):
-			return shap.KernelExplainer(
-				self.model.predict,
-				X_train.sample(
-					n=sample_size if X_train.shape[0] > sample_size else X_train.shape[0],
-					random_state=42,
-				),
-			)
-		elif isinstance(
-			self.model,
-			(
-				DecisionTreeClassifier,
-				RandomForestClassifier,
-				GradientBoostingClassifier,
-				XGBClassifier,
-				LGBMClassifier,
-				CatBoostClassifier,
-			),
-		):
-			return shap.TreeExplainer(self.model)
-		else:
-			return shap.DeepExplainer(self.model, X_train)
+	def set_default_params(self):
+		hyperparams = self.get_hyperparams()
+		self.params = {param_name: param_config["default"] for param_name, param_config in hyperparams.items()}
 
-	def get_shap_values(self, X_train, X_test, sample_size=25):
-		shap_explainer = self.get_shap_explainer(X_train, sample_size)
-		return shap_explainer(
-			X_test.sample(n=sample_size if X_test.shape[0] > sample_size else X_test.shape[0], random_state=42)
-		)
-
-		# X_test_array = np.array(X_test) if isinstance(self.model, models.Sequential) else X_test
-		# return shap_explainer(X_test_array[:sample_size])
-
-	def train(self, X_train, y_train, X_test, y_test=None):
-		start_time = time.time()
+	def fit(self, X, y):
+		if self.params is None:
+			self.set_default_params()
 		self.model.set_params(**self.params)
-		self.model.fit(X_train, y_train)
-		self.y_pred = self.model.predict(X_test)
-		self.y_prob = self.model.predict_proba(X_test)[:, 1]
+		self.model.fit(X, y)
+
+	def predict_proba(self, X):
+		return self.model.predict_proba(X)
+
+	def predict(self, X):
+		return self.model.predict(X)
+
+	def train_and_test(self, X_train, y_train, X_test):
+		start_time = time.time()
+		self.fit(X_train, y_train)
+
+		# self.y_pred = self.predict(X_test)
+		# self.y_prob = self.predict_proba(X_test)[:, 1]
+
+		proba = self.predict_proba(X_test)
+		self.y_prob = proba[:, 1] if proba.shape[1] == 2 else proba.flatten()
+		self.y_pred = (self.y_prob > 0.5).astype(int)
+
 		training_time = time.time() - start_time
 		return training_time
 
 
-class LR(Base):
+class LR(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = LogisticRegression()
+		self.tip = "liniar"
 
 	def get_hyperparams(self):
 		return {
@@ -110,10 +98,11 @@ class LR(Base):
 		}
 
 
-class LDA(Base):
+class LDA(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = LinearDiscriminantAnalysis()
+		self.tip = "liniar"
 
 	def get_hyperparams(self):
 		return {
@@ -140,10 +129,11 @@ class LDA(Base):
 		}
 
 
-class QDA(Base):
+class QDA(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = QuadraticDiscriminantAnalysis()
+		self.tip = "non-liniar"
 
 	def get_hyperparams(self):
 		return {
@@ -172,11 +162,11 @@ class QDA(Base):
 		}
 
 
-
-class KNN(Base):
+class KNN(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = KNeighborsClassifier()
+		self.tip = "non-liniar"
 
 	def get_hyperparams(self):
 		return {
@@ -211,10 +201,11 @@ class KNN(Base):
 		}
 
 
-class SVM(Base):
+class SVM(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = SVC(probability=True)
+		self.tip = "non-liniar"
 
 	def get_hyperparams(self):
 		return {
@@ -257,10 +248,11 @@ class SVM(Base):
 		}
 
 
-class DT(Base):
+class DT(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = DecisionTreeClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -303,10 +295,11 @@ class DT(Base):
 		}
 
 
-class RF(Base):
+class RF(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = RandomForestClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -357,10 +350,11 @@ class RF(Base):
 		}
 
 
-class BRF(Base):
+class BRF(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = BalancedRandomForestClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -423,10 +417,11 @@ class BRF(Base):
 		}
 
 
-class AB(Base):
+class AB(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = AdaBoostClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -449,10 +444,11 @@ class AB(Base):
 		}
 
 
-class GBC(Base):
+class GBC(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = GradientBoostingClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -507,10 +503,11 @@ class GBC(Base):
 		}
 
 
-class XGB(Base):
+class XGB(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = XGBClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -565,10 +562,11 @@ class XGB(Base):
 		}
 
 
-class LGBM(Base):
+class LGBM(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = LGBMClassifier()
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -639,10 +637,11 @@ class LGBM(Base):
 		}
 
 
-class CB(Base):
+class CB(BaseModel):
 	def __init__(self):
 		super().__init__()
 		self.model = CatBoostClassifier(silent=True)
+		self.tip = "arbore"
 
 	def get_hyperparams(self):
 		return {
@@ -693,10 +692,10 @@ class CB(Base):
 		}
 
 
-# TODO: afisare history (sauuu???)
-class MLP(Base):
+class MLP(BaseModel):
 	def __init__(self):
 		super().__init__()
+		self.tip = "deep"
 
 	def get_hyperparams(self):
 		return {
@@ -760,15 +759,14 @@ class MLP(Base):
 			},
 		}
 
-	def build_model(self, input_shape):
-		from keras.layers import BatchNormalization, Dense, Dropout, Input  # type: ignore
-		from keras.metrics import AUC  # type: ignore
-		from keras.models import Sequential  # type: ignore
+	def fit(self, X, y):
+		if self.params is None:
+			self.set_default_params()
 
 		self.model = Sequential()
 		for i in range(self.params["n_layers"]):
 			if i == 0:
-				self.model.add(Input(shape=input_shape))
+				self.model.add(Input(shape=(X.shape[1],)))
 				self.model.add(
 					Dense(
 						self.params["units_per_layer"][0],
@@ -789,33 +787,17 @@ class MLP(Base):
 			metrics=[AUC(name="auc")],
 		)
 
-	def train(self, X_train, y_train, X_val, y_val):
-		import gc
-
-		from tensorflow.keras import backend as K  # type: ignore
-
-		self.build_model((X_train.shape[1],))
-		start_time = time.time()
-
-		history = self.model.fit(
-			X_train,
-			y_train,
-			validation_data=(X_val, y_val),
+		self.model.fit(
+			X,
+			y,
 			epochs=self.params["epochs"],
 			batch_size=self.params["batch_size"],
 			verbose=0,
 		)
 
-		# history_dict = history.history
-		# final_loss = history_dict["loss"][-1]
-		# final_auc = history_dict["auc"][-1] if "auc" in history_dict else None
+	def predict_proba(self, X):
+		return self.model.predict(X)
 
-		self.training_time = time.time() - start_time
-		self.y_prob = self.model.predict(X_val)
-		self.y_pred = (self.y_prob > 0.5).astype(int)
-		training_time = time.time() - start_time
-
-		K.clear_session()
-		gc.collect()
-		
-		return training_time
+	def predict(self, X):
+		probs = self.predict_proba(X)
+		return (probs > 0.5).astype(int)

@@ -19,16 +19,25 @@ PAGES = [
 ]
 
 
-def nav_bar(allowed_pages: list[int] = None):
-	if allowed_pages is None:
-		allowed_pages = [page_id for (page_id, _, _, _) in PAGES]
+# def nav_bar(allowed_pages: list[int] = None):
+# 	if allowed_pages is None:
+# 		allowed_pages = [page_id for (page_id, _, _, _) in PAGES]
 
+# 	for page_id, label, path, icon in PAGES:
+# 		st.sidebar.page_link(
+# 			path,
+# 			label=label,
+# 			icon=icon,
+# 			disabled=page_id not in allowed_pages,
+# 		)
+
+
+def nav_bar():
 	for page_id, label, path, icon in PAGES:
 		st.sidebar.page_link(
 			path,
 			label=label,
 			icon=icon,
-			disabled=page_id not in allowed_pages,
 		)
 
 

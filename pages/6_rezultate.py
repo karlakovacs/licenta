@@ -48,22 +48,22 @@ def main():
 
 			st.subheader("Metrici")
 			if "metrici" not in rezultate:
-				rezultate["metrici"] = calcul_metrici(y_test, y_pred, y_prob, nume_model)
+				rezultate["metrici"] = calcul_metrici(y_test, y_pred, y_prob)
 			afisare_metrici(rezultate["metrici"])
 
 			st.subheader("Matrice de confuzie")
 			if "matrice_confuzie" not in rezultate:
-				rezultate["matrice_confuzie"] = plot_matrice_confuzie(y_test, y_pred, nume_model)
+				rezultate["matrice_confuzie"] = plot_matrice_confuzie(y_test, y_pred)
 			st.plotly_chart(rezultate["matrice_confuzie"], use_container_width=False)
 
 			st.subheader("Curba ROC")
 			if "roc" not in rezultate:
-				rezultate["roc"] = plot_curba_roc(y_test, y_prob, nume_model)
+				rezultate["roc"] = plot_curba_roc(y_test, y_prob)
 			st.plotly_chart(rezultate["roc"], use_container_width=False)
 
 			st.subheader("Curba PR")
 			if "pr" not in rezultate:
-				rezultate["pr"] = plot_curba_pr(y_test, y_prob, nume_model)
+				rezultate["pr"] = plot_curba_pr(y_test, y_prob)
 			st.plotly_chart(rezultate["pr"], use_container_width=False)
 
 

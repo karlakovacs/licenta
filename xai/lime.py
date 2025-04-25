@@ -27,7 +27,7 @@ def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta
 	return explanation
 
 
-def explanation_plot(explanation, key):
+def explanation_plot(explanation):
 	lime_html = (
 		f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
 	)

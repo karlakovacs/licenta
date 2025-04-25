@@ -42,7 +42,7 @@ def calcul_raport_clasificare(y_true, y_pred):
 	return df
 
 
-def calcul_metrici(y_true, y_pred, y_prob, nume_model):
+def calcul_metrici(y_true, y_pred, y_prob):
 	tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 
 	accuracy = accuracy_score(y_true, y_pred)
@@ -93,7 +93,7 @@ def afisare_metrici(metrici):
 		col.metric(label=key, value=f"{value:.4f}")
 
 
-def plot_matrice_confuzie(y_true, y_pred, nume_model):
+def plot_matrice_confuzie(y_true, y_pred):
 	cm = confusion_matrix(y_true, y_pred)
 	cm = cm[::-1]
 
@@ -122,7 +122,7 @@ def plot_matrice_confuzie(y_true, y_pred, nume_model):
 	return fig
 
 
-def plot_curba_roc(y_true, y_prob, nume_model):
+def plot_curba_roc(y_true, y_prob):
 	fpr, tpr, _ = roc_curve(y_true, y_prob)
 	roc_auc = roc_auc_score(y_true, y_prob)
 
@@ -160,7 +160,7 @@ def plot_curba_roc(y_true, y_prob, nume_model):
 	return fig
 
 
-def plot_curba_pr(y_true, y_prob, nume_model):
+def plot_curba_pr(y_true, y_prob):
 	precision, recall, _ = precision_recall_curve(y_true, y_prob)
 	avg_precision = average_precision_score(y_true, y_prob)
 
