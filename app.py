@@ -1,8 +1,6 @@
+from keras.api.models import Sequential
 import streamlit as st
 
-from ml import get_model
-
-# from database import *
 from utils import nav_bar
 
 

@@ -1,8 +1,6 @@
-import time
-
 import streamlit as st
 
-from ml import get_model
+from ml import get_hiperparametri, get_model, train_and_test
 from utils import citire_date_temp, nav_bar
 
 
@@ -11,12 +9,11 @@ nav_bar()
 st.title("Configurează hiperparametrii")
 
 
-def main():
-	modele_selectate = st.session_state.get("modele_selectate", [])
-	if not modele_selectate:
-		st.warning("Selectează mai întâi modelele din pagina anterioară.")
-		return
-
+modele_selectate = st.session_state.get("modele_selectate", [])
+if not modele_selectate:
+	st.warning("Selectează mai întâi modelele din pagina anterioară.")
+	# return
+else:
 	X_train = citire_date_temp("X_train")
 	y_train = citire_date_temp("y_train")
 	X_test = citire_date_temp("X_test")
@@ -25,16 +22,15 @@ def main():
 
 	tabs = st.tabs(modele_selectate)
 
-	for i, nume_model in enumerate(modele_selectate):
+	for i, denumire_model in enumerate(modele_selectate):
 		with tabs[i]:
-			st.subheader(f"Hiperparametri pentru `{nume_model}`")
+			st.subheader(f"Hiperparametri pentru `{denumire_model}`")
 
-			model = get_model(nume_model)
-			hyperparams = model.get_hyperparams()
+			hiperparametri = get_hiperparametri(denumire_model)
 			parametri_utilizator = {}
 
-			for param, detalii in hyperparams.items():
-				key = f"{nume_model}_{param}"
+			for param, detalii in hiperparametri.items():
+				key = f"{denumire_model}_{param}"
 				help = detalii["help"]
 
 				if detalii["type"] == "numerical":
@@ -72,28 +68,41 @@ def main():
 						)
 						parametri_utilizator[param].append(val)
 
-			model.params = parametri_utilizator
-			modele_antrenate[nume_model] = {
-				"model": model,
-				"params": parametri_utilizator,
+			modele_antrenate[denumire_model] = {
+				"model": None,
+				"hiperparametri": parametri_utilizator,
 				"timp": None,
+				"y_pred": None,
+				"y_prob": None,
 			}
 
-	if st.button("Antrenează modelele", type="primary"):
-		with st.spinner("Se antrenează modelele..."):
-			for model in modele_selectate:
-				try:
-					instanta = modele_antrenate[model]["model"]
-					timp = instanta.train_and_test(X_train, y_train, X_test)
-					modele_antrenate[model]["timp"] = timp
-					st.success(f"`{model}` antrenat în {timp:.2f}s")
-				except Exception as e:
-					st.error(f"Eroare la `{model}`: {e}")
-					del modele_antrenate[model]
+	if st.button("Antrenează modelele", type="primary", disabled="modele_antrenate" in st.session_state):
+		# with st.spinner("Se antrenează modelele..."):
+		for denumire_model in modele_selectate:
+			try:
+				date_model = modele_antrenate[denumire_model]
+				hiperparametri = date_model["hiperparametri"]
+				instanta_model = get_model(denumire_model, hiperparametri, X_train.shape[1])
+				if denumire_model == "Multilayer Perceptron":
+					timp_antrenare, y_pred, y_prob = train_and_test(
+						instanta_model,
+						X_train,
+						y_train,
+						X_test,
+						True,
+						epochs=hiperparametri["epochs"],
+						batch_size=hiperparametri["batch_size"],
+					)
+				else:
+					timp_antrenare, y_pred, y_prob = train_and_test(instanta_model, X_train, y_train, X_test)
+				date_model["model"] = instanta_model
+				date_model["timp"] = timp_antrenare
+				date_model["y_pred"] = y_pred
+				date_model["y_prob"] = y_prob
+				st.success(f"`{denumire_model}` antrenat în {timp_antrenare:.2f}s")
+			except Exception as e:
+				st.error(f"Eroare la antrenarea `{denumire_model}`: {e}")
+				del modele_antrenate[denumire_model]
 
-			st.session_state.modele_antrenate = modele_antrenate
-			st.success("Toate modelele au fost antrenate și salvate!")
-
-
-if __name__ == "__main__":
-	main()
+		st.session_state.modele_antrenate = modele_antrenate
+		st.success("Toate modelele au fost antrenate și salvate!")

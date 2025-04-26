@@ -293,21 +293,20 @@ def creare_dict_procesare():
 	st.session_state["procesare"] = procesare
 
 
-def main():
-	st.title("Procesarea datelor")
+st.title("Procesarea datelor")
 
-	set_date: dict = st.session_state.get("set_date", None)
-	df: pd.DataFrame = None
+set_date: dict = st.session_state.get("set_date", None)
+df: pd.DataFrame = None
 
-	if set_date["sursa"] != "predefinit":
-		df = citire_date_temp(set_date["denumire"])
-	else:
-		df = citire_date_predefinite(set_date["denumire"])
+if set_date["sursa"] != "predefinit":
+	df = citire_date_temp(set_date["denumire"])
+else:
+	df = citire_date_predefinite(set_date["denumire"])
 
-	if df is None:
-		st.error("Setul de date nu a putut fi încărcat")
-		return
+if df is None:
+	st.error("Setul de date nu a putut fi încărcat")
 
+else:
 	st.header(set_date["denumire"])
 	st.dataframe(df.head())
 
@@ -341,12 +340,9 @@ def main():
 	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
 		ui_impartire()
 
-	if st.button("Aplică toți pașii de procesare", type="primary"):
+	if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
 		creare_dict_procesare()
 		st.json(st.session_state["procesare"])
 		procesare_dataset(df, st.session_state["procesare"])
+		st.session_state.procesare_realizata = True
 		st.success("Preprocesarea a fost aplicată cu succes!")
-
-
-if __name__ == "__main__":
-	main()

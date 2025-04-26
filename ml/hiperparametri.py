@@ -576,3 +576,19 @@ HIPERPARAMETRI = {
 		},
 	},
 }
+
+def get_hiperparametri(denumire_model: str) -> dict:
+	hiperparametri_model = HIPERPARAMETRI.get(denumire_model, None)
+	return hiperparametri_model
+
+
+def get_hiperparametri_default(denumire_model: str) -> dict:
+	hiperparametri_model = HIPERPARAMETRI.get(denumire_model, None)
+	if hiperparametri_model is not None:
+		hiperparametri_default = {
+			denumire_hiperparametru: hiperparametru_dict["default"]
+			for denumire_hiperparametru, hiperparametru_dict in hiperparametri_model.items()
+		}
+		return hiperparametri_default
+	else:
+		return {}

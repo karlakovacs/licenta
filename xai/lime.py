@@ -1,4 +1,3 @@
-from keras import models
 import lime
 import lime.lime_tabular
 import numpy as np
@@ -15,12 +14,12 @@ def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta
 
 	instance = X_test.values[instanta]
 
-	if hasattr(model.model, "predict_proba"):
-		predict_fn = model.model.predict_proba
-	elif isinstance(model.model, models.Sequential):
+	if hasattr(model, "predict_proba"):
+		predict_fn = model.predict_proba
+	else:  # keras
 
 		def predict_fn(X):
-			probs = model.model.predict(X)
+			probs = model.predict(X)
 			return np.hstack([1 - probs, probs])
 
 	explanation = explainer.explain_instance(data_row=instance, predict_fn=predict_fn)
@@ -28,9 +27,7 @@ def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta
 
 
 def explanation_plot(explanation):
-	lime_html = (
-		f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
-	)
+	lime_html = f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
 	return lime_html
 
 	# explanation_list = explanation.as_list()

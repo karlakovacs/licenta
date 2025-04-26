@@ -75,7 +75,7 @@ def main():
 
 			modele_selectate += selectii
 
-	if st.button("Salvează selecția", type="primary", use_container_width=True):
+	if st.button("Salvează selecția", type="primary", disabled="modele_selectate" in st.session_state):
 		st.session_state.modele_selectate = modele_selectate
 		st.toast("Modelele au fost salvate!", icon="✅")
 

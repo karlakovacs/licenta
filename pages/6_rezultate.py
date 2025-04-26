@@ -28,18 +28,17 @@ def main():
 	st.session_state.setdefault("rezultate_modele", {})
 
 	tabs = st.tabs(list(modele_antrenate.keys()))
-	for tab, (nume_model, info) in zip(tabs, modele_antrenate.items()):
+	for tab, (denumire_model, info) in zip(tabs, modele_antrenate.items()):
 		with tab:
-			st.header(nume_model)
+			st.header(denumire_model)
 
-			model = info["model"]
-			y_pred = model.y_pred
-			y_prob = model.y_prob
+			y_pred = info["y_pred"]
+			y_prob = info["y_prob"]
 
-			if nume_model not in st.session_state.rezultate_modele:
-				st.session_state.rezultate_modele[nume_model] = {}
+			if denumire_model not in st.session_state.rezultate_modele:
+				st.session_state.rezultate_modele[denumire_model] = {}
 
-			rezultate = st.session_state.rezultate_modele[nume_model]
+			rezultate = st.session_state.rezultate_modele[denumire_model]
 
 			st.subheader("Raport de clasificare")
 			if "raport_clasificare" not in rezultate:
@@ -54,17 +53,19 @@ def main():
 			st.subheader("Matrice de confuzie")
 			if "matrice_confuzie" not in rezultate:
 				rezultate["matrice_confuzie"] = plot_matrice_confuzie(y_test, y_pred)
-			st.plotly_chart(rezultate["matrice_confuzie"], use_container_width=False)
+			st.plotly_chart(
+				rezultate["matrice_confuzie"], use_container_width=False, key=f"{denumire_model}_matrice_confuzie"
+			)
 
 			st.subheader("Curba ROC")
 			if "roc" not in rezultate:
 				rezultate["roc"] = plot_curba_roc(y_test, y_prob)
-			st.plotly_chart(rezultate["roc"], use_container_width=False)
+			st.plotly_chart(rezultate["roc"], use_container_width=False, key=f"{denumire_model}_roc")
 
 			st.subheader("Curba PR")
 			if "pr" not in rezultate:
 				rezultate["pr"] = plot_curba_pr(y_test, y_prob)
-			st.plotly_chart(rezultate["pr"], use_container_width=False)
+			st.plotly_chart(rezultate["pr"], use_container_width=False, key=f"{denumire_model}_pr")
 
 
 if __name__ == "__main__":
