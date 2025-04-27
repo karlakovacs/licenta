@@ -1,4 +1,4 @@
-from keras.api.models import Sequential
+from keras.api.models import Sequential  # necesar pentru functionarea keras
 import streamlit as st
 
 from utils import nav_bar

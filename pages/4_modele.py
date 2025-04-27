@@ -53,7 +53,6 @@ MODELE_HINTURI = {
 
 
 def main():
-	st.session_state.setdefault("modele_selectate", [])
 	st.subheader("Selectează modelele dorite")
 	modele_selectate = []
 	for grup in CATEGORII_MODELE:
@@ -63,11 +62,13 @@ def main():
 		with st.container(border=True):
 			st.subheader(categorie)
 
+			modele_session_state = st.session_state.get("modele_selectate", [])
+
 			selectii = []
 			for model in modele:
 				if st.checkbox(
 					model,
-					value=model in st.session_state.modele_selectate,
+					value=model in modele_session_state,
 					help=MODELE_HINTURI[model],
 					key=f"{categorie}_{model}",
 				):

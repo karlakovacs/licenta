@@ -102,8 +102,6 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 			from keras.api.metrics import AUC
 			from keras.api.models import Sequential
 
-			# time.sleep(10)
-
 			if input_dim is None:
 				raise ValueError("Parametrul `input_dim` este necesar pentru a construi modelul MLP.")
 

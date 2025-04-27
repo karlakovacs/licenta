@@ -1,11 +1,12 @@
 import lime
-import lime.lime_tabular
+from lime.explanation import Explanation
+from lime.lime_tabular import LimeTabularExplainer
 import numpy as np
 import pandas as pd
 
 
-def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta=0):
-	explainer = lime.lime_tabular.LimeTabularExplainer(
+def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta=0) -> Explanation:
+	explainer = LimeTabularExplainer(
 		training_data=X_train.values,
 		feature_names=X_train.columns,
 		class_names=["Frauda", "Legitima"],  # ?

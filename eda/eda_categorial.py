@@ -37,7 +37,7 @@ def plot_pie_chart(serie: pd.Series, max_categorii: int = 25) -> go.Figure:
 			]
 		)
 
-		fig.update_layout(title=titlu, height=500)
+		fig.update_layout(title=titlu, height=500, template="plotly_white")
 
 		return fig
 

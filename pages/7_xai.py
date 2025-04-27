@@ -89,21 +89,20 @@ if denumire_model and tehnica_xai:
 
 			st.subheader(f"🌊 Waterfall Plot (instanța {instanta_xai})")
 			if "waterfall" not in shap_data["plots"]:
-				shap_data["plots"]["waterfall"] = waterfall_plot(shap_data["values"], instanta_xai)
-			st.pyplot(shap_data["plots"]["waterfall"], use_container_width=False)
+				shap_data["plots"]["waterfall"] = {}
+			if instanta_xai not in shap_data["plots"]["waterfall"]:
+				shap_data["plots"]["waterfall"][instanta_xai] = waterfall_plot(shap_data["values"], instanta_xai)
+			st.pyplot(shap_data["plots"]["waterfall"][instanta_xai], use_container_width=False)
 
 	elif tehnica_xai == "LIME":
-		lime_data = st.session_state["xai"][denumire_model].setdefault("lime", {"explanation": None, "plot": None})
+		lime_data = st.session_state["xai"][denumire_model].setdefault("lime", {"explanations": {}})
 
-		if lime_data["explanation"] is None:
+		if instanta_xai not in lime_data["explanations"]:
 			with st.spinner("Generăm explicația LIME..."):
-				lime_data["explanation"] = get_explanation(model, X_train, X_test, instanta_xai)
+				lime_data["explanations"][instanta_xai] = get_explanation(model, X_train, X_test, instanta_xai)
 
-		if lime_data["explanation"] is not None:
-			st.subheader(f"📈 Explicație locală pentru instanța {instanta_xai}")
-			if lime_data["plot"] is None:
-				lime_data["plot"] = explanation_plot(lime_data["explanation"])
-			components.html(lime_data["plot"], height=600)
+		st.subheader(f"📈 Explicație locală pentru instanța {instanta_xai}")
+		components.html(explanation_plot(lime_data["explanations"][instanta_xai]), height=600)
 
 	elif tehnica_xai == "DiCE ML":
 		st.session_state["xai"][denumire_model].setdefault("dice", {"explainer": None, "counterfactuals": {}})
