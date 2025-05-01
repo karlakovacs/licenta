@@ -105,4 +105,4 @@ else:
 				del modele_antrenate[denumire_model]
 
 		st.session_state.modele_antrenate = modele_antrenate
-		st.success("Toate modelele au fost antrenate și salvate!")
+		st.success("Modelele au fost antrenate și salvate!")

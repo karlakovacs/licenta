@@ -3,7 +3,7 @@ import streamlit as st
 
 # (id, label, path, icon)
 PAGES = [
-	(0, "Acasă", "app.py", "🏠"),
+	(0, "Acasă", "pages/0_acasa.py", "🏠"),
 	(1, "Set de date", "pages/1_dataset.py", "💳"),
 	(2, "EDA", "pages/2_eda.py", "📊"),
 	(3, "Procesare", "pages/3_procesare.py", "🛠️"),
@@ -13,9 +13,8 @@ PAGES = [
 	(7, "XAI", "pages/7_xai.py", "💡"),
 	(8, "Comparații", "pages/8_comparatii.py", "⚖️"),
 	(9, "Raport", "pages/9_raport.py", "⚡"),
-	(10, "Rapoarte", "pages/10_rapoarte.py", "📑"),
-	(11, "Teorie", "pages/11_teorie.py", "📚"),
-	(12, "Test", "pages/12_test.py", "❤️"),
+	(10, "Datele mele", "pages/10_date.py", "📑"),
+	(11, "Teorie", "pages/11_docs.py", "📚"),
 ]
 
 

@@ -15,9 +15,9 @@ if "date_raport" not in st.session_state:
 
 date_raport: dict = st.session_state.date_raport
 
-cheie = st.selectbox("Alege", list(date_raport.keys()))
-st.subheader(f"`{cheie}`")
-st.write(date_raport[cheie])
+# cheie = st.selectbox("Alege", list(date_raport.keys()))
+# st.subheader(f"`{cheie}`")
+# st.write(date_raport[cheie])
 
 raport_html = generare_cod_raport(date_raport)
 components.html(raport_html, height=600, scrolling=True)
@@ -26,4 +26,4 @@ html_bytes = generare_raport(date_raport)
 st.download_button(label="Descarcă HTML", data=html_bytes, file_name="raport.html", mime="text/html")
 
 pdf_bytes = generare_raport(date_raport, format_pdf=True)
-st.download_button("Descarcă PDF", pdf_bytes, "output.pdf", "application/pdf")
+st.download_button("Descarcă PDF", pdf_bytes, "raport.pdf", "application/pdf")

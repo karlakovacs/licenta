@@ -109,10 +109,18 @@ def aplicare_encoding(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 
 	if coloane_one_hot:
 		encoder = OneHotEncoder(
-			drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
+			drop="first",
+			max_categories=max_categorii,
+			sparse_output=False,
+			handle_unknown="ignore"
 		)
 		encoded = encoder.fit_transform(df[coloane_one_hot].astype(str))
-		encoded_df = pd.DataFrame(encoded, columns=encoder.get_feature_names_out(coloane_one_hot), index=df.index)
+		
+		encoded_df = pd.DataFrame(
+			encoded.astype(bool),
+			columns=encoder.get_feature_names_out(coloane_one_hot),
+			index=df.index
+		)
 
 		df = df.drop(columns=coloane_one_hot)
 		df = pd.concat([df, encoded_df], axis=1)
@@ -142,8 +150,11 @@ def aplicare_scalare(X: pd.DataFrame, metoda: str):
 		scaler = RobustScaler()
 
 	if scaler:
-		cols_to_scale = X.select_dtypes(include=["number"]).columns
-		X[cols_to_scale] = scaler.fit_transform(X[cols_to_scale])
+		coloane_scalare = [
+			col for col in X.select_dtypes(include=["number"]).columns
+			if X[col].nunique() > 2
+		]
+		X[coloane_scalare] = scaler.fit_transform(X[coloane_scalare])
 	return X
 
 

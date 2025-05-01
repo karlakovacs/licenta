@@ -7,10 +7,16 @@ import plotly.graph_objects as go
 
 
 def dataframe_to_html(df: pd.DataFrame, format_pdf: bool = False) -> str:
+	table_html = df.to_html(classes="dataframe", index=False)
+
 	if format_pdf:
-		return df.to_html(border=1)
+		return table_html
 	else:
-		return df.to_html(border=1)
+		return f"""
+        <div class="scrollable-table">
+            {table_html}
+        </div>
+        """
 
 
 def plotly_to_html(plot: go.Figure, format_pdf: bool = False) -> str:

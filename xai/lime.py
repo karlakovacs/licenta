@@ -1,35 +1,46 @@
 import lime
 from lime.explanation import Explanation
 from lime.lime_tabular import LimeTabularExplainer
+import matplotlib.figure as plt
 import numpy as np
 import pandas as pd
 
 
 def get_explanation(model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta=0) -> Explanation:
-	explainer = LimeTabularExplainer(
-		training_data=X_train.values,
-		feature_names=X_train.columns,
-		class_names=["Frauda", "Legitima"],  # ?
-		mode="classification",
-	)
+	try:
+		explainer = LimeTabularExplainer(
+			training_data=X_train.values,
+			feature_names=X_train.columns,
+			class_names=[str(c) for c in model.classes_],
+			mode="classification",
+		)
 
-	instance = X_test.values[instanta]
+		instance = X_test.values[instanta]
 
-	if hasattr(model, "predict_proba"):
-		predict_fn = model.predict_proba
-	else:  # keras
+		if hasattr(model, "predict_proba"):
+			predict_fn = model.predict_proba
+		else:  # keras
 
-		def predict_fn(X):
-			probs = model.predict(X)
-			return np.hstack([1 - probs, probs])
+			def predict_fn(X):
+				probs = model.predict(X)
+				return np.hstack([1 - probs, probs])
 
-	explanation = explainer.explain_instance(data_row=instance, predict_fn=predict_fn)
-	return explanation
+		explanation = explainer.explain_instance(data_row=instance, predict_fn=predict_fn)
+		return explanation
+	except:
+		return None
 
 
-def explanation_plot(explanation):
+def explanation_plot(explanation: Explanation) -> str:
 	lime_html = f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
 	return lime_html
+
+def explanation_pyplot(explanation: Explanation) -> plt.Figure:
+	return explanation.as_pyplot_figure(label=1)
+
+
+
+
 
 	# explanation_list = explanation.as_list()
 	# features, importances = zip(*explanation_list)

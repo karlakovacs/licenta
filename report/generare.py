@@ -31,15 +31,19 @@ def generare_cod_raport(date_raport: dict, format_pdf: bool = False):
 	return html_final
 
 
-def generare_raport(date_raport: dict, format_pdf: bool = False) -> bytes:
+def generare_raport(date_raport: dict, format_pdf: bool = False, fisier_css: str = "report/style.css") -> bytes:
 	cod_raport = generare_cod_raport(date_raport, format_pdf)
 	if not format_pdf:
+		with open(fisier_css, "r", encoding="utf-8") as f:
+			continut_css = f.read()
+		style_tag = f"<style>\n{continut_css}\n</style>"
+		cod_raport = cod_raport.replace("<head>", f"<head>\n{style_tag}")
 		report_bytes: bytes = cod_raport.encode("utf-8")
 	else:
 		report_bytes: bytes = pdfkit.from_string(
 			cod_raport,
 			False,
 			configuration=pdfkit.configuration(wkhtmltopdf="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"),
-			css="C:/Users/karla/Desktop/licenta_app/report/style.css",
+			css=fisier_css,
 		)
 	return report_bytes

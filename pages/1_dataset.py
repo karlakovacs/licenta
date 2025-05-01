@@ -116,13 +116,13 @@ if df is not None:
 		cale_dataset = incarcare_dataset_supabase(
 			df, st.session_state.id_utilizator, st.session_state.set_date["denumire"]
 		)
-		id_set_date = creare_set_date(
-			st.session_state.id_utilizator,
-			st.session_state.set_date["denumire"],
-			st.session_state.set_date["sursa"],
-			cale_dataset,
-		)
-		st.session_state.set_date["id"] = id_set_date
+		# id_set_date = creare_set_date(
+		# 	st.session_state.id_utilizator,
+		# 	st.session_state.set_date["denumire"],
+		# 	st.session_state.set_date["sursa"],
+		# 	cale_dataset,
+		# )
+		# st.session_state.set_date["id"] = id_set_date
 
 		salvare_date_temp(df, st.session_state.set_date["denumire"])
 		st.success("Datele au fost salvate.")

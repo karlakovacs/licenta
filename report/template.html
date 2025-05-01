@@ -4,113 +4,78 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Raport</title>
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-			margin: 40px;
-			background-color: #f9f9f9;
-		}
-	</style>
-	<!-- <style>
-		body {
-			font-family: Arial, sans-serif;
-			margin: 40px;
-			background-color: #f9f9f9;
-		}
-
-		h1,
-		h2,
-		h3,
-		h4 {
-			color: #333;
-		}
-
-		h2 {
-			margin-top: 40px;
-			border-bottom: 2px solid #04AA6D;
-			padding-bottom: 5px;
-		}
-
-		h3 {
-			margin-top: 30px;
-			color: #04AA6D;
-		}
-
-		h4 {
-			margin-top: 20px;
-			color: #333;
-		}
-
-		.section {
-			margin-bottom: 40px;
-		}
-
-		.toc {
-			background-color: #ffffff;
-			padding: 20px;
-			margin-bottom: 40px;
-			border: 1px solid #ddd;
-			border-radius: 8px;
-		}
-
-		.toc ul {
-			list-style-type: none;
-			padding-left: 0;
-		}
-
-		.toc li {
-			margin-bottom: 10px;
-		}
-
-		.toc a {
-			text-decoration: none;
-			color: #04AA6D;
-			font-weight: bold;
-		}
-
-		.toc a:hover {
-			text-decoration: underline;
-		}
-	</style> -->
 </head>
 
 <body>
-
 	<h1>Raport</h1>
 
-	<!-- <div class="toc">
+	<div class="cuprins">
 		<h2>Cuprins</h2>
 		<ul>
-			{% if set_date %}<li><a href="#set_date">Set de date</a></li>{% endif %}
+			{% if set_date %}
+			<li><a href="#set_date">Set de date</a></li>
+			{% endif %}
+
 			{% if eda %}
 			<li><a href="#eda">Exploratory Data Analysis (EDA)</a></li>
-			{% if eda.describe_numeric %}<li style="margin-left: 20px;"><a class="indented"
-					href="#describe_numeric">Statistici
-					descriptive - numerice</a></li>{% endif %}
-			{% if eda.describe_categorical %}<li style="margin-left: 20px;"><a class="indented"
-					href="#describe_categorical">Statistici
-					descriptive - categoriale</a></li>{% endif %}
-			{% if eda.plot_tipuri_variabile %}<li style="margin-left: 20px;"><a class="indented"
-					href="#tipuri_variabile">Tipuri de
-					variabile</a></li>{% endif %}
-			{% if eda.pie_chart_tinta %}<li style="margin-left: 20px;"><a class="indented"
-					href="#distributie_tinta">Distribuția
-					țintei</a></li>{% endif %}
-			{% if eda.histograme %}<li style="margin-left: 20px;"><a class="indented" href="#histograme">Histograme</a>
-			</li>{% endif %}
-			{% if eda.box_plots %}<li style="margin-left: 20px;"><a class="indented" href="#boxplots">Box plots</a></li>
+
+			{% if eda.describe_numeric %}
+			<li class="indented"><a href="#describe_numeric">Statistici descriptive - numerice</a></li>
 			{% endif %}
+
+			{% if eda.describe_categorical %}
+			<li class="indented"><a href="#describe_categorical">Statistici descriptive - categoriale</a></li>
+			{% endif %}
+
+			{% if eda.plot_tipuri_variabile %}
+			<li class="indented"><a href="#tipuri_variabile">Tipuri de variabile</a></li>
+			{% endif %}
+
+			{% if eda.pie_chart_tinta %}
+			<li class="indented"><a href="#distributie_tinta">Distribuția țintei</a></li>
+			{% endif %}
+
+			{% if eda.histograme %}
+			<li class="indented"><a href="#histograme">Histograme</a></li>
+			{% endif %}
+
+			{% if eda.box_plots %}
+			<li class="indented"><a href="#box_plots">Box plots</a></li>
+			{% endif %}
+
 			{% if eda.plot_matrice_corelatie %}
-			<a class="indented" href="#matrice_corelatie">Matricea de corelație</a>
+            <li class="indented"><a href="#matrice_corelatie">Matricea de corelație</a></li>
 			{% endif %}
-			{% if eda.plot_variabile_puternic_corelate %}<a class="indented" href="#variabile_corelate">Variabile
-				corelate cu ținta</a></li>{% endif %}
+
+			{% if eda.plot_variabile_puternic_corelate %}
+            <li class="indented"><a href="#variabile_corelate">Variabile corelate cu ținta</a></li>
+			{% endif %}
+			{% endif %}
+
+			{% if procesare %}
+			<li><a href="#procesare">Procesarea datelor</a></li>
+			{% endif %}
+
+			{% if modele_antrenate %}
+			<li><a href="#modele_antrenate">Antrenarea modelelor de ML</a></li>
+			{% endif %}
+
+			{% if rezultate_modele %}
+			<li><a href="#rezultate_modele">Rezultatele modelelor</a></li>
+			{% endif %}
+
+			{% if xai %}
+			<li><a href="#xai">Explainable AI (XAI)</a></li>
+			{% endif %}
+
+			{% if grafic_comparativ %}
+			<li><a href="#grafic_comparativ">Grafic comparativ</a></li>
 			{% endif %}
 		</ul>
-	</div> -->
+	</div>
 
 	{% if set_date %}
-	<div class="section" id="set_date">
+	<div class="sectiune" id="set_date">
 		<h2>Set de date</h2>
 		<p><b>Denumire:</b> {{ set_date.denumire }}</p>
 		<p><b>Sursă:</b> {{ set_date.sursa }}</p>
@@ -119,7 +84,7 @@
 	{% endif %}
 
 	{% if eda %}
-	<div class="section" id="eda">
+	<div class="sectiune" id="eda">
 		<h2>Exploratory Data Analysis (EDA)</h2>
 
 		{% if eda.describe_numeric %}
@@ -159,7 +124,7 @@
 		{% endif %}
 
 		{% if eda.box_plots %}
-		<h3 id="boxplots">Box plots pentru variabile importante</h3>
+		<h3 id="box_plots">Box plots pentru variabile importante</h3>
 		{% for variabila, fig in eda.box_plots.items() %}
 		<h4>Box plot pentru {{ variabila }}</h4>
 		{{ fig | safe }}
@@ -179,9 +144,9 @@
 	{% endif %}
 
 	{% if procesare %}
-	<div class="section" id="procesare">
+	<div class="sectiune" id="procesare">
 		<h2>Procesarea datelor</h2>
-	
+
 		{% if procesare.coloane_eliminate %}
 		<h3>Coloane eliminate</h3>
 		<ul>
@@ -190,23 +155,23 @@
 			{% endfor %}
 		</ul>
 		{% endif %}
-	
+
 		{% if procesare.eliminare_duplicate %}
 		<h3>Eliminare duplicate</h3>
 		<p>S-au eliminat duplicatele din setul de date.</p>
 		{% endif %}
-	
+
 		{% if procesare.eliminare_randuri_nan %}
 		<h3>Eliminare rânduri cu valori lipsă</h3>
 		<p>Rândurile cu valori lipsă au fost eliminate.</p>
 		{% endif %}
-	
+
 		{% if procesare.outlieri %}
 		<h3>Tratamentul outlierilor</h3>
 		<p><b>Detectie:</b> {{ procesare.outlieri.detectie }}</p>
 		<p><b>Actiune:</b> {{ procesare.outlieri.actiune }}</p>
 		{% endif %}
-	
+
 		{% if procesare.valori_lipsa %}
 		<h3>Strategii de completare valori lipsă</h3>
 		<p><b>Numerice:</b> {{ procesare.valori_lipsa.strategie_numerice }} (valoare fixă: {{
@@ -214,7 +179,7 @@
 		<p><b>Categoriale:</b> {{ procesare.valori_lipsa.strategie_categoriale }} (valoare fixă: {{
 			procesare.valori_lipsa.valoare_fixa_categoriale }})</p>
 		{% endif %}
-	
+
 		{% if procesare.coloane_binare %}
 		<h3>Conversie coloane în binar</h3>
 		<ul>
@@ -223,46 +188,46 @@
 			{% endfor %}
 		</ul>
 		{% endif %}
-	
+
 		{% if procesare.datetime %}
 		<h3>Procesare coloane datetTime</h3>
 		<p><b>Coloane:</b> {{ procesare.datetime.coloane | join(', ') }}</p>
 		<p><b>Format:</b> {{ procesare.datetime.format }}</p>
 		<p><b>Componente extrase:</b> {{ procesare.datetime.componente | join(', ') }}</p>
 		{% endif %}
-	
+
 		{% if procesare.encoding %}
 		<h3>Encoding variabile categoriale</h3>
 		<p><b>Max categorii pentru one-hot:</b> {{ procesare.encoding.max_categorii }}</p>
 		<p><b>Coloane pentru label encoding:</b> {{ procesare.encoding.coloane_label | join(', ') }}</p>
 		{% endif %}
-	
+
 		{% if procesare.dezechilibru %}
 		<h3>Tratamentul dezechilibrului</h3>
 		<p>Metoda aleasă: {{ procesare.dezechilibru }}</p>
 		{% endif %}
-	
+
 		{% if procesare.scalare %}
 		<h3>Scalare variabile</h3>
 		<p>Metoda de scalare: {{ procesare.scalare }}</p>
 		{% endif %}
-	
+
 		{% if procesare.impartire %}
 		<h3>Împărțirea datelor în train/test</h3>
 		<p><b>Proporție test:</b> {{ procesare.impartire.proportie_test }}</p>
 		<p><b>Stratificare:</b> {{ "Da" if procesare.impartire.stratificat else "Nu" }}</p>
 		{% endif %}
-	
+
 	</div>
 	{% endif %}
 
 	{% if modele_antrenate %}
-	<div class="section" id="modele_antrenate">
+	<div class="sectiune" id="modele_antrenate">
 		<h2>Antrenarea modelelor de ML</h2>
-	
+
 		{% for nume_model, info in modele_antrenate.items() %}
 		<h3>{{ nume_model }}</h3>
-	
+
 		{% if info.hiperparametri %}
 		<h4>Hiperparametri:</h4>
 		<ul>
@@ -277,27 +242,27 @@
 			{% endfor %}
 		</ul>
 		{% endif %}
-	
+
 		{% if info.timp %}
 		<p><b>Timp de antrenare:</b> {{ "%.3f"|format(info.timp) }} secunde</p>
 		{% endif %}
-	
+
 		{% endfor %}
 	</div>
 	{% endif %}
 
 	{% if rezultate_modele %}
-	<div class="section" id="rezultate_modele">
+	<div class="sectiune" id="rezultate_modele">
 		<h2>Rezultatele modelelor</h2>
-	
+
 		{% for nume_model, info in rezultate_modele.items() %}
 		<h3>{{ nume_model }}</h3>
-	
+
 		{% if info.raport_clasificare %}
 		<h4>Raport de clasificare</h4>
 		<pre>{{ info.raport_clasificare }}</pre>
 		{% endif %}
-	
+
 		{% if info.metrici %}
 		<h4>Metrici</h4>
 		<ul>
@@ -306,33 +271,33 @@
 			{% endfor %}
 		</ul>
 		{% endif %}
-	
+
 		{% if info.matrice_confuzie %}
 		<h4>Matrice de confuzie</h4>
 		{{ info.matrice_confuzie | safe }}
 		{% endif %}
-	
+
 		{% if info.roc %}
 		<h4>Curba ROC</h4>
 		{{ info.roc | safe }}
 		{% endif %}
-	
+
 		{% if info.pr %}
 		<h4>Curba Precision-Recall (PR)</h4>
 		{{ info.pr | safe }}
 		{% endif %}
-	
+
 		{% endfor %}
 	</div>
 	{% endif %}
 
 	{% if xai %}
-	<div class="section" id="xai">
+	<div class="sectiune" id="xai">
 		<h2>Explainable AI (XAI)</h2>
-	
+
 		{% for model, explicatii in xai.items() %}
 		<h3>{{ model }}</h3>
-	
+
 		{% if explicatii.shap %}
 		<h4>Explicații SHAP</h4>
 		{% for tip_plot, ploturi in explicatii.shap.items() %}
@@ -347,7 +312,7 @@
 		{% endif %}
 		{% endfor %}
 		{% endif %}
-	
+
 		{% if explicatii.lime %}
 		<h4>Explicații LIME</h4>
 		{% for idx, lime_html in explicatii.lime.items() %}
@@ -355,7 +320,7 @@
 		{{ lime_html | safe }}
 		{% endfor %}
 		{% endif %}
-	
+
 		{% if explicatii.dice %}
 		<h4>Explicații DiCE - Counterfactuals</h4>
 		{% for idx, cf in explicatii.dice.items() %}
@@ -366,13 +331,13 @@
 		{{ cf.diffs | safe }}
 		{% endfor %}
 		{% endif %}
-	
+
 		{% endfor %}
 	</div>
 	{% endif %}
 
 	{% if grafic_comparativ %}
-	<div class="section" id="grafic_comparativ">
+	<div class="sectiune" id="grafic_comparativ">
 		<h2>Grafic comparativ</h2>
 		{{ grafic_comparativ | safe }}
 	</div>
