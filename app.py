@@ -7,7 +7,7 @@ from database import login_utilizator
 
 st.set_page_config(page_title="Autentificare", page_icon="🔐", layout="centered")
 
-if not st.experimental_user.is_logged_in:
+if not st.user.is_logged_in:
 	st.markdown(
 		"<h1 style='font-size: 3em; font-weight: bold; text-align: center;'>Bun venit!</h1>",
 		unsafe_allow_html=True,
@@ -31,6 +31,6 @@ if not st.experimental_user.is_logged_in:
 
 else:
 	with st.spinner("Logare..."):
-		id_google: str = st.experimental_user.sub
+		id_google: str = st.user.sub
 		st.session_state.id_utilizator = login_utilizator(id_google)
 		st.switch_page("pages/0_acasa.py")
