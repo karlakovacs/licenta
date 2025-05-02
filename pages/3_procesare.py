@@ -298,7 +298,7 @@ st.title("Procesarea datelor")
 set_date: dict = st.session_state.get("set_date", None)
 df: pd.DataFrame = None
 
-if set_date["sursa"] != "predefinit":
+if set_date["sursa"] != "Seturi predefinite":
 	df = citire_date_temp(set_date["denumire"])
 else:
 	df = citire_date_predefinite(set_date["denumire"])
@@ -342,7 +342,7 @@ else:
 
 	if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
 		creare_dict_procesare()
-		st.json(st.session_state["procesare"])
+		# st.json(st.session_state["procesare"])
 		procesare_dataset(df, st.session_state["procesare"])
 		st.session_state.procesare_realizata = True
-		st.success("Preprocesarea a fost aplicată cu succes!")
+		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")

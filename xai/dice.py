@@ -111,7 +111,6 @@ def calculate_counterfactuals(
 ) -> tuple[int | bool, pd.DataFrame, dict]:
 	try:
 		predictie = model.predict(date_instanta)
-		print("predictie ok")
 
 		if hasattr(model, "layers"):  # keras
 			predictie = int(predictie > 0.5)

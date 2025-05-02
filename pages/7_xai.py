@@ -1,10 +1,18 @@
-import traceback
-
 import streamlit as st
-import streamlit.components.v1 as components
 
 from utils import citire_date_temp, nav_bar
-from xai import *
+from xai import (
+	DESCRIERI_XAI,
+	bar_plot,
+	calculate_counterfactuals,
+	calculate_shap_values,
+	explanation_plotly,
+	get_dice_explainer,
+	get_explanation,
+	interpretare_explicatii,
+	violin_plot,
+	waterfall_plot,
+)
 
 
 st.set_page_config(layout="wide", page_title="XAI", page_icon="💡")
@@ -23,8 +31,8 @@ if not modele_antrenate:
 	st.warning("Antrenează modelele mai întâi.")
 
 else:
-	# st.session_state.setdefault("xai", {})
-	st.session_state["xai"] = {}
+	st.session_state.setdefault("xai", {})
+	# st.session_state["xai"] = {}
 	optiuni_modele = list(modele_antrenate.keys())
 
 	denumire_model = st.selectbox(
@@ -63,7 +71,6 @@ if denumire_model and tehnica_xai:
 
 	model = modele_antrenate[denumire_model]["model"]
 
-	st.session_state["xai"] = {}
 	st.session_state["xai"].setdefault(denumire_model, {})
 
 	if tehnica_xai == "SHAP":
@@ -80,6 +87,8 @@ if denumire_model and tehnica_xai:
 					shap_data["plots"]["bar"] = bar_plot(shap_data["values"])
 				if shap_data["plots"]["bar"]:
 					st.pyplot(shap_data["plots"]["bar"], use_container_width=False)
+					with st.popover("Detalii despre SHAP Bar Plot"):
+						st.write(DESCRIERI_XAI["bar"])
 				else:
 					st.info("Nu s-a putut genera graficul Bar Plot.")
 
@@ -88,6 +97,8 @@ if denumire_model and tehnica_xai:
 					shap_data["plots"]["violin"] = violin_plot(shap_data["values"])
 				if shap_data["plots"]["violin"]:
 					st.pyplot(shap_data["plots"]["violin"], use_container_width=False)
+					with st.popover("Detalii despre SHAP Violin Plot"):
+						st.write(DESCRIERI_XAI["violin"])
 				else:
 					st.info("Nu s-a putut genera graficul Violin Plot.")
 
@@ -98,6 +109,8 @@ if denumire_model and tehnica_xai:
 					shap_data["plots"]["waterfall"][instanta_xai] = waterfall_plot(shap_data["values"], instanta_xai)
 				if shap_data["plots"]["waterfall"][instanta_xai]:
 					st.pyplot(shap_data["plots"]["waterfall"][instanta_xai], use_container_width=False)
+					with st.popover("Detalii despre SHAP Waterfall Plot"):
+						st.write(DESCRIERI_XAI["waterfall"])
 				else:
 					st.info("Nu s-a putut genera graficul Waterfall Plot.")
 			else:
@@ -107,6 +120,7 @@ if denumire_model and tehnica_xai:
 
 	elif tehnica_xai == "LIME":
 		lime_data = st.session_state["xai"][denumire_model].setdefault("lime", {"explanations": {}})
+		max_valori_unice = (st.session_state.get("procesare", {}).get("encoding", {}).get("max_categorii", 10)) or 10
 
 		if instanta_xai not in lime_data["explanations"]:
 			with st.spinner("Generăm explicația LIME..."):
@@ -114,23 +128,22 @@ if denumire_model and tehnica_xai:
 
 		st.subheader(f"📈 Explicație locală pentru instanța {instanta_xai}")
 		if lime_data["explanations"][instanta_xai] is not None:
-			components.html(explanation_plot(lime_data["explanations"][instanta_xai]), height=600)
-			st.pyplot(explanation_pyplot(lime_data["explanations"][instanta_xai]))
-			st.write(lime_data["explanations"][instanta_xai].as_list())
+			st.plotly_chart(explanation_plotly(lime_data["explanations"][instanta_xai]), use_container_width=False)
+			with st.popover("Detalii despre LIME Plot"):
+				st.write(DESCRIERI_XAI["lime"])
 		else:
 			st.info("Nu s-a putut genera explicația LIME.")
 
 	elif tehnica_xai == "DiCE ML":
-		# st.session_state["xai"][denumire_model].setdefault("dice", {"explainer": None, "counterfactuals": {}})
-
-		st.session_state["xai"][denumire_model] = {"dice": {"explainer": None, "counterfactuals": {}}}
+		st.session_state["xai"][denumire_model].setdefault("dice", {"explainer": None, "counterfactuals": {}})
+		# st.session_state["xai"][denumire_model] = {"dice": {"explainer": None, "counterfactuals": {}}}
 
 		dice_data = st.session_state["xai"][denumire_model]["dice"]
 
 		tinta = st.session_state.set_date["tinta"]
 		date_instanta = X_test.iloc[[instanta_xai]]
 
-		st.subheader("Exemplu selectat")
+		st.subheader("Exemplul selectat")
 		st.write(date_instanta)
 
 		if dice_data["explainer"] is None:
@@ -160,7 +173,8 @@ if denumire_model and tehnica_xai:
 
 			st.subheader("🔍 Intepretări")
 			st.write(interpretare_explicatii(explicatii))
+
+			with st.popover("Detalii despre DiCE ML"):
+				st.write(DESCRIERI_XAI["dice"])
 		else:
 			st.info("Nu s-au putut genera explicațiile DiCE ML.")
-			# st.error(f"Eroare la generarea explicațiilor pentru `{denumire_model}`: {e}")
-			# st.code(traceback.format_exc(), language="python")

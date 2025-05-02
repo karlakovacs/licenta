@@ -1,7 +1,7 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
-from report import *
+from database import creare_raport, incarcare_rapoarte_supabase
+from report import generare_raport
 from utils import nav_bar
 
 
@@ -9,19 +9,6 @@ st.set_page_config(layout="wide", page_title="Raport", page_icon="⚡")
 nav_bar()
 st.title("Generarea raportului")
 
-# def curatare_modele_antrenate(modele_antrenate: dict) -> dict:
-# 	if modele_antrenate is None:
-# 		return None
-	
-# 	modele_curatate = {}
-
-# 	for denumire_model, info in modele_antrenate.items():
-# 		info_curat = {k: v for k, v in info.items() if k not in ["model", "y_pred", "y_prob"]}
-# 		modele_curatate[denumire_model] = info_curat
-
-# 	return modele_curatate
-
-### OBTINERE DATE DIN SESSION STATE
 date_raport = {
 	"set_date": st.session_state.get("set_date", None),
 	"eda": st.session_state.get("eda", None),
@@ -32,11 +19,29 @@ date_raport = {
 	"grafic_comparativ": st.session_state.get("grafic_comparativ", None),
 }
 
-raport_html = generare_cod_raport(date_raport)
-components.html(raport_html, height=600, scrolling=True)
+if "rapoarte_salvate" not in st.session_state:
+	with st.spinner("Generare raport..."):
+		html_bytes: bytes = generare_raport(date_raport)
+		pdf_bytes: bytes = generare_raport(date_raport, format_pdf=True)
+		path = incarcare_rapoarte_supabase(st.session_state.id_utilizator, html_bytes, pdf_bytes)
+		creare_raport(st.session_state.id_utilizator, path)
+		st.session_state.html_bytes = html_bytes
+		st.session_state.html_bytes = pdf_bytes
+		st.session_state.rapoarte_salvate = True
 
-html_bytes = generare_raport(date_raport)
-st.download_button(label="Descarcă HTML", data=html_bytes, file_name="raport.html", mime="text/html")
+if "rapoarte_salvate" in st.session_state:
+	st.download_button(
+		label="📥 Descarcă HTML",
+		type="primary",
+		data=st.session_state.html_bytes,
+		file_name="raport.html",
+		mime="text/html",
+	)
 
-pdf_bytes = generare_raport(date_raport, format_pdf=True)
-st.download_button("Descarcă PDF", pdf_bytes, "raport.pdf", "application/pdf")
+	st.download_button(
+		label="📂 Descarcă PDF",
+		type="primary",
+		data=st.session_state.pdf_bytes,
+		file_name="raport.pdf",
+		mime="application/pdf",
+	)

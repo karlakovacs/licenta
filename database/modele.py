@@ -13,8 +13,8 @@ class Utilizator(Base):
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_google = Column(String, unique=True, nullable=False)
-	email = Column(String, unique=True, nullable=False)
 	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_ultima_conectare = Column(DateTime, default=datetime.now(timezone.utc))
 
 	seturi_date = relationship("SetDate", back_populates="utilizator")
 	rapoarte = relationship("Raport", back_populates="utilizator")
@@ -26,8 +26,9 @@ class SetDate(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_utilizator = Column(Integer, ForeignKey("utilizatori.id"), nullable=False)
 	denumire = Column(String, nullable=False)
-	sursa = Column(Enum("local", "kaggle", "predefinit", name="sursa_set_date"), nullable=False)
+	sursa = Column(Enum("Fișier local", "Link Kaggle", name="sursa_set_date"), nullable=False)
 	url = Column(String, nullable=False)
+	tinta = Column(String, nullable=False)
 	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
 	data_actualizare = Column(DateTime, default=datetime.now(timezone.utc))
 

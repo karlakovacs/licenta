@@ -14,7 +14,7 @@ PAGES = [
 	(8, "Comparații", "pages/8_comparatii.py", "⚖️"),
 	(9, "Raport", "pages/9_raport.py", "⚡"),
 	(10, "Datele mele", "pages/10_date.py", "📑"),
-	(11, "Teorie", "pages/11_docs.py", "📚"),
+	(11, "Documentație", "pages/11_docs.py", "📚"),
 ]
 
 

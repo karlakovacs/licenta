@@ -34,3 +34,29 @@ def matplotlib_to_html(fig: plt.Figure) -> str:
 	buf.seek(0)
 	svg_data = buf.getvalue().decode("utf-8")
 	return f"<div>{svg_data}</div>"
+
+
+def explicatii_dice_to_text(explicatii: dict) -> str:
+	if not explicatii:
+		return "<p><i>Nu există explicații disponibile pentru acest contrafactual.</i></p>"
+
+	rezultat = "<ol>"
+	for idx, modificari in explicatii.items():
+		rezultat += f"<li><b>Contrafactual #{idx + 1}</b></li>"
+		rezultat += "<ul>"
+
+		for m in modificari:
+			variabila = m.get("variabila", "necunoscută")
+			valoare = m.get("valoare", "?")
+			tip = m.get("tip")
+			directie = m.get("directie")
+
+			if tip == "numeric":
+				sens = "crească" if directie == "+" else "scadă"
+				rezultat += f"<li><b>{variabila}</b> trebuie să {sens} cu <code>{valoare}</code></li>"
+			else:
+				rezultat += f"<li><b>{variabila}</b> trebuie să aibă valoarea <code>{valoare}</code></li>"
+
+		rezultat += "</ul>"
+	rezultat += "</ol>"
+	return rezultat

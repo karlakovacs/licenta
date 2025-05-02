@@ -179,54 +179,42 @@ def impartire_train_test(X: pd.DataFrame, y: pd.Series, setari: dict):
 
 
 def procesare_dataset(df: pd.DataFrame, dict_procesare: dict):
-	# Eliminare coloane
 	if dict_procesare.get("coloane_eliminate"):
 		df = eliminare_coloane(df, dict_procesare["coloane_eliminate"])
 
-	# Eliminare duplicate
 	if dict_procesare.get("eliminare_duplicate"):
 		df = eliminare_duplicate(df)
 
-	# Eliminare rânduri cu multe valori lipsă
 	if dict_procesare.get("eliminare_randuri_nan"):
 		df = eliminare_randuri_nan(df)
 
-	# Tratare outlieri
 	if "outlieri" in dict_procesare:
 		metoda = dict_procesare["outlieri"]["detectie"]
 		actiune = dict_procesare["outlieri"]["actiune"]
 		df = tratare_outlieri(df, metoda, actiune)
 
-	# Completare valori lipsă
-	if "valori_lipsa" in dict_procesare:
+	if "valori_lipsa" in dict_procesare or df.isna().any().any():
 		df = completare_valori_lipsa(df, dict_procesare["valori_lipsa"])
 
-	# Conversie coloane binare
 	if "coloane_binare" in dict_procesare:
 		df = conversie_coloane_binare(df, dict_procesare["coloane_binare"])
 
-	# Procesare datetime
 	if "datetime" in dict_procesare:
 		df = aplicare_datetime(df, dict_procesare["datetime"])
 
-	# Salvăm tinta pentru split ulterior
 	tinta = dict_procesare["impartire"]["tinta"]
 	X = df.drop(columns=[tinta])
 	y = df[tinta]
 
-	# Encoding
 	if "encoding" in dict_procesare:
 		X = aplicare_encoding(X, dict_procesare["encoding"])
 
-	# Dezechilibru
 	if dict_procesare.get("dezechilibru") != "Niciuna":
 		X, y = aplicare_dezechilibru(X, y, dict_procesare["dezechilibru"])
 
-	# Scalare
 	if dict_procesare.get("scalare") != "Niciuna":
 		X = aplicare_scalare(X, dict_procesare["scalare"])
 
-	# Împărțire train/test
 	setari_split = dict_procesare["impartire"]
 	setari_split["tinta"] = tinta
 	impartire_train_test(X, y, setari_split)

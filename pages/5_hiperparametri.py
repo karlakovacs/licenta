@@ -12,7 +12,6 @@ st.title("Configurează hiperparametrii")
 modele_selectate = st.session_state.get("modele_selectate", [])
 if not modele_selectate:
 	st.warning("Selectează mai întâi modelele din pagina anterioară.")
-	# return
 else:
 	X_train = citire_date_temp("X_train")
 	y_train = citire_date_temp("y_train")

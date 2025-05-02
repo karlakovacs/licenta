@@ -1,3 +1,5 @@
+from xai.lime import explanation_plotly
+
 from .conversii import *
 
 
@@ -116,22 +118,35 @@ def pregatire_xai(xai: dict, format_pdf: bool = False) -> dict:
 				if isinstance(plot_obj, dict):
 					model_html["shap"][tip_plot] = {}
 					for idx, fig in plot_obj.items():
-						model_html["shap"][tip_plot][idx] = matplotlib_to_html(fig)
+						if fig is not None:
+							model_html["shap"][tip_plot][idx] = matplotlib_to_html(fig)
 				else:
-					model_html["shap"][tip_plot] = matplotlib_to_html(plot_obj)
+					if plot_obj is not None:
+						model_html["shap"][tip_plot] = matplotlib_to_html(plot_obj)
 
 		if "lime" in date and "explanations" in date["lime"]:
 			model_html["lime"] = {}
 			for idx, exp in date["lime"]["explanations"].items():
-				model_html["lime"][idx] = exp.as_html()
+				if exp is not None:
+					model_html["lime"][idx] = plotly_to_html(explanation_plotly(exp), format_pdf)
 
 		if "dice" in date and "counterfactuals" in date["dice"]:
 			model_html["dice"] = {}
 			for idx, instance in date["dice"]["counterfactuals"].items():
+				if instance is None:
+					continue
+
+				predictie = instance.get("predictie")
+				cf_df = instance.get("cf_df")
+				explicatii = instance.get("explicatii")
+
+				if predictie is None and cf_df is None and explicatii is None:
+					continue
+
 				model_html["dice"][idx] = {
-					"predictie": instance.get("predictie"),
-					"cf_df": dataframe_to_html(instance.get("cf_df"), format_pdf),
-					"diffs": dataframe_to_html(instance.get("diffs"), format_pdf),
+					"predictie": predictie,
+					"cf_df": dataframe_to_html(cf_df, format_pdf) if cf_df is not None else "",
+					"explicatii": explicatii_dice_to_text(explicatii),
 				}
 
 		xai_final[model] = model_html

@@ -327,8 +327,8 @@
 		<h5>Instanța {{ idx }} - Predicție: {{ cf.predictie }}</h5>
 		<h6>Counterfactuals:</h6>
 		{{ cf.cf_df | safe }}
-		<h6>Diferențe:</h6>
-		{{ cf.diffs | safe }}
+		<h6>Explicații:</h6>
+		{{ cf.explicatii | safe }}
 		{% endfor %}
 		{% endif %}
 

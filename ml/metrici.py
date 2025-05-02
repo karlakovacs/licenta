@@ -117,6 +117,7 @@ def plot_matrice_confuzie(y_true, y_pred):
 		yaxis=dict(tickmode="array", tickvals=[0, 1], ticktext=["Actual 0", "Actual 1"]),
 		width=500,
 		height=500,
+		template="plotly_white",
 	)
 
 	return fig
@@ -134,7 +135,7 @@ def plot_curba_roc(y_true, y_prob):
 			y=tpr,
 			mode="lines",
 			name=f"Curba ROC (AUC={roc_auc:.4f})",
-			line=dict(color="yellow", width=2),
+			line=dict(color="purple", width=3),
 		)
 	)
 
@@ -144,7 +145,7 @@ def plot_curba_roc(y_true, y_prob):
 			y=[0, 1],
 			mode="lines",
 			name="Clasificator aleatoriu",
-			line=dict(color="white", dash="dash", width=2),
+			line=dict(color="yellow", dash="dash", width=3),
 		)
 	)
 
@@ -155,6 +156,7 @@ def plot_curba_roc(y_true, y_prob):
 		legend=dict(x=0.7, y=0.1),
 		width=700,
 		height=500,
+		template="plotly_white",
 	)
 
 	return fig
@@ -172,7 +174,7 @@ def plot_curba_pr(y_true, y_prob):
 			y=precision,
 			mode="lines",
 			name=f"Curba PR (AP={avg_precision:.4f})",
-			line=dict(color="yellow", width=2),
+			line=dict(color="purple", width=3),
 			showlegend=True,
 		)
 	)
@@ -184,6 +186,7 @@ def plot_curba_pr(y_true, y_prob):
 		legend=dict(x=0.01, y=0.1),
 		width=700,
 		height=500,
+		template="plotly_white",
 	)
 
 	return fig

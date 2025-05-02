@@ -52,7 +52,7 @@ if not st.session_state.get("connected"):
 else:
 	with st.spinner("Logare..."):
 		user_info: dict = st.session_state["user_info"]
-		id_utilizator = login_utilizator(user_info)
+		id_google: str = user_info["id"]
 		st.session_state.authenticator = authenticator
-		st.session_state.id_utilizator = login_utilizator(user_info)
+		st.session_state.id_utilizator = login_utilizator(id_google)
 		st.switch_page("pages/0_acasa.py")

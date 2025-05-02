@@ -1,8 +1,15 @@
-import pandas as pd
 import streamlit as st
 
-from database import citire_dataset_supabase, creare_set_date, get_seturi_date_utilizator, incarcare_dataset_supabase
-from utils import citire_date_predefinite, descarcare_kaggle, nav_bar, salvare_date_temp
+from database import (
+	citire_dataset_supabase,
+	creare_set_date,
+	get_seturi_date_utilizator,
+	incarcare_dataset_supabase,
+	modificare_set_date,
+	verificare_denumire_set_date,
+)
+from dataset import citire_fisier_local, descarcare_kaggle
+from utils import citire_date_predefinite, nav_bar, salvare_date_temp
 
 
 st.set_page_config(layout="wide", page_title="Set de date", page_icon="💳")
@@ -10,122 +17,102 @@ st.title("Alegerea setului de date")
 nav_bar()
 
 st.session_state.setdefault("set_date", {})
+st.session_state.setdefault("set_existent", False)
 
-optiuni_sursa = ["Fișier local", "Link Kaggle", "Seturi de date predefinite", "Seturile mele"]
-sursa_dataset = st.segmented_control(
-	"Alege sursa pentru încărcarea setului de date", optiuni_sursa, selection_mode="single"
+df = None
+sursa = None
+denumire = None
+tinta = None
+
+sursa = st.selectbox(
+	"📂 Alege sursa setului de date", ["Fișier local", "Link Kaggle", "Seturi predefinite", "Seturile mele"]
 )
 
-df: pd.DataFrame = None
+if sursa == "Fișier local":
+	df = citire_fisier_local()
+	denumire = st.text_input("📄 Denumirea setului de date", key="denumire_local")
+	st.session_state.set_existent = False
 
-if sursa_dataset == "Fișier local":
-	fisier = st.file_uploader("Încarcă un fișier", type=["csv", "xlsx"])
-	if fisier is not None:
-		if fisier.name.endswith(".csv"):
-			df = pd.read_csv(fisier)
-		elif fisier.name.endswith(".xlsx"):
-			df = pd.read_excel(fisier)
-		else:
-			st.error("Format de fișier necunoscut!")
-
-		st.session_state.set_date["denumire"] = fisier.name.rsplit(".", 1)[0]
-		st.session_state.set_date["sursa"] = "local"
-
-elif sursa_dataset == "Link Kaggle":
-	link = st.text_input("Introdu linkul către fișierul de pe Kaggle")
+elif sursa == "Link Kaggle":
+	link = st.text_input("🔗 Link Kaggle")
 	if link:
-		df, denumire_dataset = descarcare_kaggle(link)
-		st.session_state.set_date["denumire"] = denumire_dataset
-		st.session_state.set_date["sursa"] = "kaggle"
+		df = descarcare_kaggle(link)
+	denumire = st.text_input("📄 Denumirea setului de date", key="denumire_kaggle")
+	st.session_state.set_existent = False
 
-elif sursa_dataset == "Seturi de date predefinite":
-	optiuni_dataset = ["MLG-ULB", "VESTA"]
-	set_date_predefinit = st.selectbox("Alege un set de date", optiuni_dataset, index=0)
-	df = citire_date_predefinite(set_date_predefinit)
-	st.session_state.set_date["denumire"] = set_date_predefinit
-	st.session_state.set_date["sursa"] = "predefinit"
+elif sursa == "Seturi predefinite":
+	set_predefinit = st.selectbox("📁 Alege un set predefinit", ["MLG-ULB", "VESTA"])
+	df = citire_date_predefinite(set_predefinit)
+	denumire = set_predefinit
+	st.session_state.set_existent = False
 
-elif sursa_dataset == "Seturile mele":
-	seturi_date = get_seturi_date_utilizator(st.session_state.id_utilizator)
-
-	df_seturi_date = pd.DataFrame(
-		[
-			{
-				"ID": s.id,
-				"Denumire": s.denumire,
-				"Sursa": s.sursa,
-				"Creat la": s.data_creare,
-				"URL": s.url,
-			}
-			for s in seturi_date
-		]
-	)
-
-	df_seturi_date["Selectează"] = False
-
-	df_vizual = df_seturi_date[["Selectează", "Denumire", "Sursa", "Creat la"]].copy()
-
-	edited_df = st.data_editor(
-		df_vizual,
-		use_container_width=False,
-		num_rows="fixed",
-		hide_index=True,
-		key="editor_seturi",
-		column_config={"Selectează": st.column_config.CheckboxColumn("Selectează")},
-		disabled=["Denumire", "Sursa", "Creat la"],
-	)
-
-	selectie = edited_df[edited_df["Selectează"] == True]
-
-	if len(selectie) > 1:
-		st.warning("Te rog selectează un singur set de date.")
-	elif len(selectie) == 1:
-		set_date_selectat = df_seturi_date[
-			(df_seturi_date["Denumire"] == selectie.iloc[0]["Denumire"])
-			& (df_seturi_date["Creat la"] == selectie.iloc[0]["Creat la"])
-		].iloc[0]
-
-		df = citire_dataset_supabase(set_date_selectat["URL"])
-		st.session_state.set_date["denumire"] = set_date_selectat["Denumire"]
-		st.session_state.set_date["sursa"] = "seturile_mele"
-		st.session_state.set_date["id"] = set_date_selectat["ID"]
+elif sursa == "Seturile mele":
+	seturi = get_seturi_date_utilizator(st.session_state.id_utilizator)
+	if not seturi:
+		st.info("Nu ai încărcat niciun set de date.")
+	else:
+		selectie = st.selectbox("📁 Alege un set de date existent", options=seturi, format_func=lambda s: s.denumire)
+		if selectie:
+			df = citire_dataset_supabase(selectie.url)
+			denumire = st.text_input(
+				"📄 Denumirea setului de date", value=selectie.denumire, key="denumire_seturile_mele"
+			)
+			sursa = selectie.sursa
+			st.session_state.set_existent = True
 
 if df is not None:
-	st.header(f"📑 {st.session_state.set_date['denumire']}")
+	st.header(f"📊 {denumire}")
 	st.dataframe(df.head())
 
-	memorie_totala_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
-	st.metric(label="**📂 Memorie ocupată de DataFrame**", value=f"{memorie_totala_mb:.2f} MB")
+	memorie = df.memory_usage(deep=True).sum() / (1024 * 1024)
+	st.metric("Dimensiune", f"{memorie:.2f} MB")
 
-	st.subheader("Selectează variabila țintă")
+	st.subheader("🎯 Selectează variabila țintă (binară)")
 	coloane_binare = [col for col in df.columns if df[col].nunique(dropna=False) == 2]
-	tinta = st.selectbox(
-		"Alege coloana țintă",
-		coloane_binare,
-		index=coloane_binare.index("isFraud") if st.session_state.set_date["sursa"] == "predefinit" else 0,
-	)
 
-	if df[tinta].nunique() > 2:
-		st.error("Variabila țintă trebuie să fie binară (doar 2 valori unice).")
-		st.session_state.set_date["tinta"] = None
+	if coloane_binare:
+		if sursa == "Seturi predefinite":
+			default_index = coloane_binare.index("isFraud")
+		elif sursa == "Seturile mele":
+			default_index = coloane_binare.index(selectie.tinta) if selectie.tinta in coloane_binare else 0
+		else:
+			default_index = 0
+
+		tinta = st.selectbox("Variabilă țintă", coloane_binare, index=default_index)
 	else:
-		st.success(f"Variabila țintă selectată: `{tinta}` (valori: {df[tinta].unique().tolist()})")
-		st.session_state.set_date["tinta"] = tinta
+		st.error("Nicio coloană binară disponibilă.")
+		tinta = None
 
-	if st.session_state.set_date["sursa"] not in ["predefinit", "seturile_mele"]:
-		cale_dataset = incarcare_dataset_supabase(
-			df, st.session_state.id_utilizator, st.session_state.set_date["denumire"]
-		)
-		# id_set_date = creare_set_date(
-		# 	st.session_state.id_utilizator,
-		# 	st.session_state.set_date["denumire"],
-		# 	st.session_state.set_date["sursa"],
-		# 	cale_dataset,
-		# )
-		# st.session_state.set_date["id"] = id_set_date
+	if st.button("Confirmă selecția"):
+		if tinta is None:
+			st.error("Selectează o variabilă țintă validă.")
+		elif not denumire:
+			st.error("Introdu denumirea setului de date.")
+		elif not st.session_state.set_existent and verificare_denumire_set_date(
+			st.session_state.id_utilizator, denumire
+		):
+			st.error("Un set de date cu această denumire există deja. Te rugăm să alegi alt nume.")
+		else:
+			st.session_state.set_date = {
+				"denumire": denumire,
+				"sursa": sursa,
+				"tinta": tinta,
+			}
 
-		salvare_date_temp(df, st.session_state.set_date["denumire"])
-		st.success("Datele au fost salvate.")
+			if not st.session_state.set_existent and sursa != "Seturi predefinite":
+				cale_dataset = incarcare_dataset_supabase(df, st.session_state.id_utilizator, denumire)
+				st.toast("Setul de date a fost încărcat în baza de date", icon="✅")
+				id_set_date = creare_set_date(st.session_state.id_utilizator, denumire, sursa, cale_dataset, tinta)
+			elif st.session_state.set_existent:
+				if selectie.denumire != denumire or selectie.tinta != tinta:
+					rezultat, mesaj = modificare_set_date(
+						st.session_state.id_utilizator, selectie.id, denumire=denumire, tinta=tinta
+					)
+					st.toast(mesaj, icon="✅" if rezultat else "❌")
+
+			if sursa != "Seturi predefinite":
+				salvare_date_temp(df, denumire)
+			st.toast("Setul de date este gata de utilizare", icon="✅")
 
 else:
-	st.warning("Setul de date nu a fost încărcat sau este invalid.")
+	st.warning("Niciun set de date încărcat.")

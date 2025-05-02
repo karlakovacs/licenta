@@ -26,7 +26,7 @@ st.session_state.setdefault("eda", {})
 
 df: pd.DataFrame = None
 
-if set_date["sursa"] != "predefinit":
+if set_date["sursa"] != "Seturi predefinite":
 	df = citire_date_temp(set_date["denumire"])
 else:
 	df = citire_date_predefinite(set_date["denumire"])
