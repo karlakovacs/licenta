@@ -16,6 +16,6 @@ def citire_date_temp(nume_dataset: str) -> pd.DataFrame | pd.Series:
 
 
 def salvare_date_temp(df: pd.DataFrame | pd.Series, nume_dataset: str) -> None:
-	temp_path = tempfile.gettempdir() + "/" + nume_dataset  # + ".pkl"
+	temp_path = tempfile.gettempdir() + "/" + nume_dataset + ".pkl"
 	with open(temp_path, "wb") as f:
 		pickle.dump(df, f)
