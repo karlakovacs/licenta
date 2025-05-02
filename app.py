@@ -45,8 +45,6 @@ if not st.session_state.get("connected"):
 		- Generarea de rapoarte în format interactiv (HTML) sau clasic (PDF).
 		"""
 	)
-
-	st.markdown('<div class="login-box">', unsafe_allow_html=True)
 	authenticator.login()
 
 else:
