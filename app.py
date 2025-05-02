@@ -11,7 +11,7 @@ from database import login_utilizator
 
 st.set_page_config(page_title="Autentificare", page_icon="🔐", layout="centered")
 
-temp_credentials_path = tempfile.gettempdir() + "/" + "google_credentials"  # + ".json"
+temp_credentials_path = tempfile.gettempdir() + "/" + "google_credentials" + ".json"
 json_data = json.loads(st.secrets["google"]["GOOGLE_CREDENTIALS"])
 with open(temp_credentials_path, "w") as f:
 	json.dump(json_data, f)
