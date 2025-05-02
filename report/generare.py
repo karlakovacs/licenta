@@ -43,7 +43,7 @@ def generare_raport(date_raport: dict, format_pdf: bool = False, fisier_css: str
 		report_bytes: bytes = pdfkit.from_string(
 			cod_raport,
 			False,
-			configuration=pdfkit.configuration(wkhtmltopdf="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"),
+			# configuration=pdfkit.configuration(wkhtmltopdf="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"),
 			css=fisier_css,
 		)
 	return report_bytes
