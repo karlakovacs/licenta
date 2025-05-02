@@ -1,32 +1,13 @@
 from keras.api.models import Sequential  # necesar pentru functionarea keras  # noqa: I001
 
-import json
-import tempfile
-
 import streamlit as st
-from streamlit_google_auth import Authenticate
 
 from database import login_utilizator
 
 
 st.set_page_config(page_title="Autentificare", page_icon="🔐", layout="centered")
 
-temp_credentials_path = tempfile.gettempdir() + "/" + "google_credentials" + ".json"
-json_data = json.loads(st.secrets["google"]["GOOGLE_CREDENTIALS"])
-with open(temp_credentials_path, "w") as f:
-	json.dump(json_data, f)
-
-authenticator = Authenticate(
-	secret_credentials_path=temp_credentials_path,
-	cookie_name=st.secrets["google"]["COOKIE_NAME"],
-	cookie_key=st.secrets["google"]["COOKIE_KEY"],
-	redirect_uri=st.secrets["google"]["REDIRECT_URI"],
-)
-# os.remove(temp_credentials_path)
-
-authenticator.check_authentification()
-
-if not st.session_state.get("connected"):
+if not st.experimental_user.is_logged_in:
 	st.markdown(
 		"<h1 style='font-size: 3em; font-weight: bold; text-align: center;'>Bun venit!</h1>",
 		unsafe_allow_html=True,
@@ -45,12 +26,11 @@ if not st.session_state.get("connected"):
 		- Generarea de rapoarte în format interactiv (HTML) sau clasic (PDF).
 		"""
 	)
-	authenticator.login()
+	if st.button("Autentificare cu Google", type="primary"):
+		st.login("google")
 
 else:
 	with st.spinner("Logare..."):
-		user_info: dict = st.session_state["user_info"]
-		id_google: str = user_info["id"]
-		st.session_state.authenticator = authenticator
+		id_google: str = st.experimental_user.sub
 		st.session_state.id_utilizator = login_utilizator(id_google)
 		st.switch_page("pages/0_acasa.py")

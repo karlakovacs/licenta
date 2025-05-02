@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-from streamlit_google_auth import Authenticate
 from supabase import create_client
 
 from database import (
@@ -19,16 +18,15 @@ nav_bar()
 st.title("Datele mele")
 
 st.header("Profilul meu")
-user_info: dict = st.session_state.user_info
-authenticator: Authenticate = st.session_state.authenticator
 st.markdown(
-	f'<img src="{user_info.get("picture")}" width="100" style="border-radius: 50%;">',
+	f'<img src="{st.experimental_user.picture}" width="100" style="border-radius: 50%;">',
 	unsafe_allow_html=True,
 )
-st.write(user_info.get("name"))
-st.write(user_info.get("email"))
+st.write(st.experimental_user.name)
+st.write(st.experimental_user.email)
 if st.button("Deconectare", type="primary"):
-	authenticator.logout()
+	st.logout()
+	st.session_state.clear()
 	st.switch_page("app.py")
 
 SUPABASE_URL = st.secrets.supabase.SUPABASE_URL
