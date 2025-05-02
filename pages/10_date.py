@@ -85,5 +85,5 @@ else:
 					supabase.storage.from_(BUCKET_RAPOARTE).remove(f"{folder_prefix}{file['name']}")
 
 				stergere_raport(id_utilizator, raport.id)
-				st.success("Raportul a fost șters complet.")
+				st.success("Raportul a fost șters.")
 				st.rerun()

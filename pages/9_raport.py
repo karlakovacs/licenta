@@ -26,7 +26,7 @@ if "rapoarte_salvate" not in st.session_state:
 		path = incarcare_rapoarte_supabase(st.session_state.id_utilizator, html_bytes, pdf_bytes)
 		creare_raport(st.session_state.id_utilizator, path)
 		st.session_state.html_bytes = html_bytes
-		st.session_state.html_bytes = pdf_bytes
+		st.session_state.pdf_bytes = pdf_bytes
 		st.session_state.rapoarte_salvate = True
 
 if "rapoarte_salvate" in st.session_state:

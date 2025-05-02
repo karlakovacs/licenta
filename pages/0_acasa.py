@@ -10,6 +10,9 @@ nav_bar()
 st.title("Acasă")
 
 st.write(
-	"Bun venit în cadrul aplicației dedicate clasificării binare!"
-	"Puteți lucra folosind seturi proprii de date sau date referitoare la detectarea fraudei bancare."
+	"""
+	Bun venit în cadrul aplicației dedicate clasificării binare!
+	
+	Puteți lucra folosind seturi proprii de date sau date referitoare la detectarea fraudei bancare.
+	"""
 )

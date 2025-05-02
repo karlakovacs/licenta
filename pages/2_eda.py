@@ -75,7 +75,7 @@ def tab_pie_charts(X: pd.DataFrame):
 			st.subheader(f"Distribuția variabilei {col}")
 			st.plotly_chart(fig, use_container_width=False)
 	else:
-		st.warning("Nu exista coloane categoriale in setul de date.")
+		st.info("Nu există coloane categoriale în setul de date.")
 
 
 def tab_histograme(X):
@@ -92,7 +92,7 @@ def tab_histograme(X):
 			st.subheader(f"Distribuția variabilei {col}")
 			st.plotly_chart(fig, use_container_width=False)
 	else:
-		st.warning("Nu exista coloane numerice in setul de date.")
+		st.info("Nu există coloane numerice în setul de date.")
 
 
 def tab_box_plots(X):
@@ -108,7 +108,7 @@ def tab_box_plots(X):
 			st.subheader(f"Box plot pentru variabila {col}")
 			st.plotly_chart(fig, use_container_width=False)
 	else:
-		st.warning("Nu exista coloane numerice in setul de date.")
+		st.info("Nu există coloane numerice în setul de date.")
 
 
 def tab_matrice_corelatie(df):
