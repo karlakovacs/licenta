@@ -81,7 +81,7 @@ if denumire_model and tehnica_xai:
 				with st.spinner("Calculăm valorile SHAP..."):
 					shap_data["values"] = calculate_shap_values(model, X_train, X_test)
 
-			if shap_data["values"] is not None:
+			if shap_data["values"] != "Error":
 				st.subheader("📊 Bar Plot")
 				if "bar" not in shap_data["plots"]:
 					shap_data["plots"]["bar"] = bar_plot(shap_data["values"])

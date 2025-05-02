@@ -298,51 +298,55 @@ st.title("Procesarea datelor")
 set_date: dict = st.session_state.get("set_date", None)
 df: pd.DataFrame = None
 
-if set_date["sursa"] != "Seturi predefinite":
-	df = citire_date_temp(set_date["denumire"])
-else:
-	df = citire_date_predefinite(set_date["denumire"])
-
-if df is None:
-	st.error("Setul de date nu a putut fi încărcat")
+if set_date is None:
+	st.warning("Alegeți un set de date mai întâi.")
 
 else:
-	st.header(set_date["denumire"])
-	st.dataframe(df.head())
+	if set_date["sursa"] != "Seturi predefinite":
+		df = citire_date_temp(set_date["denumire"])
+	else:
+		df = citire_date_predefinite(set_date["denumire"])
 
-	with st.expander("🧹 Eliminarea coloanelor inutile"):
-		ui_eliminare_coloane(df)
+	if df is None:
+		st.error("Setul de date nu a putut fi încărcat")
 
-	with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
-		ui_eliminare_randuri(df)
+	else:
+		st.header(set_date["denumire"])
+		st.dataframe(df.head())
 
-	with st.expander("🔬 Detectarea și tratarea outlierilor"):
-		ui_outlieri(df)
+		with st.expander("🧹 Eliminarea coloanelor inutile"):
+			ui_eliminare_coloane(df)
 
-	with st.expander("🧩 Înlocuirea valorilor lipsă"):
-		ui_valori_lipsa_coloane(df)
+		with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
+			ui_eliminare_randuri(df)
 
-	with st.expander("🟢 Procesarea coloanelor binare"):
-		ui_coloane_binare(df)
+		with st.expander("🔬 Detectarea și tratarea outlierilor"):
+			ui_outlieri(df)
 
-	with st.expander("📅 Procesarea coloanelor datetime"):
-		ui_datetime(df)
+		with st.expander("🧩 Înlocuirea valorilor lipsă"):
+			ui_valori_lipsa_coloane(df)
 
-	with st.expander("🏷️ Encoding pentru coloanele categoriale"):
-		ui_encoding(df)
+		with st.expander("🟢 Procesarea coloanelor binare"):
+			ui_coloane_binare(df)
 
-	with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
-		ui_dezechilibru()
+		with st.expander("📅 Procesarea coloanelor datetime"):
+			ui_datetime(df)
 
-	with st.expander("📏 Scalarea datelor"):
-		ui_scalare()
+		with st.expander("🏷️ Encoding pentru coloanele categoriale"):
+			ui_encoding(df)
 
-	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
-		ui_impartire()
+		with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
+			ui_dezechilibru()
 
-	if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
-		creare_dict_procesare()
-		# st.json(st.session_state["procesare"])
-		procesare_dataset(df, st.session_state["procesare"])
-		st.session_state.procesare_realizata = True
-		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
+		with st.expander("📏 Scalarea datelor"):
+			ui_scalare()
+
+		with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
+			ui_impartire()
+
+		if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
+			creare_dict_procesare()
+			# st.json(st.session_state["procesare"])
+			procesare_dataset(df, st.session_state["procesare"])
+			st.session_state.procesare_realizata = True
+			st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
