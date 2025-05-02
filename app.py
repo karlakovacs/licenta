@@ -20,7 +20,7 @@ authenticator = Authenticate(
 	secret_credentials_path=temp_credentials_path,
 	cookie_name=st.secrets["google"]["COOKIE_NAME"],
 	cookie_key=st.secrets["google"]["COOKIE_KEY"],
-	redirect_uri="http://localhost:8501",  # https://your-app-name.streamlit.app"
+	redirect_uri=st.secrets["google"]["REDIRECT_URI"],
 )
 # os.remove(temp_credentials_path)
 
