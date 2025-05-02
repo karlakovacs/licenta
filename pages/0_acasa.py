@@ -7,6 +7,8 @@ st.set_page_config(layout="wide", page_title="Acasă", page_icon="🏠")
 
 nav_bar()
 
+st.session_state.clear()
+
 st.title("Acasă")
 
 st.write(

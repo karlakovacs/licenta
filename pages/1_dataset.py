@@ -73,7 +73,7 @@ if df is not None:
 	if coloane_binare:
 		if sursa == "Seturi predefinite":
 			default_index = coloane_binare.index("isFraud")
-		elif sursa == "Seturile mele":
+		elif st.session_state.set_existent:
 			default_index = coloane_binare.index(selectie.tinta) if selectie.tinta in coloane_binare else 0
 		else:
 			default_index = 0
