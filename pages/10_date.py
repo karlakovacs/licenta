@@ -19,15 +19,14 @@ st.title("Datele mele")
 
 st.header("Profilul meu")
 st.markdown(
-	f'<img src="{st.experimental_user.picture}" width="100" style="border-radius: 50%;">',
+	f'<img src="{st.user.picture}" width="100" style="border-radius: 50%;">',
 	unsafe_allow_html=True,
 )
-st.write(st.experimental_user.name)
-st.write(st.experimental_user.email)
+st.write(st.user.name)
+st.write(st.user.email)
 if st.button("Deconectare", type="primary"):
-	st.logout()
 	st.session_state.clear()
-	st.switch_page("app.py")
+	st.logout()
 
 SUPABASE_URL = st.secrets.supabase.SUPABASE_URL
 SUPABASE_KEY = st.secrets.supabase.SUPABASE_KEY
