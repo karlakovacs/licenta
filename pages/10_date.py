@@ -64,19 +64,20 @@ if not rapoarte:
 	st.info("Nu ai generat niciun raport.")
 else:
 	for raport in rapoarte:
-		base_path = raport.url
-		html_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_RAPOARTE}/{base_path}/raport_{base_path.split('/')[-1]}.html"
-		pdf_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_RAPOARTE}/{base_path}/raport_{base_path.split('/')[-1]}.pdf"
+		cale_raport = raport.url
+		denumire_fisier = f"raport_{cale_raport.split('/')[-1]}"
+		html_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_RAPOARTE}/{cale_raport}/{denumire_fisier}.html?download={denumire_fisier}.html"
+		pdf_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_RAPOARTE}/{cale_raport}/{denumire_fisier}.pdf"
 
 		with st.expander(f"📝 Raport generat pe {raport.data_generare.strftime('%Y-%m-%d %H:%M')}"):
 			st.markdown(f"[🌐 Descarcă HTML]({html_url})", unsafe_allow_html=True)
-			st.markdown(f"[📄 Descarcă PDF]({pdf_url})", unsafe_allow_html=True)
+			st.markdown(f"[📄 Vizualizează PDF]({pdf_url})", unsafe_allow_html=True)
 
 			if st.button(f"🗑️ Ștergere", type="primary", key=f"stergere_raport_{raport.id}"):
-				folder_prefix = base_path + "/"
-				files = supabase.storage.from_(BUCKET_RAPOARTE).list(folder_prefix)
+				prefix_folder = cale_raport + "/"
+				files = supabase.storage.from_(BUCKET_RAPOARTE).list(prefix_folder)
 				for file in files:
-					supabase.storage.from_(BUCKET_RAPOARTE).remove(f"{folder_prefix}{file['name']}")
+					supabase.storage.from_(BUCKET_RAPOARTE).remove(f"{prefix_folder}{file['name']}")
 
 				stergere_raport(id_utilizator, raport.id)
 				st.success("Raportul a fost șters.")
