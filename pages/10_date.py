@@ -55,9 +55,6 @@ else:
 				st.success(f"Setul `{set_date.denumire}` a fost șters.")
 				st.rerun()
 
-			# if st.button("📥 Descarcă", type="primary", key=f"descarcare_set_{set_data.id}"):
-			# 	pass
-
 st.divider()
 
 st.header("📄 Rapoartele mele")
@@ -72,8 +69,9 @@ else:
 		pdf_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_RAPOARTE}/{base_path}/raport_{base_path.split('/')[-1]}.pdf"
 
 		with st.expander(f"📝 Raport generat pe {raport.data_generare.strftime('%Y-%m-%d %H:%M')}"):
-			st.markdown(f"[🌐 Descarcă HTML]({html_url})", unsafe_allow_html=True)
-			st.markdown(f"[📄 Descarcă PDF]({pdf_url})", unsafe_allow_html=True)
+			preview_url = f"https://htmlpreview.github.io/?{html_url}"
+			st.markdown(f"[🔍 Vizualizează HTML]({preview_url})", unsafe_allow_html=True)
+			st.markdown(f"[📄 Vizualizează PDF]({pdf_url})", unsafe_allow_html=True)
 
 			if st.button(f"🗑️ Ștergere", type="primary", key=f"stergere_raport_{raport.id}"):
 				folder_prefix = base_path + "/"
