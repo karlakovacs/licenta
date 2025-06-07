@@ -3,12 +3,13 @@ import streamlit as st
 from database import login_email, login_google, sign_up_email
 
 
-st.set_page_config(page_title="Autentificare", page_icon="🔐", layout="wide")
+st.set_page_config(page_title="Autentificare", page_icon="assets/logo.png", layout="wide")
 
 if not st.user.is_logged_in:
 	col1, col2 = st.columns([2, 1])
 
 	with col1:
+		st.image("assets/logo.png", width=100)
 		st.markdown(
 			"<h1 style='font-size: 3em; font-weight: bold; text-align: center;'>Bun venit!</h1>",
 			unsafe_allow_html=True,
@@ -42,7 +43,6 @@ if not st.user.is_logged_in:
 				success, msg, id_utilizator = login_email(email, parola)
 				if success:
 					st.success(msg)
-					# st.rerun()
 					st.session_state.id_utilizator = id_utilizator
 					st.switch_page("pages/0_acasa.py")
 				else:
