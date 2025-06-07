@@ -26,7 +26,7 @@ class Utilizator(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_google = Column(String, unique=True, nullable=True)
 	id_supabase = Column(String, unique=True, nullable=True)
-	email = Column(String, unique=True, nullable=False)
+	email = Column(String, unique=True, nullable=True)
 	nume = Column(String, nullable=True)
 	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
 	data_ultima_conectare = Column(DateTime, default=datetime.now(timezone.utc))

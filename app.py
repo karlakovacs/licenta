@@ -1,6 +1,5 @@
-# from tensorflow.python.keras.models import Sequential  # necesar pentru functionarea keras  # noqa: I001
+from tensorflow.python.keras.models import Sequential  # necesar pentru functionarea keras  # noqa: I001
 import streamlit as st
-
 from database import login_email, login_google, sign_up_email
 
 
