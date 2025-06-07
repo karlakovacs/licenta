@@ -98,9 +98,9 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 			return model
 
 		case "Multilayer Perceptron":
-			from keras.api.layers import BatchNormalization, Dense, Dropout, Input
-			from keras.api.metrics import AUC
-			from keras.api.models import Sequential
+			from tensorflow.python.keras.layers import BatchNormalization, Dense, Dropout, Input
+			from tensorflow.python.keras.metrics import AUC
+			from tensorflow.python.keras.models import Sequential
 
 			if input_dim is None:
 				raise ValueError("Parametrul `input_dim` este necesar pentru a construi modelul MLP.")
