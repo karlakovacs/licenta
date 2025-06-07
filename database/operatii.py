@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import streamlit as st
+from supabase import create_client
 
 from database.modele import Raport, SetDate, Utilizator
 
@@ -21,7 +22,70 @@ def get_session():
 	return Session()
 
 
-def login_utilizator(id_google: str) -> int:
+def get_client():
+	SUPABASE_URL = st.secrets.supabase.SUPABASE_URL
+	SUPABASE_KEY = st.secrets.supabase.SUPABASE_KEY
+	supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+	return supabase
+
+
+def sign_up_email(nume, email, parola, confirmare):
+	db = get_session()
+	supabase = get_client()
+	email = email.strip()
+
+	if parola != confirmare:
+		return False, "Parolele nu coincid."
+
+	try:
+		result = supabase.auth.sign_up({"email": email, "password": parola})
+		user = result.user
+
+		if user:
+			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
+			if not utilizator:
+				utilizator = Utilizator(
+					id_supabase=user.id, email=email, nume=nume, data_creare=datetime.now(timezone.utc)
+				)
+				db.add(utilizator)
+				db.commit()
+
+			return True, "Cont creat. Verifică emailul."
+		else:
+			return False, "Eroare la înregistrare."
+
+	except Exception as e:
+		return False, f"Eroare: {e}"
+
+
+def login_email(email, parola):
+	db = get_session()
+	supabase = get_client()
+	email = email.strip()
+
+	try:
+		result = supabase.auth.sign_in_with_password({"email": email, "password": parola})
+		user = result.user
+
+		if user:
+			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
+			if not utilizator:
+				utilizator = Utilizator(id_supabase=user.id, email=user.email, data_creare=datetime.now(timezone.utc))
+				db.add(utilizator)
+
+			utilizator.data_ultima_conectare = datetime.now(timezone.utc)
+			db.commit()
+			db.refresh(utilizator)
+			return True, f"Salut, {utilizator.nume}", utilizator.id
+
+		else:
+			return False, "Autentificare eșuată."
+
+	except Exception as e:
+		return False, f"Eroare: {e}"
+
+
+def login_google(id_google: str) -> int:
 	db = get_session()
 	utilizator = db.query(Utilizator).filter(Utilizator.id_google == id_google).first()
 	if not utilizator:

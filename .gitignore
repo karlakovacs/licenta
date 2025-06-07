@@ -9,3 +9,5 @@ catboost_info/
 pyproject.toml
 
 db_init.py
+
+testing/
