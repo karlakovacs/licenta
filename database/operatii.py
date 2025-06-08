@@ -29,67 +29,67 @@ def get_client():
 	return supabase
 
 
-def sign_up_email(nume, email, parola, confirmare):
+# def sign_up_email(nume, email, parola, confirmare):
+# 	db = get_session()
+# 	supabase = get_client()
+# 	email = email.strip()
+
+# 	if parola != confirmare:
+# 		return False, "Parolele nu coincid."
+
+# 	try:
+# 		result = supabase.auth.sign_up({"email": email, "password": parola})
+# 		user = result.user
+
+# 		if user:
+# 			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
+# 			if not utilizator:
+# 				utilizator = Utilizator(
+# 					id_supabase=user.id, email=email, nume=nume, data_creare=datetime.now(timezone.utc)
+# 				)
+# 				db.add(utilizator)
+# 				db.commit()
+
+# 			return True, "Cont creat. Verifică emailul."
+# 		else:
+# 			return False, "Eroare la înregistrare."
+
+# 	except Exception as e:
+# 		return False, f"Eroare: {e}"
+
+
+# def login_email(email, parola):
+# 	db = get_session()
+# 	supabase = get_client()
+# 	email = email.strip()
+
+# 	try:
+# 		result = supabase.auth.sign_in_with_password({"email": email, "password": parola})
+# 		user = result.user
+
+# 		if user:
+# 			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
+# 			if not utilizator:
+# 				utilizator = Utilizator(id_supabase=user.id, email=user.email, data_creare=datetime.now(timezone.utc))
+# 				db.add(utilizator)
+
+# 			utilizator.data_ultima_conectare = datetime.now(timezone.utc)
+# 			db.commit()
+# 			db.refresh(utilizator)
+# 			return True, f"Salut, {utilizator.nume}", utilizator.id
+
+# 		else:
+# 			return False, "Autentificare eșuată."
+
+# 	except Exception as e:
+# 		return False, f"Eroare: {e}"
+
+
+def login(id_auth0: str) -> int:
 	db = get_session()
-	supabase = get_client()
-	email = email.strip()
-
-	if parola != confirmare:
-		return False, "Parolele nu coincid."
-
-	try:
-		result = supabase.auth.sign_up({"email": email, "password": parola})
-		user = result.user
-
-		if user:
-			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
-			if not utilizator:
-				utilizator = Utilizator(
-					id_supabase=user.id, email=email, nume=nume, data_creare=datetime.now(timezone.utc)
-				)
-				db.add(utilizator)
-				db.commit()
-
-			return True, "Cont creat. Verifică emailul."
-		else:
-			return False, "Eroare la înregistrare."
-
-	except Exception as e:
-		return False, f"Eroare: {e}"
-
-
-def login_email(email, parola):
-	db = get_session()
-	supabase = get_client()
-	email = email.strip()
-
-	try:
-		result = supabase.auth.sign_in_with_password({"email": email, "password": parola})
-		user = result.user
-
-		if user:
-			utilizator = db.query(Utilizator).filter_by(id_supabase=user.id).first()
-			if not utilizator:
-				utilizator = Utilizator(id_supabase=user.id, email=user.email, data_creare=datetime.now(timezone.utc))
-				db.add(utilizator)
-
-			utilizator.data_ultima_conectare = datetime.now(timezone.utc)
-			db.commit()
-			db.refresh(utilizator)
-			return True, f"Salut, {utilizator.nume}", utilizator.id
-
-		else:
-			return False, "Autentificare eșuată."
-
-	except Exception as e:
-		return False, f"Eroare: {e}"
-
-
-def login_google(id_google: str) -> int:
-	db = get_session()
-	utilizator = db.query(Utilizator).filter(Utilizator.id_google == id_google).first()
+	utilizator = db.query(Utilizator).filter(Utilizator.id_auth0 == id_auth0).first()
 	if not utilizator:
-		utilizator = Utilizator(id_google=id_google)
+		utilizator = Utilizator(id_auth0=id_auth0)
 		db.add(utilizator)
 	else:
 		utilizator.data_ultima_conectare = datetime.now(timezone.utc)
@@ -99,10 +99,10 @@ def login_google(id_google: str) -> int:
 	return utilizator.id
 
 
-def get_utilizator(id_google):
-	db = get_session()
-	utilizator = db.query(Utilizator).filter(Utilizator.id_google == id_google).first()
-	return utilizator.id
+# def get_utilizator(id_auth0: str):
+# 	db = get_session()
+# 	utilizator = db.query(Utilizator).filter(Utilizator.id_auth0 == id_auth0).first()
+# 	return utilizator.id
 
 
 def creare_set_date(id_utilizator: int, denumire: str, sursa: str, url: str, tinta: str) -> SetDate:
