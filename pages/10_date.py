@@ -34,7 +34,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 BUCKET_RAPOARTE = "reports"
 BUCKET_DATASETS = "datasets"
-id_utilizator = st.session_state.id_utilizator
+id_utilizator = st.session_state.get("id_utilizator", "")
 
 st.header("📊 Seturile mele de date")
 seturi_date = get_seturi_date_utilizator(id_utilizator)
