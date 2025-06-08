@@ -22,7 +22,6 @@ st.markdown(
 	f'<img src="{st.user.picture}" width="100" style="border-radius: 50%;">',
 	unsafe_allow_html=True,
 )
-st.write(st.user.name)
 st.write(st.user.email)
 if st.button("Deconectare", type="primary"):
 	st.session_state.clear()
