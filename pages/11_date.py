@@ -4,6 +4,7 @@ from supabase import create_client
 
 from database import (
 	citire_sample_dataset_supabase,
+	get_id_utilizator,
 	get_rapoarte_utilizator,
 	get_seturi_date_utilizator,
 	stergere_raport,
@@ -12,9 +13,10 @@ from database import (
 from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Datele mele", page_icon="📑")
+st.set_page_config(layout="wide", page_title="FlagML | Datele mele", page_icon="assets/logo.png")
 nav_bar()
 
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
 st.title("Datele mele")
 
 st.header("Profilul meu")
@@ -34,6 +36,8 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 BUCKET_RAPOARTE = "reports"
 BUCKET_DATASETS = "datasets"
 id_utilizator = st.session_state.get("id_utilizator", "")
+
+st.divider()
 
 st.header("📊 Seturile mele de date")
 seturi_date = get_seturi_date_utilizator(id_utilizator)

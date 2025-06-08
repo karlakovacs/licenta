@@ -3,9 +3,9 @@ from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, OneHotEncoder, RobustScaler, StandardScaler
+import streamlit as st
 
-from database import *
-from utils import *
+from dataset import salvare_date_temp
 
 
 def eliminare_coloane(df: pd.DataFrame, coloane: list) -> pd.DataFrame:
@@ -69,7 +69,8 @@ def completare_valori_lipsa(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 
 def conversie_coloane_binare(df: pd.DataFrame, conversii: dict) -> pd.DataFrame:
 	for col, true_val in conversii.items():
-		df[col] = df[col] == true_val
+		if col in df.columns:
+			df[col] = df[col] == true_val
 	return df
 
 
@@ -94,37 +95,63 @@ def aplicare_datetime(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 	return df
 
 
-def aplicare_encoding(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
-	max_categorii = setari.get("max_categorii", 10)
+def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
+	encoders = {"label_encoders": {}, "one_hot_encoder": None, "coloane_one_hot": []}
 	coloane_label = setari.get("coloane_label", [])
-
-	df = df.copy()
+	max_categorii = setari.get("max_categorii", 10)
 
 	for col in coloane_label:
-		encoder = LabelEncoder()
-		df[col] = encoder.fit_transform(df[col].astype(str))
+		le = LabelEncoder()
+		le.fit(df[col].astype(str))
+		encoders["label_encoders"][col] = le
 
 	potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
 	coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
+	encoders["coloane_one_hot"] = coloane_one_hot
 
 	if coloane_one_hot:
-		encoder = OneHotEncoder(
-			drop="first",
-			max_categories=max_categorii,
-			sparse_output=False,
-			handle_unknown="ignore"
+		one_hot_encoder = OneHotEncoder(
+			drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
 		)
-		encoded = encoder.fit_transform(df[coloane_one_hot].astype(str))
-		
+		one_hot_encoder.fit(df[coloane_one_hot].astype(str))
+		encoders["one_hot_encoder"] = one_hot_encoder
+
+	return encoders
+
+
+def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:
+	df = df.copy()
+
+	for col, le in encoders["label_encoders"].items():
+		if col in df.columns:
+			df[col] = le.transform(df[col].astype(str))
+
+	coloane_one_hot = encoders.get("coloane_one_hot", [])
+	one_hot_encoder: OneHotEncoder = encoders.get("one_hot_encoder")
+
+	if one_hot_encoder and coloane_one_hot:
+		df_to_encode = (
+			df[coloane_one_hot].astype(str)
+			if all(col in df.columns for col in coloane_one_hot)
+			else df.reindex(columns=coloane_one_hot, fill_value="")
+		)
+		encoded = one_hot_encoder.transform(df_to_encode)
+
 		encoded_df = pd.DataFrame(
-			encoded.astype(bool),
-			columns=encoder.get_feature_names_out(coloane_one_hot),
-			index=df.index
+			encoded.astype(bool), columns=one_hot_encoder.get_feature_names_out(coloane_one_hot), index=df.index
 		)
 
-		df = df.drop(columns=coloane_one_hot)
+		df = df.drop(columns=[col for col in coloane_one_hot if col in df.columns])
 		df = pd.concat([df, encoded_df], axis=1)
 
+	return df
+
+
+def aplicare_encoding(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
+	df = df.copy()
+	if st.session_state.get("encoders", None) is None:
+		st.session_state.encoders = fit_encoders(df, setari)
+	df = folosire_encoding(df, st.session_state.encoders)
 	return df
 
 
@@ -140,7 +167,7 @@ def aplicare_dezechilibru(X: pd.DataFrame, y: pd.Series, strategie: str) -> pd.D
 	return sampler.fit_resample(X, y)
 
 
-def aplicare_scalare(X: pd.DataFrame, metoda: str):
+def fit_scaler(X: pd.DataFrame, metoda: str):
 	scaler = None
 	if metoda == "StandardScaler":
 		scaler = StandardScaler()
@@ -150,11 +177,20 @@ def aplicare_scalare(X: pd.DataFrame, metoda: str):
 		scaler = RobustScaler()
 
 	if scaler:
-		coloane_scalare = [
-			col for col in X.select_dtypes(include=["number"]).columns
-			if X[col].nunique() > 2
-		]
+		coloane_scalare = [col for col in X.select_dtypes(include=["number"]).columns if X[col].nunique() > 15]
 		X[coloane_scalare] = scaler.fit_transform(X[coloane_scalare])
+		st.session_state.scaler = {"scaler": scaler, "coloane_scalare": coloane_scalare}
+
+
+def aplicare_scalare(X: pd.DataFrame, metoda: str):
+	if "scaler" not in st.session_state:
+		fit_scaler(X, metoda)
+
+	scaler = st.session_state.scaler.get("scaler")
+	coloane_scalare = st.session_state.scaler.get("coloane_scalare")
+
+	X = X.copy()
+	X[coloane_scalare] = scaler.transform(X[coloane_scalare])
 	return X
 
 
@@ -218,3 +254,22 @@ def procesare_dataset(df: pd.DataFrame, dict_procesare: dict):
 	setari_split = dict_procesare["impartire"]
 	setari_split["tinta"] = tinta
 	impartire_train_test(X, y, setari_split)
+
+
+def procesare_instanta(instanta: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:
+	if dict_procesare.get("coloane_eliminate"):
+		instanta = eliminare_coloane(instanta, dict_procesare["coloane_eliminate"])
+
+	if "coloane_binare" in dict_procesare:
+		instanta = conversie_coloane_binare(instanta, dict_procesare["coloane_binare"])
+
+	if "datetime" in dict_procesare:
+		instanta = aplicare_datetime(instanta, dict_procesare["datetime"])
+
+	if "encoding" in dict_procesare:
+		instanta = aplicare_encoding(instanta, dict_procesare["encoding"])
+
+	if dict_procesare.get("scalare") != "Niciuna":
+		instanta = aplicare_scalare(instanta, dict_procesare["scalare"])
+
+	return instanta

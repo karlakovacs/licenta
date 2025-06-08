@@ -5,7 +5,7 @@ from report import generare_raport
 from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Raport", page_icon="⚡")
+st.set_page_config(layout="wide", page_title="FlagML | Raport", page_icon="assets/logo.png")
 nav_bar()
 st.title("Generarea raportului")
 

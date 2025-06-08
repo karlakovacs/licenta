@@ -1,10 +1,11 @@
 import streamlit as st
 
+from dataset import citire_date_temp
 from ml import get_hiperparametri, get_model, train_and_test
-from utils import citire_date_temp, nav_bar
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Hiperparametri", page_icon="⚙️")
+st.set_page_config(layout="wide", page_title="FlagML | Hiperparametri", page_icon="assets/logo.png")
 nav_bar()
 st.title("Configurează hiperparametrii")
 
@@ -104,4 +105,6 @@ else:
 				del modele_antrenate[denumire_model]
 
 		st.session_state.modele_antrenate = modele_antrenate
+		st.session_state.get("pagini").update({6: True})
 		st.success("Modelele au fost antrenate și salvate!")
+		# st.rerun()

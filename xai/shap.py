@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import shap
 
 
@@ -36,7 +37,7 @@ def get_shap_explainer(model, X_train, sample_size=100):
 		return None
 
 
-def calculate_shap_values(model, X_train, X_test):
+def calculate_shap_values(model, X_train: pd.DataFrame, X_test: pd.DataFrame):
 	explainer = get_shap_explainer(model, X_train)
 	if explainer is not None:
 		explanation = explainer(X_test.values)
@@ -65,7 +66,10 @@ def calculate_shap_values(model, X_train, X_test):
 				base_val = np.zeros(n_samples)
 
 			return shap.Explanation(
-				values=values, base_values=base_val, data=X_test.values[:n_samples], feature_names=X_test.columns.tolist()
+				values=values,
+				base_values=base_val,
+				data=X_test.values[:n_samples],
+				feature_names=X_test.columns.tolist(),
 			)
 		else:
 			return explanation
@@ -89,6 +93,7 @@ def waterfall_plot(shap_values, instanta):
 		return fig
 	except Exception as e:
 		return None
+
 
 def violin_plot(shap_values):
 	try:

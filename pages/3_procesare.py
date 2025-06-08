@@ -1,15 +1,12 @@
 import pandas as pd
 import streamlit as st
 
+from dataset import citire_date_predefinite, citire_date_temp
 from preprocessing import procesare_dataset
-from utils import (
-	citire_date_predefinite,
-	citire_date_temp,
-	nav_bar,
-)
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Procesare", page_icon="🛠️")
+st.set_page_config(layout="wide", page_title="FlagML | Procesare", page_icon="assets/logo.png")
 nav_bar()
 
 
@@ -120,7 +117,7 @@ def ui_coloane_binare(df: pd.DataFrame):
 			if col not in coloane_eliminate and df[col].nunique(dropna=True) == 2 and df[col].dtype != "bool"
 		]
 		st.session_state["coloane_binare"] = coloane_binare
-	
+
 	coloane_binare = st.session_state.get("coloane_binare", None)
 
 	if not coloane_binare:
@@ -349,4 +346,6 @@ else:
 			# st.json(st.session_state["procesare"])
 			procesare_dataset(df, st.session_state["procesare"])
 			st.session_state.procesare_realizata = True
+			st.session_state.get("pagini").update({4: True})
+			# st.rerun()
 			st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")

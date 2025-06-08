@@ -22,7 +22,7 @@ def citire_fisier_local():
 			df = pd.read_excel(fisier)
 		else:
 			st.error("Format de fișier necunoscut!")
-		
+
 		return df
 
 

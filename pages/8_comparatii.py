@@ -1,9 +1,10 @@
 import streamlit as st
 
-from utils import creare_df_metrici, grafic_comparativ, nav_bar
+from ml import creare_df_metrici, grafic_comparativ
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Comparații", page_icon="⚖️")
+st.set_page_config(layout="wide", page_title="FlagML | Comparații", page_icon="assets/logo.png")
 nav_bar()
 st.title("Compararea performanței modelelor")
 

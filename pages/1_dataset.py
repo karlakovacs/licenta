@@ -3,16 +3,23 @@ import streamlit as st
 from database import (
 	citire_dataset_supabase,
 	creare_set_date,
+	get_id_utilizator,
 	get_seturi_date_utilizator,
 	incarcare_dataset_supabase,
 	modificare_set_date,
 	verificare_denumire_set_date,
 )
-from dataset import citire_fisier_local, descarcare_kaggle
-from utils import citire_date_predefinite, nav_bar, salvare_date_temp
+from dataset import (
+	citire_date_predefinite,
+	citire_fisier_local,
+	descarcare_kaggle,
+	generare_metadate_json,
+	salvare_date_temp,
+)
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Set de date", page_icon="💳")
+st.set_page_config(layout="wide", page_title="FlagML | Set de date", page_icon="assets/logo.png")
 st.title("Alegerea setului de date")
 nav_bar()
 
@@ -23,6 +30,7 @@ df = None
 sursa = None
 denumire = None
 tinta = None
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
 
 sursa = st.selectbox(
 	"📂 Alege sursa setului de date", ["Fișier local", "Link Kaggle", "Seturi predefinite", "Seturile mele"]
@@ -112,7 +120,10 @@ if df is not None:
 
 			if sursa != "Seturi predefinite":
 				salvare_date_temp(df, denumire)
+			generare_metadate_json(df)
+			st.session_state.get("pagini").update({2: True, 3: True})
 			st.toast("Setul de date este gata de utilizare", icon="✅")
+			# st.rerun()
 
 else:
 	st.warning("Niciun set de date încărcat.")

@@ -1,1 +1,1 @@
-from .procesare import procesare_dataset
+from .procesare import procesare_dataset, procesare_instanta

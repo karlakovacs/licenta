@@ -1,5 +1,6 @@
 import streamlit as st
 
+from dataset import citire_date_temp
 from ml import (
 	afisare_metrici,
 	calcul_metrici,
@@ -8,10 +9,10 @@ from ml import (
 	plot_curba_roc,
 	plot_matrice_confuzie,
 )
-from utils import citire_date_temp, nav_bar
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="Rezultate", page_icon="🎯")
+st.set_page_config(layout="wide", page_title="FlagML | Rezultate", page_icon="assets/logo.png")
 nav_bar()
 st.title("Rezultate")
 
@@ -66,6 +67,8 @@ def main():
 			if "pr" not in rezultate:
 				rezultate["pr"] = plot_curba_pr(y_test, y_prob)
 			st.plotly_chart(rezultate["pr"], use_container_width=False, key=f"{denumire_model}_pr")
+
+	st.session_state.get("pagini").update({7: True, 8: True, 9: True, 10: True})
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import streamlit as st
 from database import login
 
 
-st.set_page_config(page_title="Autentificare", page_icon="assets/logo.png", layout="wide")
+st.set_page_config(layout="wide", page_title="FlagML | Auth", page_icon="assets/logo.png")
 
 if not st.user.is_logged_in:
 	col1, col2 = st.columns([2, 1])
@@ -16,7 +16,7 @@ if not st.user.is_logged_in:
 		)
 
 		st.markdown(
-		"""
+			"""
 		Această aplicație educațională este concepută pentru a ajuta utilizatorii să înțeleagă și să exerseze clasificarea binară, adică probleme în care rezultatul are doar două valori posibile (de exemplu, o tranzacție bancară poate fi frauduloasă sau legitimă).
 
 		Scopul principal este prezentarea fluxului complet al unui proiect de machine learning, de la încărcarea datelor până la antrenarea, evaluarea și interpretarea modelelor predictive. Aplicația oferă suport pentru:

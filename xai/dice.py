@@ -2,6 +2,7 @@ import dice_ml
 from dice_ml import Dice, Model
 from lightgbm import LGBMClassifier
 import pandas as pd
+import streamlit as st
 from xgboost import XGBClassifier
 
 
@@ -28,18 +29,33 @@ def pregatire_date(df: pd.DataFrame) -> pd.DataFrame:
 	return df
 
 
-def get_features(df: pd.DataFrame):
-	categorical_features = [col for col in df.columns if df[col].dtype.name in ["bool", "category", "object"]]
-	continuous_features = [col for col in df.columns if col not in categorical_features]
-	return categorical_features, continuous_features
+def clasificare_variabile(df: pd.DataFrame):
+	variabile_categoriale = [
+		col
+		for col in df.columns
+		if pd.api.types.is_bool_dtype(df[col]) or pd.api.types.is_object_dtype(df[col]) or df[col].nunique() <= 15
+	]
+
+	variabile_numerice = [col for col in df.columns if col not in variabile_categoriale]
+	st.session_state.variabile_numerice = variabile_numerice
+	variabile_booleene = [
+		col for col in df.columns if pd.api.types.is_bool_dtype(df[col]) or df[col].dropna().nunique() == 2
+	]
+	st.session_state.variabile_booleene = variabile_booleene
+
+	# print("categ", variabile_categoriale)
+	# print("cont", variabile_numerice)
+	# print("bool", variabile_booleene)
+
+	return variabile_categoriale, variabile_numerice
 
 
 def get_dice_data(X_train: pd.DataFrame, y_train: pd.Series, tinta: str, model) -> dice_ml.Data:
 	if isinstance(model, (XGBClassifier, LGBMClassifier)):
 		X_train = pregatire_date(X_train)
-		categorical_features, continuous_features = get_features(X_train)
+		variabile_categoriale, variabile_numerice = clasificare_variabile(X_train)
 	else:
-		categorical_features, continuous_features = get_features(X_train)
+		variabile_categoriale, variabile_numerice = clasificare_variabile(X_train)
 		X_train = pregatire_date(X_train)
 
 	df = pd.concat([X_train.reset_index(drop=True), y_train.reset_index(drop=True)], axis=1)
@@ -47,8 +63,8 @@ def get_dice_data(X_train: pd.DataFrame, y_train: pd.Series, tinta: str, model) 
 	return dice_ml.Data(
 		dataframe=df,
 		outcome_name=tinta,
-		continuous_features=continuous_features,
-		categorical_features=categorical_features,
+		continuous_features=variabile_numerice,
+		categorical_features=variabile_categoriale,
 	)
 
 
@@ -70,6 +86,8 @@ def get_dice_explainer(model, X_train: pd.DataFrame, y_train: pd.Series, tinta: 
 
 
 def descriere_diferente(date_instanta: pd.DataFrame, contrafactuale: pd.DataFrame) -> dict[int, list[dict]]:
+	variabile_numerice = st.session_state.variabile_numerice
+	variabile_booleene = st.session_state.variabile_booleene
 	explicatii_total = {}
 	orig = date_instanta.iloc[0]
 
@@ -82,20 +100,26 @@ def descriere_diferente(date_instanta: pd.DataFrame, contrafactuale: pd.DataFram
 			val_cf = cf[col]
 
 			if val_init != val_cf:
-				if isinstance(val_init, (int, float)) and isinstance(val_cf, (int, float)):
+				# if isinstance(val_init, (int, float)) and isinstance(val_cf, (int, float)):
+				if col in variabile_numerice:
 					delta = val_cf - val_init
 					explicatii.append(
 						{
 							"variabila": col,
-							"tip": "numeric",
+							"tip": "N",
 							"directie": "+" if delta > 0 else "-",
 							"valoare": round(abs(delta), 4),
 						}
 					)
+				elif col in variabile_booleene:
+					explicatii.append({"variabila": col, "tip": "B", "valoare": bool(val_cf)})
+
 				else:
-					explicatii.append({"variabila": col, "tip": "categoric", "valoare": val_cf})
+					explicatii.append({"variabila": col, "tip": "C", "valoare": val_cf})
 
 		explicatii_total[i] = explicatii
+
+	# print(explicatii_total)
 
 	return explicatii_total
 
@@ -134,10 +158,12 @@ def interpretare_explicatii(explicatii: dict) -> str:
 		output += f"#### Contrafactual #{idx + 1}\n"
 
 		for m in modificari:
-			if m["tip"] == "numeric":
+			if m["tip"] == "N":
 				directie = "crească" if m["directie"] == "+" else "scadă"
 				output += f"- `{m['variabila']}` trebuie să **{directie} cu {m['valoare']}**\n"
-			else:
+			elif m["tip"] == "B":
+				output += f"- `{m['variabila']}` trebuie să fie **`{m['valoare']}`**\n"
+			elif m["tip"] == "C":
 				output += f"- `{m['variabila']}` trebuie să aibă valoarea **`{m['valoare']}`**\n"
 
 		output += "\n"

@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+from dataset import citire_date_predefinite, citire_date_temp
 from eda import (
 	descriere_variabile,
 	df_valori_lipsa,
@@ -14,10 +15,10 @@ from eda import (
 	plot_valori_lipsa,
 	plot_variabile_puternic_corelate,
 )
-from utils import citire_date_predefinite, citire_date_temp, nav_bar
+from utils import nav_bar
 
 
-st.set_page_config(layout="wide", page_title="EDA", page_icon="📊")
+st.set_page_config(layout="wide", page_title="FlagML | EDA", page_icon="assets/logo.png")
 st.title("Analiza exploratorie a datelor")
 nav_bar()
 

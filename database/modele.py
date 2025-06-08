@@ -24,7 +24,7 @@ class Utilizator(Base):
 	__tablename__ = "utilizatori"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
-	id_auth0 = Column(String, unique=True, nullable=True)
+	id_auth0 = Column(String, unique=True, nullable=False)
 	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
 	data_ultima_conectare = Column(DateTime, default=datetime.now(timezone.utc))
 

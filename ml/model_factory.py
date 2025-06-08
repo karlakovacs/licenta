@@ -98,7 +98,7 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 			return model
 
 		case "Multilayer Perceptron":
-			from tensorflow.python.keras.layers import BatchNormalization, Dense, Dropout, Input
+			from tensorflow.python.keras.layers import Dense, Dropout, Input
 			from tensorflow.python.keras.metrics import AUC
 			from tensorflow.python.keras.models import Sequential
 
@@ -110,7 +110,7 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 				if i == 0:
 					model.add(Input(shape=(input_dim,)))
 				model.add(Dense(hiperparametri["units_per_layer"][i], activation=hiperparametri["activation"]))
-				model.add(BatchNormalization())
+				# model.add(BatchNormalization())
 				model.add(Dropout(hiperparametri["dropout_rates"][i]))
 
 			model.add(Dense(1, activation="sigmoid"))
