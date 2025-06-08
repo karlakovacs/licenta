@@ -9,14 +9,14 @@ if not st.user.is_logged_in:
 	col1, col2 = st.columns([2, 1])
 
 	with col1:
-		st.image("assets/logo.png", width=100)
+		st.image("assets/logo-text.png", width=100)
 		st.markdown(
-			"<h1 style='font-size: 3em; font-weight: bold; text-align: center;'>Bun venit!</h1>",
+			"<h1 style='text-align: center;'>Bun venit!</h1>",
 			unsafe_allow_html=True,
 		)
 
 		st.markdown(
-			"""
+		"""
 		Această aplicație educațională este concepută pentru a ajuta utilizatorii să înțeleagă și să exerseze clasificarea binară, adică probleme în care rezultatul are doar două valori posibile (de exemplu, o tranzacție bancară poate fi frauduloasă sau legitimă).
 
 		Scopul principal este prezentarea fluxului complet al unui proiect de machine learning, de la încărcarea datelor până la antrenarea, evaluarea și interpretarea modelelor predictive. Aplicația oferă suport pentru:
@@ -65,6 +65,8 @@ if not st.user.is_logged_in:
 
 		if st.button("Autentificare cu Google", type="primary"):
 			st.login("google")
+
+		st.write(st.user)
 
 else:
 	with st.spinner("Se face logarea..."):
