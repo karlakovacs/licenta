@@ -98,19 +98,18 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 			return model
 
 		case "Multilayer Perceptron":
-			from tensorflow.python.keras.layers import Dense, Dropout, Input
-			from tensorflow.python.keras.metrics import AUC
-			from tensorflow.python.keras.models import Sequential
+			from keras.api.layers import Dense, Dropout, Input
+			from keras.api.metrics import AUC
+			from keras.api.models import Sequential
 
 			if input_dim is None:
 				raise ValueError("Parametrul `input_dim` este necesar pentru a construi modelul MLP.")
 
-			model = Sequential()
+			model: Sequential = Sequential()
 			for i in range(hiperparametri["n_layers"]):
 				if i == 0:
 					model.add(Input(shape=(input_dim,)))
 				model.add(Dense(hiperparametri["units_per_layer"][i], activation=hiperparametri["activation"]))
-				# model.add(BatchNormalization())
 				model.add(Dropout(hiperparametri["dropout_rates"][i]))
 
 			model.add(Dense(1, activation="sigmoid"))
@@ -120,8 +119,6 @@ def get_model(denumire: str, hiperparametri: dict, input_dim: int = None):
 				loss=hiperparametri["loss"],
 				metrics=[AUC(name="auc")],
 			)
-
-			# time.sleep(10)
 
 			return model
 

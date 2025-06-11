@@ -1,9 +1,6 @@
 import dice_ml
 from dice_ml import Dice, Model
-from lightgbm import LGBMClassifier
 import pandas as pd
-import streamlit as st
-from xgboost import XGBClassifier
 
 
 def pregatire_date(df: pd.DataFrame) -> pd.DataFrame:
@@ -29,40 +26,16 @@ def pregatire_date(df: pd.DataFrame) -> pd.DataFrame:
 	return df
 
 
-def clasificare_variabile(df: pd.DataFrame):
-	variabile_categoriale = [
-		col
-		for col in df.columns
-		if pd.api.types.is_bool_dtype(df[col]) or pd.api.types.is_object_dtype(df[col]) or df[col].nunique() <= 15
-	]
-
-	variabile_numerice = [col for col in df.columns if col not in variabile_categoriale]
-	st.session_state.variabile_numerice = variabile_numerice
-	variabile_booleene = [
-		col for col in df.columns if pd.api.types.is_bool_dtype(df[col]) or df[col].dropna().nunique() == 2
-	]
-	st.session_state.variabile_booleene = variabile_booleene
-
-	# print("categ", variabile_categoriale)
-	# print("cont", variabile_numerice)
-	# print("bool", variabile_booleene)
-
-	return variabile_categoriale, variabile_numerice
-
-
-def get_dice_data(X_train: pd.DataFrame, y_train: pd.Series, tinta: str, model) -> dice_ml.Data:
-	if isinstance(model, (XGBClassifier, LGBMClassifier)):
-		X_train = pregatire_date(X_train)
-		variabile_categoriale, variabile_numerice = clasificare_variabile(X_train)
-	else:
-		variabile_categoriale, variabile_numerice = clasificare_variabile(X_train)
-		X_train = pregatire_date(X_train)
+def get_dice_data(X_train: pd.DataFrame, y_train: pd.Series, metadate: dict) -> dice_ml.Data:
+	X_train = pregatire_date(X_train)
+	variabile_categoriale = metadate["variabile_categoriale"]
+	variabile_numerice = metadate["variabile_numerice"]
 
 	df = pd.concat([X_train.reset_index(drop=True), y_train.reset_index(drop=True)], axis=1)
 
 	return dice_ml.Data(
 		dataframe=df,
-		outcome_name=tinta,
+		outcome_name=y_train.name,
 		continuous_features=variabile_numerice,
 		categorical_features=variabile_categoriale,
 	)
@@ -79,20 +52,22 @@ def get_dice_model(model, model_type: str = "classifier") -> Model:
 		raise ValueError("Modelul nu este compatibil cu DiCE.")
 
 
-def get_dice_explainer(model, X_train: pd.DataFrame, y_train: pd.Series, tinta: str) -> Dice:
-	data = get_dice_data(X_train, y_train, tinta, model)
+def get_dice_explainer(model, X_train: pd.DataFrame, y_train: pd.Series, metadate: dict) -> Dice:
+	data = get_dice_data(X_train, y_train, metadate)
 	dice_model = get_dice_model(model)
 	return Dice(data, dice_model, method="random")
 
 
-def descriere_diferente(date_instanta: pd.DataFrame, contrafactuale: pd.DataFrame) -> dict[int, list[dict]]:
-	variabile_numerice = st.session_state.variabile_numerice
-	variabile_booleene = st.session_state.variabile_booleene
+def descriere_diferente(
+	X_explicat: pd.DataFrame, counterfactuals: pd.DataFrame, metadate: dict
+) -> dict[int, list[dict]]:
+	variabile_numerice = metadate["variabile_numerice"]
+	variabile_booleene = metadate["variabile_booleene"]
 	explicatii_total = {}
-	orig = date_instanta.iloc[0]
+	orig = X_explicat.iloc[0]
 
-	for i in range(len(contrafactuale)):
-		cf = contrafactuale.iloc[i]
+	for i in range(len(counterfactuals)):
+		cf = counterfactuals.iloc[i]
 		explicatii = []
 
 		for col in cf.index:
@@ -119,43 +94,38 @@ def descriere_diferente(date_instanta: pd.DataFrame, contrafactuale: pd.DataFram
 
 		explicatii_total[i] = explicatii
 
-	# print(explicatii_total)
-
 	return explicatii_total
 
 
-def filtrare_contrafactuale(cf_df: pd.DataFrame, date_instanta: pd.DataFrame) -> pd.DataFrame:
-	orig = date_instanta.iloc[0]
-	dif_cols = [col for col in cf_df.columns if not (cf_df[col] == orig[col]).all()]
-	return cf_df[dif_cols]
+def filter_counterfactuals(counterfactuals: pd.DataFrame, X_explicat: pd.DataFrame) -> pd.DataFrame:
+	orig = X_explicat.iloc[0]
+	dif_cols = [col for col in counterfactuals.columns if not (counterfactuals[col] == orig[col]).all()]
+	return counterfactuals[dif_cols]
 
 
 def calculate_counterfactuals(
-	model, explainer: Dice, date_instanta, X_train_columns
-) -> tuple[int | bool, pd.DataFrame, dict]:
+	explainer: Dice, X_explicat: pd.DataFrame, coloane: list, metadate: dict
+) -> tuple[pd.DataFrame, dict, str]:
 	try:
-		predictie = model.predict(date_instanta)
-
-		if hasattr(model, "layers"):  # keras
-			predictie = int(predictie > 0.5)
-		else:
-			predictie = predictie[0]
-
-		date_instanta = pregatire_date(date_instanta)
-		dice_exp = explainer.generate_counterfactuals(date_instanta, total_CFs=3, desired_class="opposite")
-		cf_df = dice_exp.cf_examples_list[0].final_cfs_df[X_train_columns]
-		cf_df = filtrare_contrafactuale(cf_df, date_instanta)
-		explicatii = descriere_diferente(date_instanta, cf_df)
-		return predictie, cf_df, explicatii
+		X_explicat = pregatire_date(X_explicat)
+		dice_exp = explainer.generate_counterfactuals(X_explicat, total_CFs=3, desired_class="opposite")
+		counterfactuals = dice_exp.cf_examples_list[0].final_cfs_df[coloane]
+		counterfactuals = filter_counterfactuals(counterfactuals, X_explicat)
+		explicatii = descriere_diferente(X_explicat, counterfactuals, metadate)
+		interpretari = interpretare_explicatii(explicatii)
+		return counterfactuals, explicatii, interpretari
 	except:
 		return None, None, None
 
 
 def interpretare_explicatii(explicatii: dict) -> str:
+	if explicatii is None:
+		return None
+	
 	output = ""
 
 	for idx, modificari in explicatii.items():
-		output += f"#### Contrafactual #{idx + 1}\n"
+		output += f"#### Contrafactual {idx + 1}\n"
 
 		for m in modificari:
 			if m["tip"] == "N":

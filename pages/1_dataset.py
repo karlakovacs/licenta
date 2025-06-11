@@ -13,7 +13,7 @@ from dataset import (
 	citire_date_predefinite,
 	citire_fisier_local,
 	descarcare_kaggle,
-	generare_metadate_json,
+	generare_metadate,
 	salvare_date_temp,
 )
 from utils import nav_bar
@@ -120,7 +120,7 @@ if df is not None:
 
 			if sursa != "Seturi predefinite":
 				salvare_date_temp(df, denumire)
-			generare_metadate_json(df)
+			generare_metadate(df)
 			st.session_state.get("pagini").update({2: True, 3: True})
 			st.toast("Setul de date este gata de utilizare", icon="✅")
 			# st.rerun()

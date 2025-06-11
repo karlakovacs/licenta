@@ -1,104 +1,81 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import shap
 
 
-class PredictWrapper:
+class CallableModel:
 	def __init__(self, model):
 		self.model = model
 
 	def __call__(self, X):
-		return self.model.predict(X)
+		return self.model.predict_proba(X)
 
 
-def get_shap_explainer(model, X_train, sample_size=100):
-	from shap.explainers import Deep, Kernel, Linear, Tree
+def pregatire_date(df: pd.DataFrame) -> pd.DataFrame:
+	df = df.copy()
 
-	try:
-		return Deep(model, X_train)
-	except Exception as e:
-		pass
+	for col in df.columns:
+		if df[col].dtype == "bool":
+			df[col] = df[col].astype(int)
 
-	try:
-		return Tree(model)
-	except Exception as e:
-		pass
+		elif df[col].dtype == "object":
+			try:
+				df[col] = pd.to_numeric(df[col])
+			except ValueError:
+				df[col] = df[col].astype("category").cat.codes  # Encode categoric
 
-	try:
-		return Linear(model, X_train)
-	except Exception as e:
-		pass
-
-	try:
-		X_train_sample = X_train.iloc[:sample_size]
-		return Kernel(PredictWrapper(model), X_train_sample)
-	except Exception as e:
-		return None
+	return df
 
 
-def calculate_shap_values(model, X_train: pd.DataFrame, X_test: pd.DataFrame):
-	explainer = get_shap_explainer(model, X_train)
-	if explainer is not None:
-		explanation = explainer(X_test.values)
+def get_shap_explainer(model, X_train: pd.DataFrame, denumire_model: str):
+	X_train = pregatire_date(X_train)
 
-		if isinstance(explainer, shap.explainers._deep.DeepExplainer):
-			if explanation.values.ndim == 3:
-				values = explanation.values.squeeze()
-			else:
-				values = explanation.values
+	if denumire_model in [
+		"Random Forest",
+		"Balanced Random Forest",
+		"Decision Tree",
+		"Gradient Boosting Classifier",
+		"XGBoost",
+		"LightGBM",
+		"CatBoost",
+	]:
+		explainer = shap.TreeExplainer(model, X_train)
 
-			n_samples = values.shape[0]
+	elif denumire_model in ["Logistic Regression", "Linear Discriminant Analysis"]:
+		explainer = shap.LinearExplainer(model, X_train)
 
-			base_val = explanation.base_values
-			if base_val is None:
-				base_val = getattr(explainer, "expected_value", None)
+	elif denumire_model in [
+		"Quadratic Discriminant Analysis",
+		"K-Nearest Neighbors",
+		"Support Vector Classifier",
+		"AdaBoost",
+	]:
+		explainer = shap.Explainer(CallableModel(model), X_train)
 
-			if base_val is not None:
-				if np.isscalar(base_val):
-					base_val = np.repeat(base_val, n_samples)
-				else:
-					base_val = np.array(base_val)
+	elif denumire_model == "Multilayer Perceptron":
+		explainer = shap.Explainer(model, X_train)
 
-				if base_val.shape[0] != n_samples:
-					base_val = np.repeat(base_val[0], n_samples)
-			else:
-				base_val = np.zeros(n_samples)
-
-			return shap.Explanation(
-				values=values,
-				base_values=base_val,
-				data=X_test.values[:n_samples],
-				feature_names=X_test.columns.tolist(),
-			)
-		else:
-			return explanation
 	else:
-		return "Error"
+		explainer = None
+
+	return explainer
 
 
-def bar_plot(shap_values):
-	try:
-		fig = plt.figure(figsize=(10, 3))
-		shap.plots.bar(shap_values, max_display=5, show=False)
-		return fig
-	except Exception as e:
+def calculate_shap_values(explainer, X_test: pd.DataFrame) -> shap.Explanation:
+	X_test = pregatire_date(X_test)
+	
+	if explainer is None:
 		return None
+	if  isinstance(explainer, shap.TreeExplainer):
+		shap_values = explainer(X_test, check_additivity=False)
+	else:
+		shap_values = explainer(X_test)
+	if len(shap_values.shape) == 3:
+		shap_values = shap_values[:, :, 1]
+	return shap_values
 
 
-def waterfall_plot(shap_values, instanta):
-	try:
-		fig = plt.figure(figsize=(10, 3))
-		shap.plots.waterfall(shap_values[instanta], max_display=5, show=False)
-		return fig
-	except Exception as e:
-		return None
-
-
-def violin_plot(shap_values):
-	try:
-		fig = plt.figure(figsize=(10, 3))
-		shap.plots.violin(shap_values, max_display=5, show=False)
-		return fig
-	except Exception as e:
-		return None
+def shap_plot(shap_values):
+	fig = plt.figure(figsize=(10, 3))
+	shap.plots.waterfall(shap_values[0])
+	return fig

@@ -24,7 +24,7 @@ X_train, X_test, y_train = (
 metadate: dict = citire_metadate()
 tinta = st.session_state.get("set_date").get("tinta", "")
 st.session_state.setdefault("valori_random", {})
-st.session_state.setdefault("counter_idx", 0)
+st.session_state.setdefault("counter_idx", -1)
 
 valori_introduse = {}
 
@@ -98,12 +98,10 @@ with col1:
 				st.warning(f"Tip necunoscut pentru coloana: {coloana}")
 
 		if st.form_submit_button("Selectează", type="primary", use_container_width=True):
-			st.session_state.instanta_utilizator = pd.DataFrame([valori_introduse])
-			# st.write(st.session_state.instanta_utilizator)
+			st.session_state.counter_idx += 1
 			st.session_state.instanta_procesata = procesare_instanta(
-				st.session_state.instanta_utilizator, st.session_state.procesare
+				pd.DataFrame([valori_introduse]), st.session_state.procesare
 			)
-			# st.write(st.session_state.instanta_procesata)
 
 with col2:
 	st.header("Analizează observația")

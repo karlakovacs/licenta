@@ -5,7 +5,7 @@ import tempfile
 import pandas as pd
 
 
-def generare_metadate_json(df: pd.DataFrame, prag_text=15):
+def generare_metadate(df: pd.DataFrame, max_valori_unice: int = 15):
 	variabile = {}
 
 	for col in df.columns:
@@ -39,16 +39,42 @@ def generare_metadate_json(df: pd.DataFrame, prag_text=15):
 
 		# 3. Categorial sau text
 		unice = serie.nunique()
-		if unice <= prag_text:
+		if unice <= max_valori_unice:
 			categorii = serie.value_counts().sort_values(ascending=False).index.tolist()
 			variabile[col] = {"tip": "C", "valori": list(map(str, categorii))}
 		else:
 			variabile[col] = {"tip": "T"}
 
-	temp_path = os.path.join(tempfile.gettempdir(), "metadate.json")
+	denumire_fisier = "metadate.json"
+	temp_path = os.path.join(tempfile.gettempdir(), denumire_fisier)
 	with open(temp_path, "w", encoding="utf-8") as f:
 		json.dump(variabile, f, indent=2, ensure_ascii=False)
 
-	# print(variabile)
 
-	return temp_path
+def generare_metadate_set_procesat(df: pd.DataFrame, max_valori_unice: int = 15) -> dict:
+	variabile_categoriale = []
+	variabile_numerice = []
+	variabile_booleene = []
+
+	for col in df.columns:
+		col_data = df[col]
+		n_unique = col_data.dropna().nunique()
+
+		is_bool = pd.api.types.is_bool_dtype(col_data)
+		is_object = pd.api.types.is_object_dtype(col_data)
+
+		if is_bool or is_object or n_unique <= max_valori_unice:
+			variabile_categoriale.append(col)
+		else:
+			variabile_numerice.append(col)
+
+		if is_bool or n_unique == 2:
+			variabile_booleene.append(col)
+
+	variabile: dict = {
+		"variabile_categoriale": variabile_categoriale,
+		"variabile_numerice": variabile_numerice,
+		"variabile_booleene": variabile_booleene,
+	}
+
+	return variabile

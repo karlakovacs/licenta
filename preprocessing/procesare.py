@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, OneHotEncoder, RobustScaler, StandardScaler
 import streamlit as st
 
-from dataset import salvare_date_temp
+from dataset import generare_metadate_set_procesat, salvare_date_temp
 
 
 def eliminare_coloane(df: pd.DataFrame, coloane: list) -> pd.DataFrame:
@@ -251,6 +251,8 @@ def procesare_dataset(df: pd.DataFrame, dict_procesare: dict):
 	if dict_procesare.get("scalare") != "Niciuna":
 		X = aplicare_scalare(X, dict_procesare["scalare"])
 
+	metadate_set_procesat = generare_metadate_set_procesat(X)
+	st.session_state.metadate_set_procesat = metadate_set_procesat
 	setari_split = dict_procesare["impartire"]
 	setari_split["tinta"] = tinta
 	impartire_train_test(X, y, setari_split)

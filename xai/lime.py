@@ -6,34 +6,32 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def get_explanation(
-	model, X_train: pd.DataFrame, X_test: pd.DataFrame, instanta: int, max_valori_unice: int = 10
-) -> Explanation:
+def get_lime_explainer(model, X_train: pd.DataFrame, metadate: dict) -> LimeTabularExplainer:
 	try:
-		categorical_features = [
-			idx
-			for idx, col in enumerate(X_train.columns)
-			if (
-				X_train[col].dtype == "bool"
-				or X_train[col].dtype.name == "category"
-				or X_train[col].dtype == "object"
-				or (np.issubdtype(X_train[col].dtype, np.integer) and X_train[col].nunique() <= max_valori_unice)
-			)
-		]
+		variabile_categoriale_nume = metadate["variabile_categoriale"]
+		variabile_categoriale = [i for i, col in enumerate(X_train.columns) if col in variabile_categoriale_nume]
 
 		explainer = LimeTabularExplainer(
 			training_data=X_train.to_numpy(),
 			feature_names=X_train.columns,
 			class_names=[str(c) for c in model.classes_],
-			categorical_features=categorical_features,
+			categorical_features=variabile_categoriale,
 			mode="classification",
 		)
+		return explainer
 
-		instance = X_test.values[instanta]
+	except Exception as e:
+		return None
+
+
+def get_explanation(model, explainer: LimeTabularExplainer, X_explicat: pd.DataFrame) -> Explanation | None:
+	try:
+		instance = X_explicat.values.flatten()
 
 		if hasattr(model, "predict_proba"):
 			predict_fn = model.predict_proba
-		else:  # keras
+
+		else:  # keras-style predict
 
 			def predict_fn(X):
 				probs = model.predict(X)
@@ -41,16 +39,12 @@ def get_explanation(
 
 		explanation = explainer.explain_instance(data_row=instance, predict_fn=predict_fn)
 		return explanation
-	except:
+
+	except Exception as e:
 		return None
 
 
-# def explanation_plot(explanation: Explanation) -> str:
-# 	lime_html = f"<div style='background-color: white; padding: 10px;'>{explanation.as_html()}</div>"
-# 	return lime_html
-
-
-def explanation_plotly(explanation: Explanation) -> go.Figure:
+def lime_plot(explanation: Explanation) -> go.Figure:
 	lime_results = sorted(explanation.as_list(), key=lambda x: abs(x[1]), reverse=True)
 
 	features = [desc for desc, _ in lime_results]

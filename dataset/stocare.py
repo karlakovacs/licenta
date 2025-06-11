@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 import tempfile
 
@@ -23,6 +24,7 @@ def salvare_date_temp(df: pd.DataFrame | pd.Series, nume_dataset: str) -> None:
 
 
 def citire_metadate() -> dict:
-	temp_path = tempfile.gettempdir() + "/metadate.json"
+	denumire_fisier = "metadate.json"
+	temp_path = os.path.join(tempfile.gettempdir(), denumire_fisier)
 	with open(temp_path, "r") as f:
 		return json.load(f)

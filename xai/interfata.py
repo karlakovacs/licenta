@@ -1,90 +1,84 @@
 import pandas as pd
 import streamlit as st
 
+from ml import predictie_individuala
+
 from .descrieri import DESCRIERI_XAI
 from .dice import (
 	calculate_counterfactuals,
 	get_dice_explainer,
-	interpretare_explicatii,
 )
-from .lime import explanation_plotly, get_explanation
-from .shap import bar_plot, calculate_shap_values, violin_plot, waterfall_plot
+from .lime import get_explanation, get_lime_explainer, lime_plot
+from .shap import calculate_shap_values, get_shap_explainer, shap_plot
 
 
-def ui_date_test(
+def ui_test(
 	modele_antrenate: dict,
 	X_train: pd.DataFrame,
-	X_test: pd.DataFrame,
 	y_train: pd.Series,
+	X_test: pd.DataFrame,
 ):
+	st.session_state.setdefault("instante_test", {})
 	denumire_model, tehnica_xai = ui_selectie_model_tehnica(modele_antrenate)
-	instanta_idx = ui_selectie_instanta(denumire_model, X_test)
-	ui_xai(
-		modele_antrenate,
-		denumire_model=denumire_model,
-		tehnica_xai=tehnica_xai,
-		instanta_idx=instanta_idx,
-		X_train=X_train,
-		X_test=X_test,
-		y_train=y_train,
-	)
+	instanta_idx = ui_selectie_instanta(X_test)
+	X_explicat = X_test.iloc[[instanta_idx]]
+
+	ui_xai(modele_antrenate, denumire_model, tehnica_xai, instanta_idx, X_train, y_train, X_explicat, False)
 
 
 def ui_predictii(
 	modele_antrenate: dict,
 	X_train: pd.DataFrame,
 	y_train: pd.Series,
-	instanta: pd.DataFrame,
-	counter_idx: int,
+	X_explicat: pd.DataFrame,
+	instanta_idx: int,
 ):
-	denumire_model, tehnica_xai = ui_selectie_model_tehnica(modele_antrenate, predictie_individuala=True)
+	st.session_state.setdefault("instante_predictii", {})
+	denumire_model, tehnica_xai = ui_selectie_model_tehnica(modele_antrenate, instanta_utilizator=True)
+
 	ui_xai(
 		modele_antrenate,
-		denumire_model=denumire_model,
-		tehnica_xai=tehnica_xai,
-		instanta_idx=counter_idx,
-		predictie_individuala=True,
-		X_train=X_train,
-		y_train=y_train,
-		instanta=instanta,
+		denumire_model,
+		tehnica_xai,
+		instanta_idx,
+		X_train,
+		y_train,
+		X_explicat,
+		True,
 	)
 
 
-def ui_selectie_model_tehnica(modele_antrenate: dict, predictie_individuala: bool = False):
-	if not predictie_individuala:
-		st.session_state.setdefault("xai", {})
+def ui_selectie_model_tehnica(modele_antrenate: dict, instanta_utilizator: bool = False):
+	if not instanta_utilizator:
+		st.session_state.setdefault("xai_test", {})
 	else:
 		st.session_state.setdefault("xai_predictii", {})
 
-	optiuni_modele = list(modele_antrenate.keys())
+	cheie_predictie = "_predictie" if instanta_utilizator else ""
+	col1, col2 = st.columns(2)
+	with col1:
+		optiuni_modele = list(modele_antrenate.keys())
+		denumire_model = st.selectbox(
+			"Alege modelul pentru care vrei să vezi analiza explicațiilor",
+			optiuni_modele,
+			key="model_xai" + cheie_predictie,
+			help="Selectează modelul de machine learning asupra căruia vrei să aplici metodele XAI.",
+		)
 
-	cheie_predictie = "_predictie" if predictie_individuala else ""
-
-	denumire_model = st.selectbox(
-		"Alege modelul pentru care vrei să vezi analiza explicațiilor",
-		optiuni_modele,
-		key="model_xai" + cheie_predictie,
-		help="Selectează modelul de machine learning asupra căruia vrei să aplici metodele XAI.",
-	)
-
-	tehnici_xai = ["SHAP", "LIME", "DiCE ML"]
-	tehnica_xai = st.selectbox(
-		"Alege tehnica de explicație (XAI)",
-		tehnici_xai,
-		key="tehnica_xai" + cheie_predictie,
-		help="Selectează tehnica de explainable AI (XAI) pentru a interpreta deciziile modelului ales.",
-	)
+	with col2:
+		tehnici_xai = ["SHAP", "LIME", "DiCE ML"]
+		tehnica_xai = st.selectbox(
+			"Alege tehnica de explicație (XAI)",
+			tehnici_xai,
+			key="tehnica_xai" + cheie_predictie,
+			help="Selectează tehnica de explainable AI (XAI) pentru a interpreta deciziile modelului ales.",
+		)
 
 	return denumire_model, tehnica_xai
 
 
-def ui_selectie_instanta(denumire_model, X_test):
-	nr_instante = (
-		len(X_test)
-		if denumire_model
-		not in ["Quadratic Discriminant Analysis", "K-Nearest Neighbors", "Support Vector Classifier", "AdaBoost"]
-		else 50
-	)
+def ui_selectie_instanta(X_test):
+	nr_instante = len(X_test)
 
 	instanta_idx = st.slider(
 		"Selectează exemplul de test pentru analiză",
@@ -98,137 +92,152 @@ def ui_selectie_instanta(denumire_model, X_test):
 	return instanta_idx
 
 
+def init_explainer(denumire_model: str, tehnica_xai: str, model, X_train: pd.DataFrame, y_train: pd.Series = None):
+	if denumire_model in st.session_state.get("explainers", {}) and tehnica_xai in st.session_state["explainers"].get(
+		denumire_model, {}
+	):
+		return st.session_state["explainers"][denumire_model][tehnica_xai]
+
+	metadate = st.session_state.metadate_set_procesat
+
+	if tehnica_xai == "SHAP":
+		explainer = get_shap_explainer(model, X_train, denumire_model)
+	elif tehnica_xai == "LIME":
+		explainer = get_lime_explainer(model, X_train, metadate)
+	elif tehnica_xai == "DiCE ML":
+		explainer = get_dice_explainer(model, X_train, y_train, metadate)
+	else:
+		st.error(f"Tehnica XAI '{tehnica_xai}' nu este validă.")
+		return None
+
+	st.session_state.setdefault("explainers", {}).setdefault(denumire_model, {})
+	st.session_state["explainers"][denumire_model][tehnica_xai] = explainer
+
+	return explainer
+
+
+def salvare_instanta(
+	denumire_model: str,
+	model,
+	X_explicat: pd.DataFrame,
+	instanta_idx: int,
+	y_train: pd.Series = None,
+	instanta_utilizator: bool = False,
+):
+	dictionar = "instante_predictii" if instanta_utilizator else "instante_test"
+	st.session_state.setdefault(dictionar, {})
+
+	if instanta_idx not in st.session_state[dictionar]:
+		st.session_state[dictionar][instanta_idx] = {"date": X_explicat}
+		if not instanta_utilizator and y_train is not None:
+			st.session_state[dictionar][instanta_idx]["y_true"] = y_train.iloc[instanta_idx]
+
+	if denumire_model not in st.session_state[dictionar][instanta_idx]:
+		y_pred, y_prob = predictie_individuala(model, st.session_state[dictionar][instanta_idx]["date"])
+		st.session_state[dictionar][instanta_idx][denumire_model] = {
+			"y_pred": y_pred,
+			"y_prob": round(y_prob * 100, 2),
+		}
+
+
+def afisare_instanta(
+	denumire_model: str,
+	instanta_idx: int,
+	instanta_utilizator: bool = False,
+):
+	dictionar = "instante_predictii" if instanta_utilizator else "instante_test"
+	instanta: dict = st.session_state[dictionar][instanta_idx]
+	date = instanta["date"]
+	y_true = instanta.get("y_true", None)
+	y_pred = instanta[denumire_model]["y_pred"]
+	y_prob = instanta[denumire_model]["y_prob"]
+
+	st.header(f"Instanța {instanta_idx}")
+	st.dataframe(date, use_container_width=True)
+
+	cols = st.columns(3)
+	with cols[0]:
+		st.metric(label="**✅ Valoare reală**", value=y_true)
+	with cols[1]:
+		st.metric(label="**🔮 Predicția modelului**", value=y_pred)
+	with cols[2]:
+		st.metric(label="**🎲 Probabilitate True**", value=f"{y_prob}%")
+
+
 def ui_xai(
 	modele_antrenate: dict,
 	denumire_model: str,
 	tehnica_xai: str,
 	instanta_idx: int,
-	predictie_individuala: bool = False,
-	X_train: pd.DataFrame = None,
-	X_test: pd.DataFrame = None,
-	y_train: pd.Series = None,
-	instanta: pd.DataFrame = None,
+	X_train: pd.DataFrame,
+	y_train: pd.Series,
+	X_explicat: pd.DataFrame,
+	instanta_utilizator: bool = False,
 ):
 	if not denumire_model or not tehnica_xai:
 		return
 
-	st.header(f"Analiză {tehnica_xai} pentru modelul `{denumire_model}`")
 	model = modele_antrenate[denumire_model]["model"]
 
+	salvare_instanta(denumire_model, model, X_explicat, instanta_idx, y_train, instanta_utilizator)
+	afisare_instanta(denumire_model, instanta_idx, instanta_utilizator)
+
+	st.divider()
+
+	st.header(f"Analiză {tehnica_xai} pentru modelul `{denumire_model}`", help=DESCRIERI_XAI[tehnica_xai])
+
 	if tehnica_xai == "SHAP":
-		if predictie_individuala:
-			ui_shap_predictie_noua(
-				denumire_model=denumire_model,
-				model=model,
-				X_train=X_train,
-				instanta=instanta,
-				instanta_idx=instanta_idx,
-			)
-		else:
-			ui_shap_set_testare(
-				denumire_model=denumire_model,
-				model=model,
-				X_train=X_train,
-				X_test=X_test,
-				instanta_xai=instanta_idx,
-			)
+		ui_shap(
+			denumire_model,
+			model,
+			X_train,
+			X_explicat,
+			instanta_idx,
+			instanta_utilizator,
+		)
 
 	elif tehnica_xai == "LIME":
 		ui_lime(
-			denumire_model=denumire_model,
-			model=model,
-			X_train=X_train,
-			instanta=instanta if predictie_individuala else X_test,
-			instanta_idx=instanta_idx,
-			predictie_individuala=predictie_individuala,
+			denumire_model,
+			model,
+			X_train,
+			X_explicat,
+			instanta_idx,
+			instanta_utilizator,
 		)
 
 	elif tehnica_xai == "DiCE ML":
 		ui_dice(
-			denumire_model=denumire_model,
-			model=model,
-			X_train=X_train,
-			instanta=instanta if predictie_individuala else X_test.iloc[[instanta_idx]],
-			y_train=y_train,
-			instanta_idx=instanta_idx,
-			predictie_individuala=predictie_individuala,
+			denumire_model,
+			model,
+			X_train,
+			X_explicat,
+			y_train,
+			instanta_idx,
+			instanta_utilizator,
 		)
 
 
-def ui_shap_set_testare(denumire_model, model, X_train, X_test, instanta_xai=0):
-	if denumire_model in ["Decision Tree", "Random Forest", "Balanced Random Forest", "AdaBoost"]:
-		st.info(f"Analiza SHAP este indisponibilă pentru modelul `{denumire_model}`.")
-		return
+def ui_shap(
+	denumire_model: str,
+	model,
+	X_train: pd.DataFrame,
+	X_explicat: pd.DataFrame,
+	instanta_idx: int,
+	instanta_utilizator: bool,
+	tehnica_xai: str = "SHAP",
+):
+	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
+	date: dict = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
+	explainer = init_explainer(denumire_model, tehnica_xai, model, X_train)
 
-	shap_data = st.session_state["xai"].setdefault(denumire_model, {}).setdefault("shap", {"values": None, "plots": {}})
+	if instanta_idx not in date:
+		with st.spinner("Generăm plotul SHAP..."):
+			shap_values = calculate_shap_values(explainer, X_explicat)
+			date[instanta_idx] = shap_plot(shap_values)
 
-	if shap_data["values"] is None:
-		with st.spinner("Calculăm valorile SHAP..."):
-			shap_data["values"] = calculate_shap_values(model, X_train, X_test)
-
-	if shap_data["values"] == "Error":
-		st.info("Nu s-au putut calcula valorile SHAP.")
-		return
-
-	st.subheader("📊 Bar Plot")
-	if "bar" not in shap_data["plots"]:
-		shap_data["plots"]["bar"] = bar_plot(shap_data["values"])
-	if shap_data["plots"]["bar"]:
-		st.pyplot(shap_data["plots"]["bar"], use_container_width=False)
-		with st.popover("Detalii despre SHAP Bar Plot"):
-			st.write(DESCRIERI_XAI["bar"])
-	else:
-		st.info("Nu s-a putut genera graficul Bar Plot.")
-
-	st.subheader("🎻 Violin Plot")
-	if "violin" not in shap_data["plots"]:
-		shap_data["plots"]["violin"] = violin_plot(shap_data["values"])
-	if shap_data["plots"]["violin"]:
-		st.pyplot(shap_data["plots"]["violin"], use_container_width=False)
-		with st.popover("Detalii despre SHAP Violin Plot"):
-			st.write(DESCRIERI_XAI["violin"])
-	else:
-		st.info("Nu s-a putut genera graficul Violin Plot.")
-
-	st.subheader(f"🌊 Waterfall Plot (instanța {instanta_xai})")
-	if "waterfall" not in shap_data["plots"]:
-		shap_data["plots"]["waterfall"] = {}
-	if instanta_xai not in shap_data["plots"]["waterfall"]:
-		shap_data["plots"]["waterfall"][instanta_xai] = waterfall_plot(shap_data["values"], instanta_xai)
-	if shap_data["plots"]["waterfall"][instanta_xai]:
-		st.pyplot(shap_data["plots"]["waterfall"][instanta_xai], use_container_width=False)
-		with st.popover("Detalii despre SHAP Waterfall Plot"):
-			st.write(DESCRIERI_XAI["waterfall"])
-	else:
-		st.info("Nu s-a putut genera graficul Waterfall Plot.")
-
-
-def ui_shap_predictie_noua(denumire_model, model, X_train, instanta: pd.DataFrame, instanta_idx: int):
-	if denumire_model in ["Decision Tree", "Random Forest", "Balanced Random Forest", "AdaBoost"]:
-		st.info(f"Analiza SHAP este indisponibilă pentru modelul `{denumire_model}`.")
-		return
-
-	# del st.session_state["xai_predictii"]
-
-	shap_data = (
-		st.session_state["xai_predictii"].setdefault(denumire_model, {}).setdefault("shap", {"values": {}, "plots": {}})
-	)
-
-	with st.spinner("Calculăm SHAP pentru instanța nouă..."):
-		shap_data["values"][instanta_idx] = calculate_shap_values(model, X_train, instanta)
-
-	if shap_data["values"][instanta_idx] == "Error":
-		st.info("Nu s-au putut calcula valorile SHAP.")
-		return
-
-	st.subheader(f"🌊 Waterfall Plot (instanța nouă)")
-	if "waterfall" not in shap_data["plots"]:
-		shap_data["plots"]["waterfall"] = {}
-	shap_data["plots"]["waterfall"][instanta_idx] = waterfall_plot(shap_data["values"][instanta_idx], instanta_idx)
-	if shap_data["plots"]["waterfall"][instanta_idx]:
-		st.pyplot(shap_data["plots"]["waterfall"][instanta_idx], use_container_width=False)
-		with st.popover("Detalii despre SHAP Waterfall Plot"):
-			st.write(DESCRIERI_XAI["waterfall"])
+	if date.get(instanta_idx):
+		st.pyplot(date[instanta_idx], use_container_width=False)
 	else:
 		st.info("Nu s-a putut genera graficul Waterfall Plot.")
 
@@ -237,32 +246,22 @@ def ui_lime(
 	denumire_model: str,
 	model,
 	X_train: pd.DataFrame,
-	instanta: pd.DataFrame,
+	X_explicat: pd.DataFrame,
 	instanta_idx: int,
-	predictie_individuala: bool = False,
+	instanta_utilizator: bool,
+	tehnica_xai: str = "LIME",
 ):
-	sesiune = "xai_predictii" if predictie_individuala else "xai"
-	lime_data = (
-		st.session_state.setdefault(sesiune, {}).setdefault(denumire_model, {}).setdefault("lime", {"explanations": {}})
-	)
+	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
+	date: dict = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
+	explainer = init_explainer(denumire_model, tehnica_xai, model, X_train)
 
-	if instanta_idx not in lime_data["explanations"]:
+	if instanta_idx not in date:
 		with st.spinner("Generăm explicația LIME..."):
-			index_explicatie = 0 if predictie_individuala else instanta_idx
-			lime_data["explanations"][instanta_idx] = get_explanation(model, X_train, instanta, index_explicatie)
+			explicatie = get_explanation(model, explainer, X_explicat)
+			date[instanta_idx] = lime_plot(explicatie) if explicatie is not None else "Error"
 
-	sub = (
-		f"📈 Explicație locală pentru instanța nouă ({instanta_idx})"
-		if predictie_individuala
-		else f"📈 Explicație locală pentru instanța {instanta_idx}"
-	)
-	st.subheader(sub)
-
-	explicatie = lime_data["explanations"][instanta_idx]
-	if explicatie is not None:
-		st.plotly_chart(explanation_plotly(explicatie), use_container_width=False)
-		with st.popover("Detalii despre LIME Plot"):
-			st.write(DESCRIERI_XAI["lime"])
+	if date.get(instanta_idx) and date.get(instanta_idx) != "Error":
+		st.plotly_chart(date[instanta_idx], use_container_width=False)
 	else:
 		st.info("Nu s-a putut genera explicația LIME.")
 
@@ -271,56 +270,47 @@ def ui_dice(
 	denumire_model: str,
 	model,
 	X_train: pd.DataFrame,
-	instanta: pd.DataFrame,
+	X_explicat: pd.DataFrame,
 	y_train: pd.Series,
 	instanta_idx: int,
-	predictie_individuala: bool = False,
+	instanta_utilizator: bool,
+	tehnica_xai: str = "DiCE ML",
 ):
-	sesiune = "xai_predictii" if predictie_individuala else "xai"
-	del st.session_state[sesiune]
+	if denumire_model in [
+		"Decision Tree",
+		"Random Forest",
+		"Balanced Random Forest",
+		"AdaBoost",
+		"XGBoost",
+		"LightGBM",
+	]:
+		st.info(f"Analiza DiCE este indisponibilă pentru modelul `{denumire_model}`.")
+		return
 
-	st.session_state.setdefault(sesiune, {})
-	st.session_state[sesiune].setdefault(denumire_model, {}).setdefault(
-		"dice", {"explainer": None, "counterfactuals": {}}
-	)
-	dice_data = st.session_state[sesiune][denumire_model]["dice"]
+	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
+	date: dict = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
+	explainer = init_explainer(denumire_model, tehnica_xai, model, X_train, y_train)
 
-	st.subheader("Instanța selectată" if not predictie_individuala else "Instanța introdusă")
-	st.write(instanta)
-
-	tinta = st.session_state.set_date["tinta"]
-
-	if dice_data["explainer"] is None:
-		with st.spinner("Creăm explainerul DiCE..."):
-			dice_data["explainer"] = get_dice_explainer(model, X_train, y_train, tinta)
-
-	if instanta_idx not in dice_data["counterfactuals"]:
+	if instanta_idx not in date:
 		with st.spinner("Generăm explicații contrafactuale..."):
-			predictie, cf_df, explicatii = calculate_counterfactuals(
-				model, dice_data["explainer"], instanta, X_train.columns.tolist()
+			metadate = st.session_state.metadate_set_procesat
+			counterfactuals, explicatii, interpretari = calculate_counterfactuals(
+				explainer, X_explicat, X_train.columns.tolist(), metadate
 			)
-			dice_data["counterfactuals"][instanta_idx] = {
-				"predictie": predictie,
-				"cf_df": cf_df,
+			date[instanta_idx] = {
+				"counterfactuals": counterfactuals,
 				"explicatii": explicatii,
+				"interpretari": interpretari,
 			}
 
-	afisare_rezultate_dice(dice_data["counterfactuals"][instanta_idx], denumire_model)
+	counterfactuals = date[instanta_idx]["counterfactuals"]
+	interpretari = date[instanta_idx]["interpretari"]
 
+	if counterfactuals is not None and not counterfactuals.empty:
+		st.subheader("Modificări minime pentru a schimba predicția modelului")
+		st.dataframe(counterfactuals)
 
-def afisare_rezultate_dice(rezultate: dict, denumire_model: str):
-	predictie, cf_df, explicatii = rezultate.values()
-
-	if not any(rezultate.get(k) is None for k in ["predictie", "cf_df", "explicatii"]):
-		st.subheader(f"🔮 Predicția modelului `{denumire_model}`: `{predictie}`")
-
-		st.subheader("🍎 Modificări minime pentru a schimba predicția modelului")
-		st.dataframe(cf_df)
-
-		st.subheader("🔍 Intepretări")
-		st.write(interpretare_explicatii(explicatii))
-
-		with st.popover("Detalii despre DiCE ML"):
-			st.write(DESCRIERI_XAI["dice"])
+		st.subheader("Intepretări")
+		st.write(interpretari)
 	else:
-		st.info("Nu s-au putut genera explicațiile DiCE ML.")
+		st.info("Nu s-au putut genera explicațiile DiCE ML (nu au fost gasite explicatii contrafactuale).")
