@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+from database import get_id_utilizator
 from dataset import citire_date_predefinite, citire_date_temp
 from eda import (
 	descriere_variabile,
@@ -15,15 +16,16 @@ from eda import (
 	plot_valori_lipsa,
 	plot_variabile_puternic_corelate,
 )
-from utils import nav_bar
+from ui import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="FlagML | EDA", page_icon="assets/logo.png")
-st.title("Analiza exploratorie a datelor")
 nav_bar()
-
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
 set_date: dict = st.session_state.get("set_date", None)
 st.session_state.setdefault("eda", {})
+
+st.title("Analiza exploratorie a datelor")
 
 df: pd.DataFrame = None
 
@@ -34,6 +36,20 @@ else:
 
 
 # taburi
+def tab_set_date(df):
+	interval = st.slider(
+		"Selectează intervalul de rânduri de afișat",
+		min_value=0,
+		max_value=len(df) - 1,
+		value=(0, min(200, len(df) - 1)),
+		step=1,
+		key="interval_observatii",
+	)
+
+	start, end = interval
+	st.dataframe(df.iloc[start : end + 1], use_container_width=True)
+
+
 def tab_descriere(df):
 	if "describe_numeric" not in st.session_state.eda or "describe_categorical" not in st.session_state.eda:
 		describe_numeric, describe_categorical = descriere_variabile(df)
@@ -156,6 +172,7 @@ def tab_corelatie_tinta(X, y):
 
 # dictionar taburi
 TAB_FUNCTII = {
+	"Setul de date": lambda: tab_set_date(df),
 	"Descrierea setului de date": lambda: tab_descriere(df),
 	"Valori lipsa": lambda: tab_valori_lipsa(df),
 	"Distribuția tipurilor de variabile": lambda: tab_tipuri_variabile(X),

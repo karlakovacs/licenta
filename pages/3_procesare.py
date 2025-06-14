@@ -1,13 +1,15 @@
 import pandas as pd
 import streamlit as st
 
+from database import create_set_date_procesat, get_id_utilizator
 from dataset import citire_date_predefinite, citire_date_temp
 from preprocessing import procesare_dataset
-from utils import nav_bar
+from ui import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="FlagML | Procesare", page_icon="assets/logo.png")
 nav_bar()
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
 
 
 def ui_eliminare_coloane(df: pd.DataFrame):
@@ -344,8 +346,12 @@ else:
 		if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
 			creare_dict_procesare()
 			# st.json(st.session_state["procesare"])
-			procesare_dataset(df, st.session_state["procesare"])
+			df = procesare_dataset(df, st.session_state["procesare"])
+			st.session_state.id_set_procesat = create_set_date_procesat(
+				st.session_state.get("id_utilizator"),
+				st.session_state.get("id_set_date"),
+				st.session_state.get("procesare"),
+				df,
+			)
 			st.session_state.procesare_realizata = True
-			st.session_state.get("pagini").update({4: True})
-			# st.rerun()
 			st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")

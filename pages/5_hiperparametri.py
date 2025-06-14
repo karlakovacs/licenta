@@ -1,12 +1,15 @@
 import streamlit as st
 
+from database import create_modele, get_id_utilizator
 from dataset import citire_date_temp
 from ml import get_hiperparametri, get_model, train_and_test
-from utils import nav_bar
+from ui import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="FlagML | Hiperparametri", page_icon="assets/logo.png")
 nav_bar()
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
+
 st.title("Configurează hiperparametrii")
 
 
@@ -105,6 +108,10 @@ else:
 				del modele_antrenate[denumire_model]
 
 		st.session_state.modele_antrenate = modele_antrenate
-		st.session_state.get("pagini").update({6: True})
-		st.success("Modelele au fost antrenate și salvate!")
-		# st.rerun()
+		st.success("Modelele au fost antrenate!")
+
+		if "ids_modele" not in st.session_state:
+			with st.spinner("Stocare modele in baza de date..."):
+				st.session_state.ids_modele = create_modele(
+					st.session_state.id_utilizator, st.session_state.id_set_procesat, st.session_state.modele_antrenate
+				)

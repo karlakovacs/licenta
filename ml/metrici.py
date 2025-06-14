@@ -42,7 +42,7 @@ def calcul_raport_clasificare(y_true, y_pred):
 	return df
 
 
-def calcul_metrici(y_true, y_pred, y_prob):
+def calcul_metrici(y_true, y_pred, y_prob) -> dict:
 	tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 
 	accuracy = accuracy_score(y_true, y_pred)
@@ -66,29 +66,29 @@ def calcul_metrici(y_true, y_pred, y_prob):
 	kappa = cohen_kappa_score(y_true, y_pred)
 	avg_precision = average_precision_score(y_true, y_prob)
 
-	metrici = [
-		accuracy,
-		recall,
-		precision,
-		f1,
-		roc_auc,
-		avg_precision,
-		bcr,
-		kappa,
-		mcc,
-		gm,
-		tpr,
-		tnr,
-		fpr,
-		fnr,
-	]
+	metrici = {
+		"accuracy": accuracy,
+		"recall": recall,
+		"precision": precision,
+		"f1": f1,
+		"roc_auc": roc_auc,
+		"avg_precision": avg_precision,
+		"bcr": bcr,
+		"kappa": kappa,
+		"mcc": mcc,
+		"gm": gm,
+		"tpr": tpr,
+		"tnr": tnr,
+		"fpr": fpr,
+		"fnr": fnr,
+	}
 
 	return metrici
 
 
-def afisare_metrici(metrici):
+def afisare_metrici(metrici: dict):
 	col1, col2, col3, col4 = st.columns(4)
-	for idx, (key, value) in enumerate(zip(METRICI, metrici)):
+	for idx, (key, value) in enumerate(zip(METRICI, metrici.values())):
 		col = [col1, col2, col3, col4][idx % 4]
 		col.metric(label=key, value=f"{value:.4f}")
 

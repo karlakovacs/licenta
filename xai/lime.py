@@ -8,13 +8,16 @@ import plotly.graph_objects as go
 
 def get_lime_explainer(model, X_train: pd.DataFrame, metadate: dict) -> LimeTabularExplainer:
 	try:
+		is_mlp = hasattr(model, "layers")
 		variabile_categoriale_nume = metadate["variabile_categoriale"]
-		variabile_categoriale = [i for i, col in enumerate(X_train.columns) if col in variabile_categoriale_nume]
+		variabile_categoriale = (
+			[i for i, col in enumerate(X_train.columns) if col in variabile_categoriale_nume] if not is_mlp else []
+		)
 
 		explainer = LimeTabularExplainer(
 			training_data=X_train.to_numpy(),
 			feature_names=X_train.columns,
-			class_names=[str(c) for c in model.classes_],
+			class_names=["False", "True"],
 			categorical_features=variabile_categoriale,
 			mode="classification",
 		)
@@ -52,7 +55,7 @@ def lime_plot(explanation: Explanation) -> go.Figure:
 	colors = ["green" if w > 0 else "red" for w in weights]
 	labels = ["Contribuții pozitive" if w > 0 else "Contribuții negative" for w in weights]
 
-	class_names = explanation.class_names if hasattr(explanation, "class_names") else ["Class 0", "Class 1"]
+	class_names = explanation.class_names
 	predicted_class_idx = explanation.predict_proba.argmax()
 	predicted_class = class_names[predicted_class_idx]
 	prediction_prob = explanation.predict_proba[predicted_class_idx]

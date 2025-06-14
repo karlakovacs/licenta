@@ -3,14 +3,16 @@ import random
 import pandas as pd
 import streamlit as st
 
+from database import get_id_utilizator
 from dataset import citire_date_temp, citire_metadate
 from preprocessing import procesare_instanta
-from utils import nav_bar
+from ui import nav_bar
 from xai import ui_predictii
 
 
 st.set_page_config(layout="wide", page_title="FlagML | Predicții", page_icon="assets/logo.png")
 nav_bar()
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
 
 st.title("Realizarea de predicții")
 

@@ -93,6 +93,13 @@ def ui_selectie_instanta(X_test):
 
 
 def init_explainer(denumire_model: str, tehnica_xai: str, model, X_train: pd.DataFrame, y_train: pd.Series = None):
+	if (
+		"explainers" in st.session_state and
+		denumire_model in st.session_state["explainers"] and
+		tehnica_xai in st.session_state["explainers"][denumire_model]
+	):
+		del st.session_state["explainers"][denumire_model][tehnica_xai]
+
 	if denumire_model in st.session_state.get("explainers", {}) and tehnica_xai in st.session_state["explainers"].get(
 		denumire_model, {}
 	):

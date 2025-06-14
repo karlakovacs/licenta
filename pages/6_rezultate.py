@@ -1,5 +1,6 @@
 import streamlit as st
 
+from database import create_metrici, get_id_utilizator
 from dataset import citire_date_temp
 from ml import (
 	afisare_metrici,
@@ -9,11 +10,13 @@ from ml import (
 	plot_curba_roc,
 	plot_matrice_confuzie,
 )
-from utils import nav_bar
+from ui import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="FlagML | Rezultate", page_icon="assets/logo.png")
 nav_bar()
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
+
 st.title("Rezultate")
 
 
@@ -67,8 +70,12 @@ def main():
 			if "pr" not in rezultate:
 				rezultate["pr"] = plot_curba_pr(y_test, y_prob)
 			st.plotly_chart(rezultate["pr"], use_container_width=False, key=f"{denumire_model}_pr")
-
-	st.session_state.get("pagini").update({7: True, 8: True, 9: True, 10: True})
+	
+	if "stocare_metrici" not in st.session_state:
+		with st.spinner("Stocare rezultate in baza de date..."):
+			metrici: dict = {k: v["metrici"] for k, v in st.session_state.rezultate_modele.items()}
+			create_metrici(st.session_state.ids_modele, metrici)
+			st.session_state.stocare_metrici = True
 
 
 if __name__ == "__main__":

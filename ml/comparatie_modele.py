@@ -2,8 +2,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .metrici import METRICI
-
 
 ACRONIME = {
 	"Logistic Regression": "LR",
@@ -27,11 +25,29 @@ def creare_df_metrici(rezultate_modele: dict):
 	metrici = {model: valori["metrici"] for model, valori in rezultate_modele.items()}
 	df_metrici = pd.DataFrame.from_dict(
 		data=metrici,
-		columns=METRICI,
 		orient="index",
 	)
 	df_metrici.reset_index(inplace=True)
-	df_metrici.rename(columns={"index": "Model"}, inplace=True)
+	df_metrici.rename(
+		columns={
+			"index": "Model",
+			"accuracy": "Acuratețe",
+			"recall": "Sensibilitate",
+			"precision": "Precizie",
+			"f1": "Scor F1",
+			"roc_auc": "Aria de sub curba ROC",
+			"avg_precision": "Precizie medie (AUPRC)",
+			"bcr": "Rata de clasificare echilibrată",
+			"kappa": "Coeficientul Cohen's Kappa",
+			"mcc": "Coeficientul de corelație Matthews",
+			"gm": "Medie geometrică",
+			"tpr": "TPR",
+			"tnr": "TNR",
+			"fpr": "FPR",
+			"fnr": "FNR",
+		},
+		inplace=True,
+	)
 	return df_metrici
 
 

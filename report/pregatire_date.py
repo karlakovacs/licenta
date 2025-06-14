@@ -1,6 +1,6 @@
-from xai.lime import explanation_plotly
+from xai.lime import lime_plot
 
-from .conversii import *
+from .conversii import dataframe_to_html, explicatii_dice_to_text, matplotlib_to_html, plotly_to_html
 
 
 def pregatire_set_date(set_date: dict) -> dict:
@@ -110,8 +110,8 @@ def pregatire_xai(xai: dict, format_pdf: bool = False) -> dict:
 	for model, date in xai.items():
 		model_html: dict = {}
 
-		if "shap" in date and "plots" in date["shap"]:
-			shap_plots = date["shap"]["plots"]
+		if "shap" in date:
+			shap_plots = date["shap"]
 			model_html["shap"] = {}
 
 			for tip_plot, plot_obj in shap_plots.items():
@@ -124,11 +124,11 @@ def pregatire_xai(xai: dict, format_pdf: bool = False) -> dict:
 					if plot_obj is not None:
 						model_html["shap"][tip_plot] = matplotlib_to_html(plot_obj)
 
-		if "lime" in date and "explanations" in date["lime"]:
+		if "lime" in date:
 			model_html["lime"] = {}
 			for idx, exp in date["lime"]["explanations"].items():
 				if exp is not None:
-					model_html["lime"][idx] = plotly_to_html(explanation_plotly(exp), format_pdf)
+					model_html["lime"][idx] = plotly_to_html(lime_plot(exp), format_pdf)
 
 		if "dice" in date and "counterfactuals" in date["dice"]:
 			model_html["dice"] = {}

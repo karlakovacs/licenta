@@ -214,7 +214,7 @@ def impartire_train_test(X: pd.DataFrame, y: pd.Series, setari: dict):
 		salvare_date_temp(df, nume)
 
 
-def procesare_dataset(df: pd.DataFrame, dict_procesare: dict):
+def procesare_dataset(df: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:
 	if dict_procesare.get("coloane_eliminate"):
 		df = eliminare_coloane(df, dict_procesare["coloane_eliminate"])
 
@@ -256,6 +256,8 @@ def procesare_dataset(df: pd.DataFrame, dict_procesare: dict):
 	setari_split = dict_procesare["impartire"]
 	setari_split["tinta"] = tinta
 	impartire_train_test(X, y, setari_split)
+
+	return pd.concat([X, y], axis=1)
 
 
 def procesare_instanta(instanta: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:

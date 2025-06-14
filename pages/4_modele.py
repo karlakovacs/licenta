@@ -1,10 +1,13 @@
 import streamlit as st
 
-from utils import nav_bar
+from database import get_id_utilizator
+from ui import nav_bar
 
 
 st.set_page_config(layout="wide", page_title="FlagML | Modele", page_icon="assets/logo.png")
 nav_bar()
+st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
+
 st.title("Modele de Machine Learning")
 
 
@@ -78,8 +81,6 @@ def main():
 
 	if st.button("Salvează selecția", type="primary", disabled="modele_selectate" in st.session_state):
 		st.session_state.modele_selectate = modele_selectate
-		st.session_state.get("pagini").update({5: True})
-		# st.rerun()
 		st.toast("Modelele au fost salvate!", icon="✅")
 
 
