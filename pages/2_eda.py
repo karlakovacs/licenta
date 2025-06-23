@@ -1,42 +1,15 @@
 import pandas as pd
 import streamlit as st
 
-from database import get_id_utilizator
-from dataset import citire_date_predefinite, citire_date_temp
-from eda import (
-	descriere_variabile,
-	df_valori_lipsa,
-	get_coloane_categoriale,
-	get_coloane_numerice,
-	plot_box_plot,
-	plot_histograma,
-	plot_matrice_corelatie,
-	plot_pie_chart,
-	plot_tipuri_variabile,
-	plot_valori_lipsa,
-	plot_variabile_puternic_corelate,
-)
-from ui import nav_bar
+from dataset import *
+from eda import *
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | EDA", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
-set_date: dict = st.session_state.get("set_date", None)
-st.session_state.setdefault("eda", {})
-
-st.title("Analiza exploratorie a datelor")
-
-df: pd.DataFrame = None
-
-if set_date["sursa"] != "Seturi predefinite":
-	df = citire_date_temp(set_date["denumire"])
-else:
-	df = citire_date_predefinite(set_date["denumire"])
+initializare_pagina("EDA", "wide", "Analiza exploratorie a datelor", {"eda": {}})
 
 
-# taburi
-def tab_set_date(df):
+def sectiune_set_date(df):
 	interval = st.slider(
 		"Selectează intervalul de rânduri de afișat",
 		min_value=0,
@@ -50,101 +23,77 @@ def tab_set_date(df):
 	st.dataframe(df.iloc[start : end + 1], use_container_width=True)
 
 
-def tab_descriere(df):
-	if "describe_numeric" not in st.session_state.eda or "describe_categorical" not in st.session_state.eda:
-		describe_numeric, describe_categorical = descriere_variabile(df)
-		st.session_state.eda["describe_numeric"] = describe_numeric
-		st.session_state.eda["describe_categorical"] = describe_categorical
-
-	col1, col2 = st.columns(2)
-
-	with col1:
-		st.subheader("Variabile numerice")
-		st.dataframe(st.session_state.eda["describe_numeric"])
-
-	with col2:
-		st.subheader("Variabile categoriale & booleene")
-		st.dataframe(st.session_state.eda["describe_categorical"])
+def descriere_variabila(tip: str, serie: pd.Series):
+	if tip.startswith("N"):
+		rezultate = descriere_variabila_numerica(tip, serie)
+	elif tip == "D":
+		rezultate = descriere_variabila_data(tip, serie)
+	elif tip == "T":
+		rezultate = descriere_variabila_text(tip, serie)
+	elif tip == "C" or tip == "B":
+		rezultate = descriere_variabila_categoriala(tip, serie)
+	else:
+		rezultate = {"tip": tip, "statistici": {}}
+	return rezultate
 
 
-def tab_tipuri_variabile(X):
+def afisare_descriere(variabila: str, descriere: dict):
+	tip: str = descriere.get("tip", None)
+	if tip.startswith("N"):
+		afisare_descriere_variabila_numerica(variabila, descriere)
+	elif tip == "D":
+		afisare_descriere_variabila_data(variabila, descriere)
+	elif tip == "T":
+		afisare_descriere_variabila_text(variabila, descriere)
+	elif tip == "C" or tip == "B":
+		afisare_descriere_variabila_categoriala(variabila, descriere)
+	else:
+		st.warning("UFF")
+
+
+def sectiune_descriere(df: pd.DataFrame):
+	st.session_state["eda"].setdefault("descrieri", {})
+	descrieri = st.session_state.eda["descrieri"]
+	df = df.copy()
+	variabila = st.selectbox("Alege o variabilă", df.columns)
+	tip = get_tip_variabila(variabila)
+	if variabila not in descrieri:
+		with st.spinner("Calculam statistici..."):
+			descrieri[variabila] = descriere_variabila(tip, df[variabila])
+
+	afisare_descriere(variabila, descrieri[variabila])
+
+
+def sectiune_tipuri_variabile(X):
 	if "plot_tipuri_variabile" not in st.session_state.eda:
 		st.session_state.eda["plot_tipuri_variabile"] = plot_tipuri_variabile(X)
 	st.plotly_chart(st.session_state.eda["plot_tipuri_variabile"], use_container_width=False)
 
 
-def tab_distributie_tinta(y):
-	if "pie_chart_tinta" not in st.session_state.eda:
-		st.session_state.eda["pie_chart_tinta"] = plot_pie_chart(y)
-	st.plotly_chart(st.session_state.eda["pie_chart_tinta"], use_container_width=False)
+def sectiune_distributie_tinta(y: pd.Series):
+	st.session_state.eda.setdefault("distributie_tinta", {})
+	if "pie_chart_tinta" not in st.session_state.eda["distributie_tinta"]:
+		st.session_state.eda["distributie_tinta"]["pie_chart_tinta"] = plot_pie_chart(y)
+		st.session_state.eda["distributie_tinta"]["interpretare"] = interpretare_tinta(y)
+	st.plotly_chart(st.session_state.eda["distributie_tinta"]["pie_chart_tinta"], use_container_width=False)
+	st.write(st.session_state.eda["distributie_tinta"]["interpretare"])
 
 
-def tab_pie_charts(X: pd.DataFrame):
-	coloane_categoriale = get_coloane_categoriale(X)
-	if coloane_categoriale:
-		st.session_state.eda.setdefault("pie_charts", {})
-		coloane_selectate = st.multiselect("Alege coloanele pentru pie chart", coloane_categoriale)
-		for col in coloane_selectate:
-			if col not in st.session_state.eda["pie_charts"]:
-				st.session_state.eda["pie_charts"][col] = plot_pie_chart(X[col])
-
-		for col, fig in st.session_state.eda["pie_charts"].items():
-			st.subheader(f"Distribuția variabilei {col}")
-			st.plotly_chart(fig, use_container_width=False)
-	else:
-		st.info("Nu există coloane categoriale în setul de date.")
-
-
-def tab_histograme(X):
-	coloane_numerice = get_coloane_numerice(X)
-	if coloane_numerice:
-		st.session_state.eda.setdefault("histograme", {})
-		nr_bins = st.slider("Alege numărul de bins:", min_value=5, max_value=50, value=20)
-		coloane_selectate = st.multiselect("Alege coloanele pentru histogramă", coloane_numerice)
-		for col in coloane_selectate:
-			if col not in st.session_state.eda["histograme"]:
-				st.session_state.eda["histograme"][col] = plot_histograma(X[col], nr_bins)
-
-		for col, fig in st.session_state.eda["histograme"].items():
-			st.subheader(f"Distribuția variabilei {col}")
-			st.plotly_chart(fig, use_container_width=False)
-	else:
-		st.info("Nu există coloane numerice în setul de date.")
-
-
-def tab_box_plots(X):
-	coloane_numerice = get_coloane_numerice(X)
-	if coloane_numerice:
-		st.session_state.eda.setdefault("box_plots", {})
-		coloane_selectate = st.multiselect("Alege coloanele pentru box plot", coloane_numerice)
-		for col in coloane_selectate:
-			if col not in st.session_state.eda["box_plots"]:
-				st.session_state.eda["box_plots"][col] = plot_box_plot(X[col])
-
-		for col, fig in st.session_state.eda["box_plots"].items():
-			st.subheader(f"Box plot pentru variabila {col}")
-			st.plotly_chart(fig, use_container_width=False)
-	else:
-		st.info("Nu există coloane numerice în setul de date.")
-
-
-def tab_matrice_corelatie(df):
-	st.session_state.eda.setdefault("plot_matrice_corelatie", {"coloane": [], "fig": None})
+def sectiune_matrice_corelatie(df: pd.DataFrame):
 	coloane_selectate = st.multiselect(
 		"Alege coloanele pentru matricea de corelație",
 		df.columns,
-		default=st.session_state.eda["plot_matrice_corelatie"]["coloane"],
+		help="Selectează variabilele numerice pentru a construi o matrice de corelație între ele.",
 	)
 
-	if set(coloane_selectate) != set(st.session_state.eda["plot_matrice_corelatie"]["coloane"]):
-		st.session_state.eda["plot_matrice_corelatie"]["fig"] = plot_matrice_corelatie(df, coloane_selectate)
-		st.session_state.eda["plot_matrice_corelatie"]["coloane"] = coloane_selectate
+	if coloane_selectate:
+		st.session_state.eda["matrice_corelatie"] = plot_matrice_corelatie(df, coloane_selectate)
+		st.plotly_chart(st.session_state.eda["matrice_corelatie"], use_container_width=True)
+	else:
+		st.info("Selectează cel puțin două coloane numerice pentru a genera graficul.")
 
-	if st.session_state.eda["plot_matrice_corelatie"]["fig"] is not None:
-		st.plotly_chart(st.session_state.eda["plot_matrice_corelatie"]["fig"], use_container_width=True)
 
-
-def tab_valori_lipsa(df: pd.DataFrame):
+def sectiune_valori_lipsa(df: pd.DataFrame):
 	st.session_state.eda.setdefault("valori_lipsa", {})
 	valori_lipsa = st.session_state.eda["valori_lipsa"]
 
@@ -153,46 +102,61 @@ def tab_valori_lipsa(df: pd.DataFrame):
 
 	st.dataframe(valori_lipsa["df"], use_container_width=False)
 
-	nr_variabile = st.slider("Alege numărul de variabile:", min_value=5, max_value=50, value=10)
-	prev_nr = valori_lipsa.get("nr_variabile", None)
-
 	if valori_lipsa["df"] is not None:
-		if "fig" not in valori_lipsa or nr_variabile != prev_nr:
-			valori_lipsa["fig"] = plot_valori_lipsa(valori_lipsa["df"], nr_variabile)
-			valori_lipsa["nr_variabile"] = nr_variabile
+		if "fig" not in valori_lipsa:
+			valori_lipsa["fig"] = plot_valori_lipsa(valori_lipsa["df"])
 
 		st.plotly_chart(valori_lipsa["fig"], use_container_width=False)
 
 
-def tab_corelatie_tinta(X, y):
+def sectiune_corelatie_tinta(X, y):
 	if "plot_variabile_puternic_corelate" not in st.session_state.eda:
 		st.session_state.eda["plot_variabile_puternic_corelate"] = plot_variabile_puternic_corelate(X, y)
 	st.plotly_chart(st.session_state.eda["plot_variabile_puternic_corelate"], use_container_width=False)
 
 
-# dictionar taburi
-TAB_FUNCTII = {
-	"Setul de date": lambda: tab_set_date(df),
-	"Descrierea setului de date": lambda: tab_descriere(df),
-	"Valori lipsa": lambda: tab_valori_lipsa(df),
-	"Distribuția tipurilor de variabile": lambda: tab_tipuri_variabile(X),
-	"Distribuția variabilei țintă": lambda: tab_distributie_tinta(y),
-	"Pie charts (pentru variabilele categoriale)": lambda: tab_pie_charts(X),
-	"Histograme (pentru variabilele numerice)": lambda: tab_histograme(X),
-	"Box plots (pentru variabilele numerice)": lambda: tab_box_plots(X),
-	"Matricea de corelație": lambda: tab_matrice_corelatie(df),
-	"Variabile puternic corelate cu ținta": lambda: tab_corelatie_tinta(X, y),
-}
+@require_auth
+@require_selected_dataset
+def main():
+	set_date: dict = st.session_state.get("set_date", None)
+	df: pd.DataFrame = citire_set_date(set_date)
 
-if df is not None:
 	tinta = set_date["tinta"]
 	X = df.drop(columns=[tinta]).copy()
 	y = df[tinta]
 
-	tabs = st.tabs(TAB_FUNCTII.keys())
-	for tab, (titlu, functie) in zip(tabs, TAB_FUNCTII.items()):
-		with tab:
-			st.subheader(titlu)
-			functie()
-else:
-	st.warning(f"Datele pentru {set_date['denumire']} nu au fost încărcate corect sau lipsesc!")
+	functii = {
+		"Setul de date": lambda: sectiune_set_date(df),
+		"Analiza valorilor lipsă": lambda: sectiune_valori_lipsa(df),
+		"Distribuția tipurilor de variabile": lambda: sectiune_tipuri_variabile(X),
+		"Distribuția variabilei țintă": lambda: sectiune_distributie_tinta(y),
+		"Statistici descriptive": lambda: sectiune_descriere(X),
+		"Matricea de corelație": lambda: sectiune_matrice_corelatie(df),
+		"Variabilele puternic corelate cu ținta": lambda: sectiune_corelatie_tinta(X, y),
+	}
+
+	detalii = {
+		"Setul de date": "Afișează setul de date în mod interactiv.\n\nPermite o primă verificare a consistenței datelor.\n\nUtil pentru a înțelege structura brută a fișierului încărcat.",
+		"Analiza valorilor lipsă": "Evaluează câte valori lipsesc pe coloană, atât în număr absolut, cât și procentual.\n\nEste utilă pentru luarea deciziilor de curățare a datelor sau imputare.",
+		"Distribuția tipurilor de variabile": "Arată câte variabile sunt de tip numeric, categoric, boolean, text sau dată.\n\nAceastă informație este crucială pentru alegerea corectă a metodelor de preprocesare și analiză.",
+		"Distribuția variabilei țintă": "Afișează distribuția clasei țintă (`target`), importantă pentru detectarea dezechilibrelor între clase.\n\nUn dezechilibru sever poate afecta performanța modelelor de clasificare.",
+		"Statistici descriptive": "Oferă statistici relevante pentru fiecare variabilă, în funcție de tipul ei: medii, extreme, dispersie, modă, distribuție etc.\n\nAjută la înțelegerea comportamentului fiecărei variabile în mod individual.",
+		"Matricea de corelație": "Prezintă corelațiile între variabile numerice. Coeficientul Pearson este folosit pentru a detecta relații liniare.\n\nPoate evidenția redundanțe sau relații utile pentru modelare.",
+		"Variabilele puternic corelate cu ținta": "Identifică variabilele numerice care au o corelație puternică (pozitivă sau negativă) cu variabila țintă.\n\nAcestea pot fi predictori relevanți în modelele de clasificare.",
+	}
+
+	selectie = None
+
+	col1, col2 = st.columns([1, 3])
+
+	with col1:
+		selectie = st.selectbox("Ce vrei să vizualizezi?", functii.keys())
+		with st.expander("Informații despre analiza curentă"):
+			st.write(detalii[selectie])
+
+	with col2:
+		functii[selectie]()
+
+
+if __name__ == "__main__":
+	main()

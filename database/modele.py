@@ -32,7 +32,7 @@ class SetDateBrut(Base):
 	__tablename__ = "seturi_date_brute"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
-	id_utilizator = Column(Integer, ForeignKey("utilizatori.id", ondelete="CASCADE"), nullable=False)
+	id_utilizator = Column(Integer, ForeignKey("utilizatori.id", ondelete="CASCADE"), nullable=True)
 	id_sursa = Column(Integer, ForeignKey("surse_date.id", ondelete="CASCADE"), nullable=False)
 	denumire = Column(String, nullable=False)
 	tinta = Column(String, nullable=False)

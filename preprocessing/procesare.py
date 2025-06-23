@@ -67,16 +67,29 @@ def completare_valori_lipsa(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 	return df_nou
 
 
-def conversie_coloane_binare(df: pd.DataFrame, conversii: dict) -> pd.DataFrame:
+# def conversie_coloane_binare(df: pd.DataFrame, conversii: dict) -> pd.DataFrame:
+# 	for col, true_val in conversii.items():
+# 		if col in df.columns:
+# 			df[col] = df[col] == true_val
+# 	return df
+
+
+def conversie_coloane_binare(df: pd.DataFrame, conversii: dict, tinta: str = None) -> pd.DataFrame:
 	for col, true_val in conversii.items():
 		if col in df.columns:
-			df[col] = df[col] == true_val
+			if col == tinta:
+				new_col_name = col
+			else:
+				new_col_name = f"{col}_{true_val}"
+			df[new_col_name] = df[col] == true_val
+			if new_col_name != col:
+				df.drop(columns=col, inplace=True)
 	return df
 
 
 def aplicare_datetime(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 	for col in setari["coloane"]:
-		df[col] = pd.to_datetime(df[col], format=setari["format"], errors="coerce")
+		df[col] = pd.to_datetime(df[col], errors="coerce")
 		if "an" in setari["componente"]:
 			df[f"{col}_an"] = df[col].dt.year
 		if "luna" in setari["componente"]:
@@ -97,13 +110,22 @@ def aplicare_datetime(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 
 def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
 	encoders = {"label_encoders": {}, "one_hot_encoder": None, "coloane_one_hot": []}
-	coloane_label = setari.get("coloane_label", [])
+	coloane_label = setari.get("coloane_label", {})
 	max_categorii = setari.get("max_categorii", 10)
 
-	for col in coloane_label:
-		le = LabelEncoder()
-		le.fit(df[col].astype(str))
-		encoders["label_encoders"][col] = le
+	# for col in coloane_label.keys():
+	# 	le = LabelEncoder()
+	# 	le.fit(df[col].astype(str))
+	# 	encoders["label_encoders"][col] = le
+
+	# for col, ordine in coloane_label.items():
+	# 	mapping = {val: i for i, val in enumerate(ordine)}
+	# 	df[col] = df[col].map(mapping)
+	# 	encoders["label_encoders"][col] = mapping
+
+	for col, ordine in coloane_label.items():
+		mapping = {val: i for i, val in enumerate(ordine)}
+		encoders["label_encoders"][col] = mapping
 
 	potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
 	coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
@@ -122,9 +144,9 @@ def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
 def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:
 	df = df.copy()
 
-	for col, le in encoders["label_encoders"].items():
+	for col, mapping in encoders["label_encoders"].items():
 		if col in df.columns:
-			df[col] = le.transform(df[col].astype(str))
+			df[col] = df[col].map(mapping).fillna(-1).astype(int)  # df[col] = df[col].map(mapping)
 
 	coloane_one_hot = encoders.get("coloane_one_hot", [])
 	one_hot_encoder: OneHotEncoder = encoders.get("one_hot_encoder")
@@ -232,13 +254,14 @@ def procesare_dataset(df: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:
 	if "valori_lipsa" in dict_procesare or df.isna().any().any():
 		df = completare_valori_lipsa(df, dict_procesare["valori_lipsa"])
 
+	tinta = dict_procesare["impartire"]["tinta"]
+
 	if "coloane_binare" in dict_procesare:
-		df = conversie_coloane_binare(df, dict_procesare["coloane_binare"])
+		df = conversie_coloane_binare(df, dict_procesare["coloane_binare"], tinta)
 
 	if "datetime" in dict_procesare:
 		df = aplicare_datetime(df, dict_procesare["datetime"])
 
-	tinta = dict_procesare["impartire"]["tinta"]
 	X = df.drop(columns=[tinta])
 	y = df[tinta]
 

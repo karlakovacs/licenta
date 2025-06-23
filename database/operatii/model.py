@@ -132,7 +132,7 @@ def get_modele(id_set_date_procesat: int) -> list:
 	for model in modele:
 		inregistrare = {
 			"Tip model": model.tip_model.denumire if model.tip_model else None,
-			"URL": f"[⬇️ Descarcă modelul]({SUPABASE_URL}/storage/v1/object/public/models/{model.url}?download={os.path.basename(model.url)})",
+			"URL": f"{SUPABASE_URL}/storage/v1/object/public/models/{model.url}?download={os.path.basename(model.url)}",
 			"Durată antrenare": model.durata_antrenare,
 			"Dată antrenare": model.data_antrenare,
 			"Hiperparametri": model.hiperparametri,

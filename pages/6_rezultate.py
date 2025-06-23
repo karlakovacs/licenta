@@ -1,6 +1,6 @@
 import streamlit as st
 
-from database import create_metrici, get_id_utilizator
+from database import create_metrici
 from dataset import citire_date_temp
 from ml import (
 	afisare_metrici,
@@ -10,26 +10,28 @@ from ml import (
 	plot_curba_roc,
 	plot_matrice_confuzie,
 )
-from ui import nav_bar
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | Rezultate", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
-
-st.title("Rezultate")
+initializare_pagina("Rezultate", "centered", "Rezultatele modelelor ML", {"rezultate_modele": {}})
 
 
+def salvare_metrici_in_bd():
+	if "stocare_metrici" not in st.session_state:
+		with st.spinner("Stocăm rezultatele in baza de date..."):
+			metrici: dict = {k: v["metrici"] for k, v in st.session_state["rezultate_modele"].items()}
+			create_metrici(st.session_state.ids_modele, metrici)
+			st.session_state.stocare_metrici = True
+
+
+@require_auth
+@require_selected_dataset
+@require_processed_dataset
+@require_selected_models
+@require_trained_models
 def main():
 	modele_antrenate: dict = st.session_state.get("modele_antrenate", None)
-
-	if not modele_antrenate:
-		st.warning("Antrenati modelele mai intai")
-		return
-
 	y_test = citire_date_temp("y_test")
-
-	st.session_state.setdefault("rezultate_modele", {})
 
 	tabs = st.tabs(list(modele_antrenate.keys()))
 	for tab, (denumire_model, info) in zip(tabs, modele_antrenate.items()):
@@ -44,38 +46,41 @@ def main():
 
 			rezultate = st.session_state.rezultate_modele[denumire_model]
 
-			st.subheader("Raport de clasificare")
-			if "raport_clasificare" not in rezultate:
-				rezultate["raport_clasificare"] = calcul_raport_clasificare(y_test, y_pred)
-			st.write(rezultate["raport_clasificare"])
+			sectiuni = [
+				(
+					"Raport de clasificare",
+					"raport_clasificare",
+					lambda: calcul_raport_clasificare(y_test, y_pred),
+					st.write,
+				),
+				("Metrici", "metrici", lambda: calcul_metrici(y_test, y_pred, y_prob), afisare_metrici),
+				(
+					"Matrice de confuzie",
+					"matrice_confuzie",
+					lambda: plot_matrice_confuzie(y_test, y_pred),
+					lambda val: st.plotly_chart(val, use_container_width=False, key=f"{denumire_model}_matrice_confuzie"),
+				),
+				(
+					"Curba ROC",
+					"roc",
+					lambda: plot_curba_roc(y_test, y_prob),
+					lambda val: st.plotly_chart(val, use_container_width=False, key=f"{denumire_model}_roc"),
+				),
+				(
+					"Curba PR",
+					"pr",
+					lambda: plot_curba_pr(y_test, y_prob),
+					lambda val: st.plotly_chart(val, use_container_width=False, key=f"{denumire_model}_pr"),
+				),
+			]
 
-			st.subheader("Metrici")
-			if "metrici" not in rezultate:
-				rezultate["metrici"] = calcul_metrici(y_test, y_pred, y_prob)
-			afisare_metrici(rezultate["metrici"])
+			for titlu, cheie, generator, displayer in sectiuni:
+				st.subheader(titlu)
+				if cheie not in rezultate:
+					rezultate[cheie] = generator()
+				displayer(rezultate[cheie])
 
-			st.subheader("Matrice de confuzie")
-			if "matrice_confuzie" not in rezultate:
-				rezultate["matrice_confuzie"] = plot_matrice_confuzie(y_test, y_pred)
-			st.plotly_chart(
-				rezultate["matrice_confuzie"], use_container_width=False, key=f"{denumire_model}_matrice_confuzie"
-			)
-
-			st.subheader("Curba ROC")
-			if "roc" not in rezultate:
-				rezultate["roc"] = plot_curba_roc(y_test, y_prob)
-			st.plotly_chart(rezultate["roc"], use_container_width=False, key=f"{denumire_model}_roc")
-
-			st.subheader("Curba PR")
-			if "pr" not in rezultate:
-				rezultate["pr"] = plot_curba_pr(y_test, y_prob)
-			st.plotly_chart(rezultate["pr"], use_container_width=False, key=f"{denumire_model}_pr")
-	
-	if "stocare_metrici" not in st.session_state:
-		with st.spinner("Stocare rezultate in baza de date..."):
-			metrici: dict = {k: v["metrici"] for k, v in st.session_state.rezultate_modele.items()}
-			create_metrici(st.session_state.ids_modele, metrici)
-			st.session_state.stocare_metrici = True
+	salvare_metrici_in_bd()
 
 
 if __name__ == "__main__":

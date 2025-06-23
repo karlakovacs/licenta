@@ -12,9 +12,11 @@ import tempfile
 from kaggle.api.kaggle_api_extended import KaggleApi
 import pandas as pd
 
+from storage import get_dataset_sample_from_storage
+
 
 def citire_fisier_local():
-	fisier = st.file_uploader("Încarcă un fișier", type=["csv", "xlsx"])
+	fisier = st.file_uploader("📄 Încarcă un fișier", type=["csv", "xlsx"])
 	if fisier is not None:
 		if fisier.name.endswith(".csv"):
 			df = pd.read_csv(fisier)
@@ -26,7 +28,7 @@ def citire_fisier_local():
 		return df
 
 
-def descarcare_kaggle(link: str) -> pd.DataFrame:
+def citire_kaggle(link: str) -> pd.DataFrame:
 	prefix = "https://www.kaggle.com/datasets/"
 	if not link.startswith(prefix):
 		raise ValueError("Linkul trebuie să înceapă cu 'https://www.kaggle.com/datasets/'")
@@ -46,3 +48,13 @@ def descarcare_kaggle(link: str) -> pd.DataFrame:
 				return pd.read_excel(file_path)
 
 	raise FileNotFoundError("Nu s-a găsit niciun fișier .csv sau .xlsx în arhiva descărcată.")
+
+
+# def citire_date_predefinite(nume_dataset: str) -> pd.DataFrame:
+# 	df = get_dataset_sample_from_storage(nume_dataset.lower(), bucket="predefined-datasets")
+# 	return df
+
+
+def citire_date_predefinite(nume_dataset: str) -> pd.DataFrame:
+	df = pd.read_parquet(f"data/{nume_dataset.lower()}.parquet")
+	return df

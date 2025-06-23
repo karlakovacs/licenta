@@ -19,6 +19,9 @@ def login(id_auth0: str) -> int:
 
 
 def get_id_utilizator(id_auth0: str) -> int:
+	if id_auth0 is None:
+		return None
+
 	db = get_session()
 	utilizator = db.query(Utilizator).filter(Utilizator.id_auth0 == id_auth0).first()
 	return utilizator.id

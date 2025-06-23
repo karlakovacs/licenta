@@ -8,7 +8,7 @@ PAGES = [
 	(2, "Analiza datelor", "pages/2_eda.py", "📊"),
 	(3, "Procesarea datelor", "pages/3_procesare.py", "🛠️"),
 	(4, "Alegerea modelelor ML", "pages/4_modele.py", "🧠"),
-	(5, "Antrenarea modelelor ML", "pages/5_hiperparametri.py", "⚙️"),
+	(5, "Antrenarea modelelor ML", "pages/5_antrenare.py", "⚙️"),
 	(6, "Rezultate", "pages/6_rezultate.py", "🎯"),
 	(7, "Explainable AI", "pages/7_xai.py", "💡"),
 	(8, "Compararea modelelor", "pages/8_comparatii.py", "⚖️"),
@@ -20,30 +20,10 @@ PAGES = [
 
 
 def nav_bar():
-	st.session_state.setdefault(
-		"pagini",
-		{
-			0: True,
-			1: True,
-			2: False,
-			3: False,
-			4: False,
-			5: False,
-			6: False,
-			7: False,
-			8: False,
-			9: False,
-			10: False,
-			11: True,
-			12: True,
-		},
-	)
-
-	st.sidebar.image("assets/logo-text.png", width=120)
-	for page_id, label, path, icon in PAGES:
+	st.sidebar.image(f"assets/logo-text.png", width=120)
+	for _, label, path, icon in PAGES:
 		st.sidebar.page_link(
 			path,
 			label=label,
 			icon=icon,
-			# disabled=not st.session_state.get("pagini").get(page_id)
 		)

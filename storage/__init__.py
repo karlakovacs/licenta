@@ -1,3 +1,3 @@
-from .operatii.model import *
-from .operatii.raport import *
-from .operatii.set_date import *
+from .model import *
+from .raport import *
+from .set_date import *

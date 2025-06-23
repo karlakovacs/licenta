@@ -1,27 +1,38 @@
 import pandas as pd
 import streamlit as st
+from streamlit_sortables import sort_items
 
-from database import create_set_date_procesat, get_id_utilizator
-from dataset import citire_date_predefinite, citire_date_temp
+from database import create_set_date_procesat
+from dataset import citire_set_date
 from preprocessing import procesare_dataset
-from ui import nav_bar
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | Procesare", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
+initializare_pagina("FlagML", "centered", "Procesarea datelor")
 
 
-def ui_eliminare_coloane(df: pd.DataFrame):
+def sectiune_eliminare_coloane(df: pd.DataFrame):
+	st.session_state.setdefault(
+		"coloane_irelevante",
+		[
+			col
+			for col in df.columns
+			if df[col].nunique() > 15
+			and (pd.api.types.is_integer_dtype(df[col]) or pd.api.types.is_object_dtype(df[col]))
+			and not pd.api.types.is_float_dtype(df[col])
+		],
+	)
+
 	st.multiselect(
 		"Alege coloanele de eliminat",
 		options=df.columns,
+		default=st.session_state.coloane_irelevante,
 		help="Coloane care nu aduc valoare, cum ar fi ID-uri, coduri, etc.",
 		key="coloane_eliminate",
 	)
 
 
-def ui_eliminare_randuri(df: pd.DataFrame):
+def sectiune_eliminare_randuri(df: pd.DataFrame):
 	are_duplicate = df.duplicated().any()
 	are_nan = df.isnull().any().any()
 
@@ -44,7 +55,7 @@ def ui_eliminare_randuri(df: pd.DataFrame):
 		st.info("Nu există valori lipsă în setul de date.")
 
 
-def ui_outlieri(df: pd.DataFrame):
+def sectiune_outlieri(df: pd.DataFrame):
 	tinta = st.session_state["set_date"]["tinta"]
 	coloane_numerice = df.drop(columns=[tinta]).select_dtypes(include=["number"]).columns
 
@@ -75,7 +86,7 @@ def ui_outlieri(df: pd.DataFrame):
 		)
 
 
-def ui_valori_lipsa_coloane(df: pd.DataFrame):
+def sectiune_valori_lipsa_coloane(df: pd.DataFrame):
 	are_nan = df.isnull().any().any()
 	if are_nan:
 		strategie_numerice = st.selectbox(
@@ -109,7 +120,7 @@ def ui_valori_lipsa_coloane(df: pd.DataFrame):
 		st.info("Nu există valori lipsă în setul de date.")
 
 
-def ui_coloane_binare(df: pd.DataFrame):
+def sectiune_coloane_binare(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
 
 	if "coloane_binare" not in st.session_state:
@@ -139,24 +150,19 @@ def ui_coloane_binare(df: pd.DataFrame):
 		)
 
 
-def ui_datetime(df: pd.DataFrame):
+def sectiune_datetime(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
-	coloane_object_raw = set(df.select_dtypes(include=["object", "category"]).columns)
-	coloane_object = list(coloane_object_raw - coloane_eliminate)
+	coloane_datetime_raw = df.select_dtypes(include=["datetime"]).columns
+	coloane_datetime = [col for col in coloane_datetime_raw if col not in coloane_eliminate]
 
-	if not coloane_object:
-		st.info("Nu există coloane de tip `object` care ar putea fi transformate în datetime.")
+	if not coloane_datetime:
+		st.info("Nu există coloane de tip `datetime`.")
 		return
 
 	st.multiselect(
 		"Alege coloane de tip datetime",
-		options=coloane_object,
+		options=coloane_datetime,
 		key="datetime_coloane",
-	)
-
-	st.text_input(
-		"Formatul datetime (ex: `%Y-%m-%d %H:%M:%S`, `%d/%m/%Y`, etc.)",
-		key="datetime_format",
 	)
 
 	st.multiselect(
@@ -166,12 +172,12 @@ def ui_datetime(df: pd.DataFrame):
 	)
 
 
-def ui_encoding(df: pd.DataFrame):
+def sectiune_encoding(df: pd.DataFrame):
 	coloane_eliminate = set(st.session_state.get("coloane_eliminate", []))
 	coloane_binare = set(st.session_state.get("coloane_binare", []))
 	coloane_datetime = set(st.session_state.get("datetime_coloane", []))
 	coloane_categoriale_raw = set(df.select_dtypes(include=["object", "category"]).columns)
-	coloane_categoriale = list(coloane_categoriale_raw - coloane_eliminate - coloane_datetime)
+	coloane_categoriale = list(coloane_categoriale_raw - coloane_eliminate - coloane_datetime - coloane_binare)
 
 	if not coloane_categoriale:
 		st.info("Nu există coloane categoriale de procesat.")
@@ -179,14 +185,24 @@ def ui_encoding(df: pd.DataFrame):
 		encoding_dorit = st.checkbox(
 			"Aplică encoding variabilelor categoriale",
 			key="encoding_dorit",
-			help="Toate variabilele categorice vor fi encodate automat folosind one-hot encoding, cu excepția celor specificate la `Label Encoding`.",
+			help="Toate variabilele categorice vor fi encodate automat folosind one-hot encoding (salvându-se primele 10 valori unice), cu excepția celor specificate la `Label Encoding`.",
 		)
 		if encoding_dorit:
-			st.slider("Max categorii per coloană", 2, 15, 10, key="encoding_max_categorii")
-			st.multiselect("Coloane pentru Label Encoding", options=coloane_categoriale, key="encoding_coloane_label")
+			encoding_coloane_label = st.multiselect(
+				"Coloane pentru Label Encoding", options=coloane_categoriale, key="encoding_coloane_label"
+			)
+
+			st.session_state.setdefault("label_ordine_sortare", {})
+
+			for col in encoding_coloane_label:
+				st.markdown(f"Sortează valorile din coloana **{col}** în ordinea dorită:")
+				unique_values = [str(v) for v in df[col].dropna().unique().tolist()]
+				sorted_values = sort_items(unique_values, direction="horizontal", key=f"sort_{col}")
+				st.markdown(f"Ordine aleasă: `{sorted_values}`")
+				st.session_state["label_ordine_sortare"][col] = sorted_values
 
 
-def ui_dezechilibru():
+def sectiune_dezechilibru():
 	st.selectbox(
 		"Strategia de gestionare a dezechilibrului dintre clase:",
 		["Undersampling", "Oversampling", "ADASYN", "Niciuna"],
@@ -201,7 +217,7 @@ def ui_dezechilibru():
 	)
 
 
-def ui_scalare():
+def sectiune_scalare():
 	st.selectbox(
 		"Alege metoda de scalare:",
 		["StandardScaler", "MinMaxScaler", "RobustScaler", "Niciuna"],
@@ -215,7 +231,7 @@ def ui_scalare():
 	)
 
 
-def ui_impartire():
+def sectiune_impartire():
 	st.slider(
 		"Alege procentajul pentru setul de testare:",
 		min_value=0.1,
@@ -268,15 +284,13 @@ def creare_dict_procesare():
 	if st.session_state.get("datetime_coloane"):
 		procesare["datetime"] = {
 			"coloane": st.session_state.get("datetime_coloane", []),
-			"format": st.session_state.get("datetime_format", "%Y-%m-%d"),
 			"componente": st.session_state.get("datetime_componente", []),
 		}
 
 	if st.session_state.get("encoding_dorit"):
 		procesare["encoding"] = {
-			"max_categorii": st.session_state.get("encoding_max_categorii", 10),
-			"coloane_label": st.session_state.get("encoding_coloane_label", []),
-			# "coloane_one_hot": st.session_state.get("encoding_coloane_one_hot", []),
+			"max_categorii": 10,
+			"coloane_label": st.session_state.get("label_ordine_sortare", {}),
 		}
 
 	procesare["dezechilibru"] = st.session_state.get("dezechilibru", "Niciuna")
@@ -292,66 +306,58 @@ def creare_dict_procesare():
 	st.session_state["procesare"] = procesare
 
 
-st.title("Procesarea datelor")
+@require_auth
+@require_selected_dataset
+def main():
+	set_date: dict = st.session_state.get("set_date", None)
+	df: pd.DataFrame = citire_set_date(set_date)
 
-set_date: dict = st.session_state.get("set_date", None)
-df: pd.DataFrame = None
+	st.header(set_date["denumire"])
+	st.dataframe(df.head())
 
-if set_date is None:
-	st.warning("Alegeți un set de date mai întâi.")
+	with st.expander("🧹 Eliminarea coloanelor inutile"):
+		sectiune_eliminare_coloane(df)
 
-else:
-	if set_date["sursa"] != "Seturi predefinite":
-		df = citire_date_temp(set_date["denumire"])
-	else:
-		df = citire_date_predefinite(set_date["denumire"])
+	with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
+		sectiune_eliminare_randuri(df)
 
-	if df is None:
-		st.error("Setul de date nu a putut fi încărcat")
+	with st.expander("🔬 Detectarea și tratarea outlierilor"):
+		sectiune_outlieri(df)
 
-	else:
-		st.header(set_date["denumire"])
-		st.dataframe(df.head())
+	with st.expander("🧩 Înlocuirea valorilor lipsă"):
+		sectiune_valori_lipsa_coloane(df)
 
-		with st.expander("🧹 Eliminarea coloanelor inutile"):
-			ui_eliminare_coloane(df)
+	with st.expander("🟢 Procesarea coloanelor binare"):
+		sectiune_coloane_binare(df)
 
-		with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
-			ui_eliminare_randuri(df)
+	with st.expander("📅 Procesarea coloanelor datetime"):
+		sectiune_datetime(df)
 
-		with st.expander("🔬 Detectarea și tratarea outlierilor"):
-			ui_outlieri(df)
+	with st.expander("🏷️ Encoding pentru coloanele categoriale"):
+		sectiune_encoding(df)
 
-		with st.expander("🧩 Înlocuirea valorilor lipsă"):
-			ui_valori_lipsa_coloane(df)
+	with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
+		sectiune_dezechilibru()
 
-		with st.expander("🟢 Procesarea coloanelor binare"):
-			ui_coloane_binare(df)
+	with st.expander("📏 Scalarea datelor"):
+		sectiune_scalare()
 
-		with st.expander("📅 Procesarea coloanelor datetime"):
-			ui_datetime(df)
+	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
+		sectiune_impartire()
 
-		with st.expander("🏷️ Encoding pentru coloanele categoriale"):
-			ui_encoding(df)
+	if st.button("Procesare", type="primary", disabled=verificare_flag("processed_dataset")):
+		creare_dict_procesare()
+		# st.json(st.session_state["procesare"])
+		df = procesare_dataset(df, st.session_state["procesare"])
+		st.session_state.id_set_procesat = create_set_date_procesat(
+			st.session_state.get("id_utilizator"),
+			st.session_state.get("id_set_date", 1),
+			st.session_state.get("procesare"),
+			df,
+		)
+		setare_flag("processed_dataset")
+		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
 
-		with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
-			ui_dezechilibru()
 
-		with st.expander("📏 Scalarea datelor"):
-			ui_scalare()
-
-		with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
-			ui_impartire()
-
-		if st.button("Procesare", type="primary", disabled="procesare_realizata" in st.session_state):
-			creare_dict_procesare()
-			# st.json(st.session_state["procesare"])
-			df = procesare_dataset(df, st.session_state["procesare"])
-			st.session_state.id_set_procesat = create_set_date_procesat(
-				st.session_state.get("id_utilizator"),
-				st.session_state.get("id_set_date"),
-				st.session_state.get("procesare"),
-				df,
-			)
-			st.session_state.procesare_realizata = True
-			st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
+if __name__ == "__main__":
+	main()

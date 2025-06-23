@@ -4,25 +4,34 @@ import tempfile
 
 import pandas as pd
 
+from ui import *
+
 
 def generare_metadate(df: pd.DataFrame, max_valori_unice: int = 15):
-	variabile = {}
+	metadate = {}
 
 	for col in df.columns:
 		serie = df[col].dropna()
 		tip = serie.dtype
 
-		# 1. Boolean
+		# boolean
 		if pd.api.types.is_bool_dtype(tip):
 			valori = sorted(map(str, set(serie.unique())))
-			variabile[col] = {"tip": "B", "valori": valori}
+			metadate[col] = {"tip": "B", "valori": valori}
 			continue
 
 		if serie.nunique() == 2 and set(serie.unique()).issubset({0, 1, True, False}):
-			variabile[col] = {"tip": "B", "valori": sorted(map(str, set(serie)))}
+			metadate[col] = {"tip": "B", "valori": sorted(map(str, set(serie)))}
 			continue
 
-		# 2. Numeric
+		# datetime
+		if pd.api.types.is_datetime64_any_dtype(tip):
+			val_min = str(serie.min())
+			val_max = str(serie.max())
+			metadate[col] = {"tip": "D", "min": val_min, "max": val_max}
+			continue
+
+		# numeric
 		if pd.api.types.is_numeric_dtype(tip):
 			if (serie % 1 == 0).all():
 				tip_numeric = "ND"
@@ -34,21 +43,27 @@ def generare_metadate(df: pd.DataFrame, max_valori_unice: int = 15):
 				val_min = float(serie.min())
 				val_max = float(serie.max())
 
-			variabile[col] = {"tip": tip_numeric, "min": val_min, "max": val_max}
+			metadate[col] = {"tip": tip_numeric, "min": val_min, "max": val_max}
 			continue
 
-		# 3. Categorial sau text
+		# categorial sau text
 		unice = serie.nunique()
 		if unice <= max_valori_unice:
 			categorii = serie.value_counts().sort_values(ascending=False).index.tolist()
-			variabile[col] = {"tip": "C", "valori": list(map(str, categorii))}
+			metadate[col] = {"tip": "C", "valori": list(map(str, categorii))}
 		else:
-			variabile[col] = {"tip": "T"}
+			metadate[col] = {"tip": "T"}
 
-	denumire_fisier = "metadate.json"
-	temp_path = os.path.join(tempfile.gettempdir(), denumire_fisier)
-	with open(temp_path, "w", encoding="utf-8") as f:
-		json.dump(variabile, f, indent=2, ensure_ascii=False)
+	# denumire_fisier = "metadate.json"
+	# temp_path = os.path.join(tempfile.gettempdir(), denumire_fisier)
+	# with open(temp_path, "w", encoding="utf-8") as f:
+	# 	json.dump(variabile, f, indent=2, ensure_ascii=False)
+
+	return metadate
+
+
+def get_tip_variabila(variabila: str) -> str:
+	return st.session_state.get("metadate", {}).get(variabila, {}).get("tip", "N/A")
 
 
 def generare_metadate_set_procesat(df: pd.DataFrame, max_valori_unice: int = 15) -> dict:

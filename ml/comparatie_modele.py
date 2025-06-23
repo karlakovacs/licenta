@@ -85,3 +85,7 @@ def grafic_comparativ(df_metrici: pd.DataFrame):
 		template="plotly_white",
 	)
 	return fig
+
+
+def interpretare_comparatii(df_metrici: pd.DataFrame):
+	pass

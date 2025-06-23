@@ -1,24 +1,40 @@
 import streamlit as st
 
-from database import get_id_utilizator
-from ui import nav_bar
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | Acasă", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
+initializare_pagina("Acasă", "centered", "Acasă")
 
-st.session_state.setdefault("flags", {})
 
-st.title("Acasă")
+@require_auth
+def main():
+	st.write(
+		"""
+		FlagML este o aplicație dedicată detectării fraudei bancare, utilizând metode moderne de învățare automată (machine learning).
 
-st.write(
-	"""
-	Bun venit în cadrul aplicației dedicate clasificării binare!
-	
-	Puteți lucra folosind seturi proprii de date sau date referitoare la detectarea fraudei bancare.
-	"""
-)
+		Fiecare tranzacție bancară poate fi clasificată ca frauduloasă sau legitimă, ceea ce face ca această sarcină să fie una tipică de clasificare binară.
 
-if st.button("Clear session state"):
-	st.session_state.clear()
+		Prin această aplicație, utilizatorii pot parcurge întregul flux de lucru ML: de la încărcarea datelor și analiza exploratorie, până la antrenarea modelelor, interpretarea deciziilor și generarea de rapoarte automate.
+		"""
+	)
+
+	col1, col2 = st.columns([1, 2])
+
+	with col1:
+		if st.button("✨ *Începe o analiză nouă*", type="primary"):
+			st.session_state.clear()
+			st.switch_page("pages/1_dataset.py")
+
+	with col2:
+		if st.button("🗂️ *Vizualizează rapoartele și modelele personale*", type="secondary"):
+			st.switch_page("pages/11_date.py")
+
+	st.image("assets/home/ai.png")
+
+	if st.button("Clear session state"):
+		st.session_state.clear()
+		st.balloons()
+
+
+if __name__ == "__main__":
+	main()

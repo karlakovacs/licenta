@@ -1,26 +1,30 @@
 import streamlit as st
 
-from database import get_id_utilizator
-from ml import creare_df_metrici, grafic_comparativ
-from ui import nav_bar
+from ml import creare_df_metrici, grafic_comparativ, interpretare_comparatii
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | Comparații", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
-
-st.title("Compararea performanței modelelor")
+initializare_pagina("Comparații", "wide", "Compararea performanței modelelor", {"comparatii_modele", {}})
 
 
-rezultate_modele = st.session_state.get("rezultate_modele", None)
+@require_auth
+@require_selected_dataset
+@require_processed_dataset
+@require_selected_models
+@require_trained_models
+def main():
+	rezultate_modele = st.session_state.get("rezultate_modele", None)
+	date = st.session_state["comparatii_modele"]
+	if not date:
+		date["df_metrici"] = creare_df_metrici(rezultate_modele)
+		date["grafic_comparativ"] = grafic_comparativ(st.session_state.df_metrici)
+		date["interpretare"] = interpretare_comparatii(st.session_state.df_metrici)
 
-if rezultate_modele is None:
-	st.warning("Antrenează modelele și vizualizează rezultatele mai întâi.")
-else:
-	del st.session_state.grafic_comparativ
-	if "grafic_comparativ" not in st.session_state:
-		st.session_state.df_metrici = creare_df_metrici(rezultate_modele)
-		st.session_state.grafic_comparativ = grafic_comparativ(st.session_state.df_metrici)
+	st.dataframe(date["df_metrici"])
+	st.plotly_chart(date["grafic_comparativ"], use_container_width=False)
+	st.header("Intepretare")
+	st.write(date["interpretare"])
 
-	st.dataframe(st.session_state.df_metrici)
-	st.plotly_chart(st.session_state.grafic_comparativ, use_container_width=False)
+
+if __name__ == "__main__":
+	main()

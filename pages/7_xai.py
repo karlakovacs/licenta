@@ -1,27 +1,27 @@
 import streamlit as st
 
-from database import get_id_utilizator
 from dataset import citire_date_temp
-from ui import nav_bar
+from ui import *
 from xai import ui_test
 
 
-st.set_page_config(layout="wide", page_title="FlagML | XAI", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
-
-st.title("Explainable AI")
+initializare_pagina("XAI", "wide", "Explainable AI", {"xai_test": {}})
 
 
-modele_antrenate = st.session_state.get("modele_antrenate", {})
-X_train, X_test, y_train = (
-	citire_date_temp("X_train"),
-	citire_date_temp("X_test"),
-	citire_date_temp("y_train"),
-)
-
-if not modele_antrenate:
-	st.warning("Antrenează modelele mai întâi.")
-
-else:
+@require_auth
+@require_selected_dataset
+@require_processed_dataset
+@require_selected_models
+@require_trained_models
+def main():
+	modele_antrenate = st.session_state.get("modele_antrenate", {})
+	X_train, X_test, y_train = (
+		citire_date_temp("X_train"),
+		citire_date_temp("X_test"),
+		citire_date_temp("y_train"),
+	)
 	ui_test(modele_antrenate, X_train, y_train, X_test)
+
+
+if __name__ == "__main__":
+	main()

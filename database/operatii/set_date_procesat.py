@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import or_
+
 from storage import *
 
 from ..modele import SetDateBrut, SetDateProcesat
@@ -9,7 +11,15 @@ from ..utils import get_session
 def create_set_date_procesat(id_utilizator: int, id_set_date: int, configuratie: dict, df: pd.DataFrame):
 	db = get_session()
 
-	set_brut = db.query(SetDateBrut).filter_by(id=id_set_date, id_utilizator=id_utilizator).first()
+	set_brut = (
+		db.query(SetDateBrut)
+		.filter(
+			SetDateBrut.id == id_set_date,
+			or_(SetDateBrut.id_utilizator == id_utilizator, SetDateBrut.id_utilizator == None),
+		)
+		.first()
+	)
+
 	if not set_brut:
 		raise ValueError("Setul de date brut nu există sau nu aparține utilizatorului.")
 

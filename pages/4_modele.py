@@ -1,15 +1,9 @@
 import streamlit as st
 
-from database import get_id_utilizator
-from ui import nav_bar
+from ui import *
 
 
-st.set_page_config(layout="wide", page_title="FlagML | Modele", page_icon="assets/logo.png")
-nav_bar()
-st.session_state.setdefault("id_utilizator", get_id_utilizator(st.user.sub))
-
-st.title("Modele de Machine Learning")
-
+initializare_pagina("Modele ML", "wide", "Modele de Machine Learning", {"modele_selectate": []})
 
 CATEGORII_MODELE = [
 	{
@@ -55,6 +49,9 @@ MODELE_HINTURI = {
 }
 
 
+@require_auth
+@require_selected_dataset
+@require_processed_dataset
 def main():
 	st.subheader("Selectează modelele dorite")
 	modele_selectate = []
@@ -65,7 +62,7 @@ def main():
 		with st.container(border=True):
 			st.subheader(categorie)
 
-			modele_session_state = st.session_state.get("modele_selectate", [])
+			modele_session_state = obtinere_cheie("modele_selectate", [])
 
 			selectii = []
 			for model in modele:
@@ -79,8 +76,9 @@ def main():
 
 			modele_selectate += selectii
 
-	if st.button("Salvează selecția", type="primary", disabled="modele_selectate" in st.session_state):
+	if st.button("Salvează selecția", type="primary", disabled=verificare_flag("selected_models")):
 		st.session_state.modele_selectate = modele_selectate
+		setare_flag("selected_models")
 		st.toast("Modelele au fost salvate!", icon="✅")
 
 

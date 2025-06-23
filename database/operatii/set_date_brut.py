@@ -43,9 +43,20 @@ def get_seturi_date_brute(id_utilizator: int) -> list:
 	db = get_session()
 	lista = (
 		db.query(SetDateBrut)
-		.options(joinedload(SetDateBrut.sursa_date))  # JOIN cu sursa_date
+		.options(joinedload(SetDateBrut.sursa_date))
 		.filter(SetDateBrut.id_utilizator == id_utilizator)
 		.order_by(SetDateBrut.data_creare.desc())
+		.all()
+	)
+	return lista
+
+
+def get_seturi_date_predefinite() -> list:
+	db = get_session()
+	lista = (
+		db.query(SetDateBrut)
+		.filter(SetDateBrut.id_sursa == 3)
+		.order_by(SetDateBrut.data_creare.asc())
 		.all()
 	)
 	return lista

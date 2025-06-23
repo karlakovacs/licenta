@@ -25,9 +25,9 @@ def train_and_test(
 		y_prob = proba[:, 1]
 
 	y_pred = (y_prob > 0.5).astype(int)
-	timp_antrenare = time.time() - timp_start
+	durata_antrenare = time.time() - timp_start
 
-	return timp_antrenare, y_pred, y_prob
+	return durata_antrenare, y_pred, y_prob
 
 
 def predictie_individuala(model, instanta: pd.DataFrame):
