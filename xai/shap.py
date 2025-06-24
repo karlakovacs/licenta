@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.special import expit
 import shap
 
 
@@ -79,3 +80,59 @@ def shap_plot(shap_values):
 	fig = plt.figure(figsize=(10, 3))
 	shap.plots.waterfall(shap_values[0])
 	return fig
+
+
+# def shap_interpretation(shap_values) -> str:
+# 	if shap_values is None or len(shap_values) == 0:
+# 		return "Nu s-a putut genera interpretarea SHAP."
+
+# 	shap_vals = shap_values[0]
+# 	if not hasattr(shap_vals, "values") or not hasattr(shap_vals, "feature_names"):
+# 		return "Structura valorilor SHAP este invalidă."
+
+# 	valori = shap_vals.values
+# 	features = shap_vals.feature_names
+# 	base_value = shap_vals.base_values
+# 	model_output = shap_vals.values.sum() + base_value
+
+# 	contributii = sorted(zip(features, valori), key=lambda x: abs(x[1]), reverse=True)
+
+# 	interpretari = [
+# 		f"Predicția modelului este de aproximativ **{model_output:.2f}** (valoarea de bază: `{base_value:.2f}`).",
+# 		"",
+# 		"Contribuțiile caracteristicilor la această predicție:",
+# 	]
+
+# 	for feature, valoare in contributii[:5]:
+# 		directie = "crește predicția" if valoare > 0 else "scade predicția"
+# 		interpretari.append(f"- `{feature}` {directie} cu aproximativ **{valoare:.2f}**")
+
+# 	return "\n".join(interpretari)
+
+def shap_interpretation(shap_values) -> str:
+	if shap_values is None or len(shap_values) == 0:
+		return "Nu s-a putut genera interpretarea SHAP."
+
+	shap_vals = shap_values[0]
+	if not hasattr(shap_vals, "values") or not hasattr(shap_vals, "feature_names"):
+		return "Structura valorilor SHAP este invalidă."
+
+	valori = shap_vals.values
+	features = shap_vals.feature_names
+	base_value = shap_vals.base_values
+	model_output = valori.sum() + base_value
+
+	probabilitate = expit(model_output)
+
+	interpretari = [
+		f"Modelul prezice clasa pozitivă cu o probabilitate estimată de **`{probabilitate:.2%}`**\n",
+		f"Valoarea de bază, adică predicția dacă toate inputurile sunt 0, este de `{expit(base_value):.2%}`\n",
+		"Cele mai influente caracteristici:",
+	]
+
+	contributii = sorted(zip(features, valori), key=lambda x: abs(x[1]), reverse=True)
+	for feature, val in contributii[:8]:
+		directie = "crește" if val > 0 else "scade"
+		interpretari.append(f"- `{feature}` {directie} probabilitatea cu ~**{abs(val):.2f}** (în scor logit)")
+
+	return "\n".join(interpretari)

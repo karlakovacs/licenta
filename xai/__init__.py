@@ -5,5 +5,5 @@ from .dice import (
 	interpretare_explicatii,
 )
 from .interfata import ui_predictii, ui_test
-from .lime import lime_plot
-from .shap import shap_plot
+from .lime import lime_interpretation, lime_plot
+from .shap import shap_interpretation, shap_plot

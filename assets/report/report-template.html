@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Raport</title>
+</head>
+
+<body>
+    {{ logo | safe }}
+
+	<h1>Raport</h1>
+
+	<div class="cuprins">
+		<h2>Cuprins</h2>
+	</div>
+
+	{% if set_date %}
+	<div class="sectiune" id="set_date">
+		<h2>Set de date</h2>
+        {{ set_date | safe }}
+	</div>
+	{% endif %}
+
+    {% if eda %}
+    <div class="sectiune" id="eda">
+        <h2>Analiza exploratorie a datelor</h2>
+    
+        {% if eda.valori_lipsa %}
+        <h3 id="valori_lipsa">Valori lipsă</h3>
+        {{ eda.valori_lipsa | safe }}
+        {% endif %}
+    
+        {% if eda.plot_tipuri_variabile %}
+        <h3 id="tipuri_variabile">Tipuri de variabile</h3>
+        {{ eda.plot_tipuri_variabile | safe }}
+        {% endif %}
+    
+        {% if eda.distributie_tinta %}
+        <h3 id="distributie_tinta">Distribuția variabilei țintă</h3>
+        {{ eda.distributie_tinta.pie_chart_tinta | safe }}
+        <div class="interpretare">
+            {{ eda.distributie_tinta.interpretare | safe }}
+        </div>
+        {% endif %}
+    
+        {% if eda.descrieri %}
+        <h3 id="descrieri">Descrierea variabilelor</h3>
+        {% for variabila, info in eda.descrieri.items() %}
+        <div class="variabila">
+            <h4><code>{{ variabila }}</code> (tip: <code>{{ info.tip }}</code>)</h4>
+            <div class="interpretare">
+                {{ info.interpretare | safe }}
+            </div>
+            {% if info.statistici %}
+            <h5>Statistici</h5>
+            {{ info.statistici | safe }}
+            {% endif %}
+            {% if info.plot_distributie_temporala %}
+            <h5>Distribuție temporală</h5>
+            {{ info.plot_distributie_temporala | safe }}
+            {% endif %}
+            {% if info.pie_chart %}
+            <h5>Distribuție categorică</h5>
+            {{ info.pie_chart | safe }}
+            {% endif %}
+            {% if info.histograma %}
+            <h5>Histogramă</h5>
+            {{ info.histograma | safe }}
+            {% endif %}
+            {% if info.box_plot %}
+            <h5>Box plot</h5>
+            {{ info.box_plot | safe }}
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    
+        {% if eda.matrice_corelatie %}
+        <h3 id="matrice_corelatie">Matricea de corelație</h3>
+        {{ eda.matrice_corelatie | safe }}
+        {% endif %}
+    
+        {% if eda.plot_variabile_puternic_corelate %}
+        <h3 id="variabile_corelate">Variabile puternic corelate cu ținta</h3>
+        {{ eda.plot_variabile_puternic_corelate | safe }}
+        {% endif %}
+    </div>
+    {% endif %}
+
+	{% if procesare %}
+	<div class="sectiune" id="procesare">
+		<h2>Procesarea datelor</h2>
+        {{ procesare | safe }}
+	</div>
+	{% endif %}
+
+	{% if modele_antrenate %}
+	<div class="sectiune" id="modele_antrenate">
+		<h2>Antrenarea modelelor de ML</h2>
+        {{ modele_antrenate | safe }}
+	</div>
+	{% endif %}
+
+	{% if rezultate_modele %}
+	<div class="sectiune" id="rezultate_modele">
+		<h2>Rezultatele modelelor</h2>
+
+		{% for nume_model, info in rezultate_modele.items() %}
+		<h3>{{ nume_model }}</h3>
+
+		{% if info.raport_clasificare %}
+		<h4>Raport de clasificare</h4>
+		<pre>{{ info.raport_clasificare }}</pre>
+		{% endif %}
+
+		{% if info.metrici %}
+		<h4>Metrici</h4>
+		<ul>
+			{% for cheie, valoare in info.metrici.items() %}
+			<li><b>{{ cheie }}:</b> {{ valoare }}</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+
+		{% if info.matrice_confuzie %}
+		<h4>Matrice de confuzie</h4>
+		{{ info.matrice_confuzie | safe }}
+		{% endif %}
+
+		{% if info.roc %}
+		<h4>Curba ROC</h4>
+		{{ info.roc | safe }}
+		{% endif %}
+
+		{% if info.pr %}
+		<h4>Curba Precision-Recall (PR)</h4>
+		{{ info.pr | safe }}
+		{% endif %}
+
+		{% endfor %}
+	</div>
+	{% endif %}
+
+    {% if comparatii_modele %}
+    <div class="sectiune" id="comparatii_modele">
+        <h2>Comparații între modele</h2>
+    
+        {% if comparatii_modele.df_comparatii %}
+        <h3 id="tabel_comparatii">Tabel comparativ</h3>
+        {{ comparatii_modele.df_comparatii | safe }}
+        {% endif %}
+    
+        {% if comparatii_modele.grafic %}
+        <h3 id="grafic_comparativ">Grafic comparativ</h3>
+        {{ comparatii_modele.grafic | safe }}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if xai_test %}
+    <div class="sectiune" id="xai_test">
+        <h2>Explainable AI (XAI) pe setul de testare</h2>
+    
+        {% for idx, instanta in xai_test.items() %}
+        <div class="subsectiune" id="xai_test_{{ idx }}">
+            <h3>Instanța {{ idx }}</h3>
+    
+            {% if instanta.date %}
+            <h4>Datele instanței</h4>
+            <pre>{{ instanta.date }}</pre>
+            {% endif %}
+    
+            <p><strong>Valoare reală (y_true):</strong> <code>{{ instanta.y_true }}</code></p>
+    
+            {% for model, info in instanta.items() %}
+            {% if model not in ("date", "y_true") %}
+            <div class="model-xai" id="xai_model_{{ idx }}_{{ model|replace(' ', '_') }}">
+                <h4>Model: {{ model }}</h4>
+                <p>
+                    <strong>Predicție:</strong> <code>{{ info.y_pred }}</code> &nbsp;
+                    <strong>Probabilitate:</strong> <code>{{ info.y_prob }}%</code>
+                </p>
+    
+                {% for metoda, detalii in info.items() %}
+                {% if metoda not in ("y_pred", "y_prob") %}
+                <div class="xai-metoda">
+                    <h5>{{ metoda }}</h5>
+                    {% if detalii.figura %}
+                    <div class="xai-figura">{{ detalii.figura | safe }}</div>
+                    {% endif %}
+                    {% if detalii.interpretare %}
+                    <div class="xai-interpretare">{{ detalii.interpretare | safe }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+
+    {% if xai_predictii %}
+    <div class="sectiune" id="xai_predictii">
+        <h2>Explainable AI (XAI) pe predicții individuale</h2>
+        {% for idx, instanta in xai_predictii.items() %}
+        <div class="subsectiune" id="xai_predictii_{{ idx }}">
+            <h3>Instanța {{ idx }}</h3>
+        
+            {% if instanta.date %}
+            <h4>Datele instanței</h4>
+            <pre>{{ instanta.date }}</pre>
+            {% endif %}
+        
+            {% for model, info in instanta.items() %}
+            {% if model not in ("date", "y_true") %}
+            <div class="model-xai" id="xai_model_{{ idx }}_{{ model|replace(' ', '_') }}">
+                <h4>Model: {{ model }}</h4>
+                <p>
+                    <strong>Predicție:</strong> <code>{{ info.y_pred }}</code> &nbsp;
+                    <strong>Probabilitate:</strong> <code>{{ info.y_prob }}%</code>
+                </p>
+        
+                {% for metoda, detalii in info.items() %}
+                {% if metoda not in ("y_pred", "y_prob") %}
+                <div class="xai-metoda">
+                    <h5>{{ metoda }}</h5>
+                    {% if detalii.figura %}
+                    <div class="xai-figura">{{ detalii.figura | safe }}</div>
+                    {% endif %}
+                    {% if detalii.interpretare %}
+                    <div class="xai-interpretare">{{ detalii.interpretare | safe }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+import re
 
 import matplotlib.figure as plt
 import pandas as pd
@@ -60,3 +61,45 @@ def explicatii_dice_to_text(explicatii: dict) -> str:
 		rezultat += "</ul>"
 	rezultat += "</ol>"
 	return rezultat
+
+
+def markdown_to_html(text: str) -> str:
+	lines = text.strip().split("\n")
+	html_lines = []
+	in_list = False
+
+	for line in lines:
+		line = line.strip()
+
+		if line.startswith("- "):
+			if not in_list:
+				html_lines.append("<ul>")
+				in_list = True
+			content = line[2:]
+		else:
+			if in_list:
+				html_lines.append("</ul>")
+				in_list = False
+			content = line
+
+		content = re.sub(r"`([^`]+)`", r"<code>\1</code>", content)
+
+		content = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", content)
+
+		content = re.sub(r"\*(.+?)\*", r"<em>\1</em>", content)
+
+		if line.startswith("- "):
+			html_lines.append(f"<li>{content}</li>")
+		else:
+			html_lines.append(f"<p>{content}</p>")
+
+	if in_list:
+		html_lines.append("</ul>")
+
+	return "\n".join(html_lines)
+
+
+def image_to_html(url: str):
+	with open(url, "rb") as f:
+		encoded = base64.b64encode(f.read()).decode()
+	return f'<img src="data:image/png;base64,{encoded}" class="logo">'

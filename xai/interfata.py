@@ -8,8 +8,8 @@ from .dice import (
 	calculate_counterfactuals,
 	get_dice_explainer,
 )
-from .lime import get_explanation, get_lime_explainer, lime_plot
-from .shap import calculate_shap_values, get_shap_explainer, shap_plot
+from .lime import get_explanation, get_lime_explainer, lime_interpretation, lime_plot
+from .shap import calculate_shap_values, get_shap_explainer, shap_interpretation, shap_plot
 
 
 def ui_test(
@@ -94,9 +94,9 @@ def ui_selectie_instanta(X_test):
 
 def init_explainer(denumire_model: str, tehnica_xai: str, model, X_train: pd.DataFrame, y_train: pd.Series = None):
 	if (
-		"explainers" in st.session_state and
-		denumire_model in st.session_state["explainers"] and
-		tehnica_xai in st.session_state["explainers"][denumire_model]
+		"explainers" in st.session_state
+		and denumire_model in st.session_state["explainers"]
+		and tehnica_xai in st.session_state["explainers"][denumire_model]
 	):
 		del st.session_state["explainers"][denumire_model][tehnica_xai]
 
@@ -235,18 +235,31 @@ def ui_shap(
 	tehnica_xai: str = "SHAP",
 ):
 	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
-	date: dict = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
-	explainer = init_explainer(denumire_model, tehnica_xai, model, X_train)
+	date = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
 
 	if instanta_idx not in date:
-		with st.spinner("Generăm plotul SHAP..."):
+		with st.spinner("Generăm explicația SHAP..."):
+			explainer = init_explainer(denumire_model, tehnica_xai, model, X_train)
 			shap_values = calculate_shap_values(explainer, X_explicat)
-			date[instanta_idx] = shap_plot(shap_values)
 
-	if date.get(instanta_idx):
-		st.pyplot(date[instanta_idx], use_container_width=False)
+			if shap_values is not None:
+				date[instanta_idx] = (
+					shap_plot(shap_values),
+					shap_interpretation(shap_values),
+				)
+			else:
+				date[instanta_idx] = (None, "Nu s-a putut genera explicația SHAP.")
+
+	fig, interpretare = date[instanta_idx]
+
+	if fig is not None:
+		st.pyplot(fig, use_container_width=False)
 	else:
-		st.info("Nu s-a putut genera graficul Waterfall Plot.")
+		st.warning("Graficul SHAP nu a putut fi generat.")
+
+	if interpretare:
+		st.subheader("Interpretare")
+		st.write(interpretare)
 
 
 def ui_lime(
@@ -259,18 +272,29 @@ def ui_lime(
 	tehnica_xai: str = "LIME",
 ):
 	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
-	date: dict = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
-	explainer = init_explainer(denumire_model, tehnica_xai, model, X_train)
+	date = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
 
 	if instanta_idx not in date:
 		with st.spinner("Generăm explicația LIME..."):
-			explicatie = get_explanation(model, explainer, X_explicat)
-			date[instanta_idx] = lime_plot(explicatie) if explicatie is not None else "Error"
+			explicatie = get_explanation(model, init_explainer(denumire_model, tehnica_xai, model, X_train), X_explicat)
+			if explicatie is not None:
+				date[instanta_idx] = (
+					lime_plot(explicatie),
+					lime_interpretation(explicatie),
+				)
+			else:
+				date[instanta_idx] = (None, "Nu s-a putut genera explicația LIME.")
 
-	if date.get(instanta_idx) and date.get(instanta_idx) != "Error":
-		st.plotly_chart(date[instanta_idx], use_container_width=False)
+	fig, interpretare = date[instanta_idx]
+
+	if fig is not None:
+		st.plotly_chart(fig, use_container_width=False)
 	else:
-		st.info("Nu s-a putut genera explicația LIME.")
+		st.warning("Explicația LIME nu a putut fi generată.")
+
+	if interpretare:
+		st.subheader("Interpretare")
+		st.write(interpretare)
 
 
 def ui_dice(

@@ -1,5 +1,8 @@
 import os
+import pickle
+import tempfile
 
+import pandas as pd
 import streamlit as st
 
 
@@ -7,12 +10,8 @@ os.environ["KAGGLE_USERNAME"] = st.secrets.kaggle.KAGGLE_USERNAME
 os.environ["KAGGLE_KEY"] = st.secrets.kaggle.KAGGLE_KEY
 
 
-import tempfile
-
 from kaggle.api.kaggle_api_extended import KaggleApi
 import pandas as pd
-
-from storage import get_dataset_sample_from_storage
 
 
 def citire_fisier_local():
@@ -50,11 +49,24 @@ def citire_kaggle(link: str) -> pd.DataFrame:
 	raise FileNotFoundError("Nu s-a găsit niciun fișier .csv sau .xlsx în arhiva descărcată.")
 
 
-# def citire_date_predefinite(nume_dataset: str) -> pd.DataFrame:
-# 	df = get_dataset_sample_from_storage(nume_dataset.lower(), bucket="predefined-datasets")
-# 	return df
+def citire_set_date(set_date: dict) -> pd.DataFrame:
+	if set_date["sursa"] != "Seturi predefinite":
+		return citire_date_temp(set_date["denumire"])
+	return citire_date_predefinite(set_date["denumire"])
 
 
 def citire_date_predefinite(nume_dataset: str) -> pd.DataFrame:
 	df = pd.read_parquet(f"data/{nume_dataset.lower()}.parquet")
 	return df
+
+
+def citire_date_temp(nume_dataset: str) -> pd.DataFrame | pd.Series:
+	temp_path = tempfile.gettempdir() + "/" + nume_dataset + ".pkl"
+	with open(temp_path, "rb") as f:
+		return pickle.load(f)
+
+
+def salvare_date_temp(df: pd.DataFrame | pd.Series, nume_dataset: str) -> None:
+	temp_path = tempfile.gettempdir() + "/" + nume_dataset + ".pkl"
+	with open(temp_path, "wb") as f:
+		pickle.dump(df, f)

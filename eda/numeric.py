@@ -29,6 +29,7 @@ def descriere_variabila_numerica(tip: str, serie: pd.Series):
 		"iqr": float(serie.quantile(0.75) - serie.quantile(0.25)),
 		"nunique": int(serie.nunique()),
 	}
+	rezultate["interpretare"] = interpretare_variabila_numerica(rezultate["statistici"])
 	return rezultate
 
 
@@ -132,8 +133,9 @@ def afisare_descriere_variabila_numerica(variabila: str, descriere: dict):
 	histo = descriere.get("histograma")
 	box = descriere.get("box_plot")
 	statistici = descriere.get("statistici", {})
+	interpretare = descriere.get("interpretare", None)
 
-	st.header(f"`{variabila}` - variabilă numerică {tip_numeric}")
+	st.header(f"🔢 `{variabila}` - variabilă numerică {tip_numeric}")
 
 	col1, col2 = st.columns(2)
 
@@ -154,7 +156,7 @@ def afisare_descriere_variabila_numerica(variabila: str, descriere: dict):
 	col1_, col2_ = st.columns(2)
 
 	with col1_:
-		st.subheader("Statistici descriptive")
+		st.subheader("Statistici")
 		if statistici:
 			df_stats = pd.DataFrame(statistici, index=["Valori"]).T
 			st.dataframe(df_stats, use_container_width=True)
@@ -163,5 +165,4 @@ def afisare_descriere_variabila_numerica(variabila: str, descriere: dict):
 
 	with col2_:
 		st.subheader("Interpretare")
-		interpretare = interpretare_variabila_numerica(statistici)
 		st.write(interpretare or "Interpretarea nu este disponibilă.")

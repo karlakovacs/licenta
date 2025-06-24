@@ -21,14 +21,14 @@ ACRONIME = {
 }
 
 
-def creare_df_metrici(rezultate_modele: dict):
+def creare_df_comparatii(rezultate_modele: dict):
 	metrici = {model: valori["metrici"] for model, valori in rezultate_modele.items()}
-	df_metrici = pd.DataFrame.from_dict(
+	df_comparatii = pd.DataFrame.from_dict(
 		data=metrici,
 		orient="index",
 	)
-	df_metrici.reset_index(inplace=True)
-	df_metrici.rename(
+	df_comparatii.reset_index(inplace=True)
+	df_comparatii.rename(
 		columns={
 			"index": "Model",
 			"accuracy": "Acuratețe",
@@ -48,11 +48,11 @@ def creare_df_metrici(rezultate_modele: dict):
 		},
 		inplace=True,
 	)
-	return df_metrici
+	return df_comparatii
 
 
-def grafic_comparativ(df_metrici: pd.DataFrame):
-	coloane_metrici = df_metrici.columns[1:]
+def grafic_comparativ(df_comparatii: pd.DataFrame):
+	coloane_metrici = df_comparatii.columns[1:]
 	num_metrics = len(coloane_metrici) - 1
 	cols = 3
 	rows = (num_metrics // cols) + (num_metrics % cols > 0)
@@ -62,9 +62,9 @@ def grafic_comparativ(df_metrici: pd.DataFrame):
 	for i, metric in enumerate(coloane_metrici, start=1):
 		row, col = ((i - 1) // cols) + 1, ((i - 1) % cols) + 1
 		if metric in ["FPR", "FNR"]:
-			sorted_results = df_metrici.sort_values(by=metric, ascending=True)
+			sorted_results = df_comparatii.sort_values(by=metric, ascending=True)
 		else:
-			sorted_results = df_metrici.sort_values(by=metric, ascending=False)
+			sorted_results = df_comparatii.sort_values(by=metric, ascending=False)
 
 		x_labels = [ACRONIME.get(name, name) for name in sorted_results.Model]
 		fig.add_trace(
@@ -85,7 +85,3 @@ def grafic_comparativ(df_metrici: pd.DataFrame):
 		template="plotly_white",
 	)
 	return fig
-
-
-def interpretare_comparatii(df_metrici: pd.DataFrame):
-	pass

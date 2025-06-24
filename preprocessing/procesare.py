@@ -127,18 +127,35 @@ def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
 		mapping = {val: i for i, val in enumerate(ordine)}
 		encoders["label_encoders"][col] = mapping
 
-	potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
-	coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
+	# potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
+	# coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
+	# encoders["coloane_one_hot"] = coloane_one_hot
+
+	# if coloane_one_hot:
+	# 	one_hot_encoder = OneHotEncoder(
+	# 		drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
+	# 	)
+	# 	one_hot_encoder.fit(df[coloane_one_hot].astype(str))
+	# 	encoders["one_hot_encoder"] = one_hot_encoder
+
+	# Identifică coloanele de tip categoric care nu sunt deja incluse pentru label encoding
+
+
+	categoriale = df.select_dtypes(include=["object", "category"]).columns
+	coloane_one_hot = [col for col in categoriale if col not in coloane_label]
 	encoders["coloane_one_hot"] = coloane_one_hot
 
 	if coloane_one_hot:
 		one_hot_encoder = OneHotEncoder(
 			drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
 		)
-		one_hot_encoder.fit(df[coloane_one_hot].astype(str))
-		encoders["one_hot_encoder"] = one_hot_encoder
+		df_categorice = df[coloane_one_hot].astype(str)
+		one_hot_encoder.fit(df_categorice)
 
-	return encoders
+		encoders["one_hot_encoder"] = one_hot_encoder
+		encoders["one_hot_feature_names"] = one_hot_encoder.get_feature_names_out(coloane_one_hot).tolist()
+
+		return encoders
 
 
 def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:

@@ -94,3 +94,27 @@ def lime_plot(explanation: Explanation) -> go.Figure:
 	)
 
 	return fig
+
+
+def lime_interpretation(explanation: Explanation) -> str:
+	if explanation is None or not explanation.as_list():
+		return "Nu s-a putut genera interpretarea LIME."
+
+	lime_results = sorted(explanation.as_list(), key=lambda x: abs(x[1]), reverse=True)
+	predicted_class_idx = explanation.predict_proba.argmax()
+	predicted_class = explanation.class_names[predicted_class_idx]
+	prediction_prob = explanation.predict_proba[predicted_class_idx]
+
+	interpretari = [
+		f"Predicția modelului este pentru clasa **`{predicted_class}`**, cu o probabilitate estimată de **`{prediction_prob:.2%}`**.",
+		"",
+		"Principalele contribuții ale caracteristicilor:",
+	]
+
+	for caracteristica, contributie in lime_results[:5]:
+		directie = "pozitivă" if contributie > 0 else "negativă"
+		interpretari.append(
+			f"- `{caracteristica}` a avut o contribuție **{directie}** de `{contributie:.2f}` la această predicție."
+		)
+
+	return "\n".join(interpretari)

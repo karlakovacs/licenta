@@ -1,7 +1,3 @@
-import json
-import os
-import tempfile
-
 import pandas as pd
 
 from ui import *
@@ -53,11 +49,6 @@ def generare_metadate(df: pd.DataFrame, max_valori_unice: int = 15):
 			metadate[col] = {"tip": "C", "valori": list(map(str, categorii))}
 		else:
 			metadate[col] = {"tip": "T"}
-
-	# denumire_fisier = "metadate.json"
-	# temp_path = os.path.join(tempfile.gettempdir(), denumire_fisier)
-	# with open(temp_path, "w", encoding="utf-8") as f:
-	# 	json.dump(variabile, f, indent=2, ensure_ascii=False)
 
 	return metadate
 

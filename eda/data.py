@@ -61,6 +61,7 @@ def descriere_variabila_data(tip: str, serie: pd.Series) -> dict:
 	}
 
 	rezultate["statistici"] = stat
+	rezultate["interpretare"] = interpretare_variabila_data(rezultate["statistici"])
 	return rezultate
 
 
@@ -164,5 +165,5 @@ def afisare_descriere_variabila_data(variabila: str, descriere: dict):
 
 	with col2:
 		st.subheader("Interpretare")
-		interpretare = interpretare_variabila_data(stat)
+		interpretare = descriere.get("interpretare", None)
 		st.markdown(interpretare if interpretare else "Interpretarea nu este disponibilă.")

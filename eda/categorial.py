@@ -43,6 +43,7 @@ def descriere_variabila_categoriala(tip: str, serie: pd.Series) -> dict:
 			"distributie": {str(val): int(freq) for val, freq in distributie.items()},
 		},
 	}
+	rezultate["interpretare"] = interpretare_variabila_categoriala(rezultate["statistici"])
 
 	return rezultate
 
@@ -78,7 +79,7 @@ def afisare_descriere_variabila_categoriala(variabila: str, descriere: dict):
 
 	with col2:
 		st.subheader("Interpretare")
-		interpretare = interpretare_variabila_categoriala(statistici)
+		interpretare = descriere.get("interpretare", None)
 		st.markdown(interpretare or "Interpretarea nu este disponibilă.")
 
 
@@ -120,6 +121,7 @@ def interpretare_variabila_categoriala(stat: dict) -> str:
 		interpretari.append("Distribuția între categorii este relativ echilibrată.")
 
 	return "\n".join(f"- {linie}" for linie in interpretari)
+
 
 def interpretare_tinta(y: pd.Series) -> str:
 	y = y.dropna()

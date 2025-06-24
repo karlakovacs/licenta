@@ -58,7 +58,7 @@ def configurare_hiperparametri(denumire_model: str):
 
 
 def antrenare_model(denumire_model: str, hiperparametri: dict, X_train, y_train, X_test):
-	with st.spinner(f"Se antrenează modelelul {denumire_model}..."):
+	with st.spinner(f"Se antrenează modelelul `{denumire_model}`..."):
 		try:
 			model = get_model(denumire_model, hiperparametri, X_train.shape[1])
 			is_mlp = True if denumire_model == "Multilayer Perceptron" else False

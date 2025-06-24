@@ -15,6 +15,7 @@ def descriere_variabila_text(tip: str, serie: pd.Series) -> dict:
 		"tip": tip,
 		"statistici": {"count": count_total, "nunique": numar_unice, "top_valori": distributie_top},
 	}
+	rezultate["interpretare"] = interpretare_variabila_text(rezultate["statistici"])
 
 	return rezultate
 
@@ -55,7 +56,7 @@ def interpretare_variabila_text(stat: dict) -> str:
 
 def afisare_descriere_variabila_text(variabila: str, descriere: dict):
 	st.header(f"📝 `{variabila}` – variabilă text")
-
+	
 	stat = descriere.get("statistici", {})
 
 	col1, col2 = st.columns(2)
@@ -68,7 +69,6 @@ def afisare_descriere_variabila_text(variabila: str, descriere: dict):
 		else:
 			st.warning("Nu există statistici disponibile.")
 
-	with col2:
 		st.subheader("Top valori")
 		top_valori = stat.get("top_valori", {})
 		if top_valori:
@@ -78,6 +78,7 @@ def afisare_descriere_variabila_text(variabila: str, descriere: dict):
 		else:
 			st.info("Nu există valori frecvente disponibile.")
 
+	with col2:
 		st.subheader("Interpretare")
-		interpretare = interpretare_variabila_text(stat)
+		interpretare = descriere.get("interpretare", None)
 		st.markdown(interpretare or "Interpretarea nu este disponibilă.")

@@ -12,7 +12,7 @@ def afisare_sectiune(i: int):
 
 
 if not st.user.is_logged_in:
-	st.sidebar.image(f"assets/logo-text.png", use_container_width=True)
+	st.sidebar.image(f"assets/logo/logo-text.png", use_container_width=True)
 	if st.sidebar.button("**Autentificare**", type="primary", use_container_width=True):
 		st.login("auth0")
 

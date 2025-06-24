@@ -1,4 +1,4 @@
-from .comparatie_modele import ACRONIME, creare_df_metrici, grafic_comparativ, interpretare_comparatii
+from .comparatie_modele import ACRONIME, creare_df_comparatii, grafic_comparativ
 from .hiperparametri import get_hiperparametri, get_hiperparametri_default
 from .metrici import (
 	METRICI,

@@ -1,9 +1,10 @@
+import datetime
 import random
 
 import pandas as pd
 import streamlit as st
 
-from dataset import citire_date_temp, citire_metadate
+from dataset import citire_date_temp
 from preprocessing import procesare_instanta
 from ui import *
 from xai import ui_predictii
@@ -40,6 +41,17 @@ def generare_valori_random(metadate: dict, tinta: str):
 
 		elif tip == "T":
 			valori_random[coloana] = f"Text_{random.randint(100, 999)}"
+
+		elif tip == "D":
+			try:
+				start_date = datetime.datetime.strptime(info.get("min"), "%Y-%m-%d %H:%M:%S").date()
+				end_date = datetime.datetime.strptime(info.get("max"), "%Y-%m-%d %H:%M:%S").date()
+			except Exception:
+				start_date = datetime.date(2000, 1, 1)
+				end_date = datetime.date(2024, 12, 31)
+
+			random_days = random.randint(0, (end_date - start_date).days)
+			valori_random[coloana] = start_date + datetime.timedelta(days=random_days)
 
 	return valori_random
 
@@ -83,6 +95,11 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 			elif tip == "T":
 				valori_introduse[coloana] = st.text_input(label=coloana, value=valoare_implicita or "")
 
+			elif tip == "D":
+				valori_introduse[coloana] = st.date_input(
+					label=coloana, value=valoare_implicita or datetime.date.today()
+				)
+
 			else:
 				st.warning(f"Tip necunoscut pentru coloana: {coloana}")
 
@@ -107,10 +124,9 @@ def main():
 	col1, col2 = st.columns([1, 3])
 	with col1:
 		st.header("Introdu datele")
-		valori_random: dict = None
 		if st.button("**🎲 Generare valori random**", type="primary", use_container_width=True):
-			valori_random = generare_valori_random(metadate, tinta)
-		formular_predictie(metadate, tinta, valori_random)
+			st.session_state.valori_random = generare_valori_random(metadate, tinta)
+		formular_predictie(metadate, tinta, st.session_state.valori_random)
 
 	with col2:
 		st.header("Analizează observația")
