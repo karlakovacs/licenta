@@ -80,6 +80,7 @@ def plot_matrice_corelatie(df: pd.DataFrame, coloane_selectate: list) -> go.Figu
 		title="Matricea de corelație",
 		xaxis_title="Caracteristici",
 		yaxis_title="Caracteristici",
+		yaxis_autorange="reversed",
 		height=600,
 		template="plotly_white",
 	)
@@ -158,7 +159,6 @@ def df_valori_lipsa(df: pd.DataFrame) -> pd.DataFrame:
 	missing_df.drop(columns=["index"], inplace=True)
 
 	if missing_df.empty:
-		st.success("Nu există valori lipsă în dataset!")
 		return None
 
 	return missing_df

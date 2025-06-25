@@ -7,212 +7,157 @@ from .conversii import dataframe_to_html, markdown_to_html, matplotlib_to_html, 
 
 
 def pregatire_set_date(set_date: dict) -> str:
-	denumire = set_date.get("denumire", "N/A")
-	sursa = set_date.get("sursa", "N/A")
-	tinta = set_date.get("tinta", "N/A")
-
-	html_string = f"""
-		<p><strong>Denumire set de date:</strong> <code>{denumire}</code></p>
-		<p><strong>Sursă:</strong> <code>{sursa}</code></p>
-		<p><strong>Variabilă țintă:</strong> <code>{tinta}</code></p>
-	"""
-	return html_string.strip()
+	rezultat: dict = {
+		"denumire": set_date.get("denumire", "N/A"),
+		"sursa": set_date.get("sursa", "N/A"),
+		"tinta": set_date.get("tinta", "N/A"),
+	}
+	return rezultat
 
 
-def pregatire_descrieri(descrieri: dict, format_pdf: bool = False) -> dict:
+TIPURI_VARIABILE = {
+	"NC": "numerică continuă",
+	"ND": "numerică discretă",
+	"T": "text",
+	"D": "dată",
+	"C": "categorială",
+	"B": "booleană",
+}
+
+
+def pregatire_descrieri(descrieri: dict) -> dict:
 	rezultat = {}
 
 	for variabila, info in descrieri.items():
 		tip = info.get("tip", "")
+		tip_variabila = TIPURI_VARIABILE.get(tip, "necunoscută")
+		tip = f"variabilă {tip_variabila}"
 		rezultat[variabila] = {"tip": tip}
 		rezultat[variabila]["interpretare"] = markdown_to_html(info.get("interpretare", ""))
 		if "statistici" in info:
-			df = pd.DataFrame(info["statistici"], index=["Valori"]).T
-			rezultat[variabila]["statistici"] = dataframe_to_html(df)
+			df = pd.DataFrame(info["statistici"], index=["Valori"])
+			rezultat[variabila]["statistici"] = dataframe_to_html(df, index=True)
 		if tip == "T":
 			continue
 
 		elif tip == "D":
 			if "plot_distributie_temporala" in info:
-				rezultat[variabila]["plot_distributie_temporala"] = plotly_to_html(
-					info["plot_distributie_temporala"], format_pdf
-				)
+				rezultat[variabila]["plot_distributie_temporala"] = plotly_to_html(info["plot_distributie_temporala"])
 
 		elif tip == "C":
 			if "pie_chart" in info:
-				rezultat[variabila]["pie_chart"] = plotly_to_html(info["pie_chart"], format_pdf)
+				rezultat[variabila]["pie_chart"] = plotly_to_html(info["pie_chart"])
 
 		elif tip in ("NC", "ND"):
 			if "histograma" in info:
-				rezultat[variabila]["histograma"] = plotly_to_html(info["histograma"], format_pdf)
+				rezultat[variabila]["histograma"] = plotly_to_html(info["histograma"])
 			if "box_plot" in info:
-				rezultat[variabila]["box_plot"] = plotly_to_html(info["box_plot"], format_pdf)
+				rezultat[variabila]["box_plot"] = plotly_to_html(info["box_plot"])
 
 	return rezultat
 
 
-def pregatire_eda(eda: dict, format_pdf: bool = False) -> dict:
-	eda_final: dict = {}
+def pregatire_eda(eda: dict) -> dict:
+	rezultat: dict = {}
 
 	if "valori_lipsa" in eda:
-		eda_final["valori_lipsa"] = plotly_to_html(eda["valori_lipsa"]["fig"], format_pdf)
+		if "fig" in eda["valori_lipsa"]:
+			rezultat["valori_lipsa"] = plotly_to_html(eda["valori_lipsa"]["fig"])
+		else:
+			rezultat["valori_lipsa"] = "<p>Nu există valori lipsă în setul de date</p>"
 
 	if "plot_tipuri_variabile" in eda:
-		eda_final["plot_tipuri_variabile"] = plotly_to_html(eda["plot_tipuri_variabile"], format_pdf)
+		rezultat["plot_tipuri_variabile"] = plotly_to_html(eda["plot_tipuri_variabile"])
 
 	if "distributie_tinta" in eda:
-		eda_final["distributie_tinta"] = {}
-		eda_final["distributie_tinta"]["pie_chart_tinta"] = plotly_to_html(
-			eda["distributie_tinta"]["pie_chart_tinta"], format_pdf
-		)
-		eda_final["distributie_tinta"]["interpretare"] = markdown_to_html(
-			eda["distributie_tinta"]["interpretare"]
-		)
+		rezultat["distributie_tinta"] = {}
+		rezultat["distributie_tinta"]["pie_chart_tinta"] = plotly_to_html(eda["distributie_tinta"]["pie_chart_tinta"])
+		rezultat["distributie_tinta"]["interpretare"] = markdown_to_html(eda["distributie_tinta"]["interpretare"])
 
 	if "descrieri" in eda:
-		eda_final["descrieri"] = pregatire_descrieri(eda["descrieri"], format_pdf)
+		rezultat["descrieri"] = pregatire_descrieri(eda["descrieri"])
 
 	if "matrice_corelatie" in eda:
-		eda_final["matrice_corelatie"] = plotly_to_html(eda["matrice_corelatie"], format_pdf)
+		rezultat["matrice_corelatie"] = plotly_to_html(eda["matrice_corelatie"])
 
 	if "plot_variabile_puternic_corelate" in eda:
-		eda_final["plot_variabile_puternic_corelate"] = plotly_to_html(
-			eda["plot_variabile_puternic_corelate"], format_pdf
-		)
+		rezultat["plot_variabile_puternic_corelate"] = plotly_to_html(eda["plot_variabile_puternic_corelate"])
 
-	return eda_final
+	return rezultat
 
 
-def pregatire_procesare(procesare: dict) -> str:
-	html_string = ""
+def este_valoare_valida(v):
+	return v not in (None, "", [], {}, "Niciuna")
 
-	if cols := procesare.get("coloane_eliminate"):
-		html_string += f"<p><strong>Coloane eliminate:</strong> {', '.join(f'<code>{col}</code>' for col in cols)}</p>"
 
-	if procesare.get("eliminare_duplicate"):
-		html_string += "<p><strong>Eliminare duplicate:</strong> <code>Activată</code></p>"
-
-	if procesare.get("eliminare_randuri_nan"):
-		html_string += "<p><strong>Eliminare rânduri cu valori lipsă:</strong> <code>Activată</code></p>"
-
-	if out := procesare.get("outlieri"):
-		html_string += (
-			f"<p><strong>Tratament outlieri:</strong> "
-			f"Detectare cu <code>{out.get('detectie')}</code>, acțiune: <code>{out.get('actiune')}</code></p>"
-		)
-
-	if vl := procesare.get("valori_lipsa"):
-		html_string += (
-			"<p><strong>Imputarea valorilor lipsă:</strong><br>"
-			f"- Strategie pentru variabilele numerice: <code>{vl.get('strategie_numerice')}</code>, "
-			f"valoare fixă: <code>{vl.get('valoare_fixa_numerice')}</code><br>"
-			f"- Strategie pentru variabilele categoriale: <code>{vl.get('strategie_categoriale')}</code>, "
-			f"valoare fixă: <code>{vl.get('valoare_fixa_categoriale')}</code></p>"
-		)
-
-	if binare := procesare.get("coloane_binare"):
-		linie = ", ".join(f"<code>{k}=True</code>" for k, v in binare.items() if v)
-		html_string += f"<p><strong>Conversii binare:</strong> {linie}</p>"
-
-	if dt := procesare.get("datetime"):
-		comp = ", ".join(f"<code>{c}</code>" for c in dt.get("componente", []))
-		cols = ", ".join(f"<code>{c}</code>" for c in dt.get("coloane", []))
-		html_string += f"<p><strong>Conversii dată/timp:</strong> coloane: {cols}; componente extrase: {comp}</p>"
-
-	if enc := procesare.get("encoding"):
-		html_string += (
-			"<p><strong>Codificare pentru variabilele categoriale:</strong> "
-			f"Variabilele vor fi codificate folosind One Hot Encoding, cu limita: <code>{enc.get('max_categorii')}</code> categorii<br>"
-		)
-		coloane_label = enc.get("coloane_label", {})
-		if coloane_label:
-			html_string += "<p><strong>Label encoding aplicat pe:</strong><ul>"
-			for var, ordonare in coloane_label.items():
-				html_string += f"<li><code>{var}</code>: ["
-				etichete = [f"<code>{eticheta}</code>" for eticheta in ordonare]
-				html_string += ", ".join(etichete) + "]</li>"
-			html_string += "</ul></p>"
-
-	html_string += f"<p><strong>Tratament pentru dezechilibrul dintre clase:</strong> <code>{procesare.get('dezechilibru')}</code></p>"
-	html_string += (
-		f"<p><strong>Tehnică de scalare a variabilelor numerice:</strong> <code>{procesare.get('scalare')}</code></p>"
-	)
-
-	if impartire := procesare.get("impartire"):
-		html_string += (
-			f"<p><strong>Împărțire train/test:</strong> "
-			f"test = <code>{impartire.get('proportie_test')}</code>, "
-			f"stratificat = <code>{impartire.get('stratificat')}</code>, "
-			f"variabilă țintă = <code>{impartire.get('tinta')}</code></p>"
-		)
-
-	return html_string.strip()
+def pregatire_procesare(procesare: dict) -> dict:
+	rezultat = {cheie: valoare for cheie, valoare in procesare.items() if este_valoare_valida(valoare)}
+	return rezultat
 
 
 def pregatire_modele_antrenate(modele_antrenate: dict) -> dict:
-	html_string = ""
+	rezultat: dict = {}
 
 	for model, date in modele_antrenate.items():
-		html_string += f"<h4>{html.escape(model)}</h4>"
+		info = {}
 
-		hiperparametri = date.get("hiperparametri", {})
-		if hiperparametri:
-			param_str = json.dumps(hiperparametri, indent=2, ensure_ascii=False)
-			html_string += "<p><strong>Hiperparametri:</strong></p>"
-			html_string += f"<pre><code>{html.escape(param_str)}</code></pre>"
+		if "hiperparametri" in date:
+			info["hiperparametri"] = date["hiperparametri"]
 
-		durata = date.get("durata_antrenare")
-		if durata is not None:
-			html_string += f"<p><strong>Durata antrenării:</strong> <code>{html.escape(str(durata))}</code> secunde</p>"
+		if "durata_antrenare" in date and date["durata_antrenare"] is not None:
+			durata = round(float(date["durata_antrenare"]), 4)
+			info["durata_antrenare"] = durata
 
-	html_string += "</div>"
-	return html_string
+		rezultat[model] = info
+
+	return rezultat
 
 
-def pregatire_rezultate_modele(rezultate_modele: dict, format_pdf: bool = False) -> dict:
-	rezultate_modele_final: dict = {}
+METRICI_TRADUCERI = {
+	"accuracy": "Acuratețe",
+	"recall": "Sensibilitate",
+	"precision": "Precizie",
+	"f1": "Scor F1",
+	"roc_auc": "Aria de sub curba ROC",
+	"avg_precision": "Precizie medie (AUPRC)",
+	"bcr": "Rata de clasificare echilibrată",
+	"kappa": "Coeficientul Cohen's Kappa",
+	"mcc": "Coeficientul de corelație Matthews",
+	"gm": "Medie geometrică",
+	"tpr": "TPR",
+	"tnr": "TNR",
+	"fpr": "FPR",
+	"fnr": "FNR",
+}
+
+
+def pregatire_rezultate_modele(rezultate_modele: dict) -> dict:
+	rezultat: dict = {}
 
 	for model, date in rezultate_modele.items():
-		model_html: dict = {}
+		info: dict = {}
 
-		model_html["raport_clasificare"] = dataframe_to_html(date.get("raport_clasificare"))
-
-		METRICI_TRADUCERI = {
-			"accuracy": "Acuratețe",
-			"recall": "Sensibilitate",
-			"precision": "Precizie",
-			"f1": "Scor F1",
-			"roc_auc": "Aria de sub curba ROC",
-			"avg_precision": "Precizie medie (AUPRC)",
-			"bcr": "Rata de clasificare echilibrată",
-			"kappa": "Coeficientul Cohen's Kappa",
-			"mcc": "Coeficientul de corelație Matthews",
-			"gm": "Medie geometrică",
-			"tpr": "TPR",
-			"tnr": "TNR",
-			"fpr": "FPR",
-			"fnr": "FNR",
-		}
+		info["raport_clasificare"] = dataframe_to_html(date.get("raport_clasificare"), True)
 
 		dict_metrici: dict = date.get("metrici", {})
-		model_html["metrici"] = {
+		info["metrici"] = {
 			METRICI_TRADUCERI.get(cheie, cheie): round(valoare, 4) for cheie, valoare in dict_metrici.items()
 		}
 
 		if "matrice_confuzie" in date and date["matrice_confuzie"] is not None:
-			model_html["matrice_confuzie"] = plotly_to_html(date["matrice_confuzie"], format_pdf)
+			info["matrice_confuzie"] = plotly_to_html(date["matrice_confuzie"])
 
 		if "roc" in date and date["roc"] is not None:
-			model_html["roc"] = plotly_to_html(date["roc"], format_pdf)
+			info["roc"] = plotly_to_html(date["roc"])
 
 		if "pr" in date and date["pr"] is not None:
-			model_html["pr"] = plotly_to_html(date["pr"], format_pdf)
+			info["pr"] = plotly_to_html(date["pr"])
 
-		rezultate_modele_final[model] = model_html
-	return rezultate_modele_final
+		rezultat[model] = info
+	return rezultat
 
 
-def pregatire_xai(instante: dict, xai: dict, format_pdf: bool = False) -> dict:
+def pregatire_xai(instante: dict, xai: dict) -> dict:
 	rezultate_finale = {}
 
 	for idx_str, instanta_info in instante.items():
@@ -244,7 +189,7 @@ def pregatire_xai(instante: dict, xai: dict, format_pdf: bool = False) -> dict:
 
 					elif metoda == "LIME":
 						rezultat_model[metoda] = {
-							"figura": plotly_to_html(xai_val[0], format_pdf),
+							"figura": plotly_to_html(xai_val[0]),
 							"interpretare": markdown_to_html(xai_val[1]),
 						}
 
@@ -258,14 +203,14 @@ def pregatire_xai(instante: dict, xai: dict, format_pdf: bool = False) -> dict:
 	return rezultate_finale
 
 
-def pregatire_comparatii_modele(comparatii_modele: dict, format_pdf: bool = False) -> dict:
+def pregatire_comparatii_modele(comparatii_modele: dict) -> dict:
 	comparatii_modele_final: dict = {}
-	comparatii_modele_final["df_comparatii"] = dataframe_to_html(comparatii_modele["df_comparatii"], format_pdf)
-	comparatii_modele_final["grafic"] = plotly_to_html(comparatii_modele["grafic"], format_pdf)
+	comparatii_modele_final["df_comparatii"] = dataframe_to_html(comparatii_modele["df_comparatii"])
+	comparatii_modele_final["grafic"] = plotly_to_html(comparatii_modele["grafic"])
 	return comparatii_modele_final
 
 
-def pregatire_date_raport(date_raport: dict, format_pdf: bool = False) -> dict:
+def pregatire_date_raport(date_raport: dict) -> dict:
 	date_raport_html: dict = {}
 
 	if "set_date" in date_raport and date_raport["set_date"] is not None:
@@ -274,7 +219,7 @@ def pregatire_date_raport(date_raport: dict, format_pdf: bool = False) -> dict:
 
 	if "eda" in date_raport and date_raport["eda"] is not None:
 		eda: dict = date_raport["eda"]
-		date_raport_html["eda"] = pregatire_eda(eda, format_pdf)
+		date_raport_html["eda"] = pregatire_eda(eda)
 
 	if "procesare" in date_raport and date_raport["procesare"] is not None:
 		date_raport_html["procesare"] = pregatire_procesare(date_raport["procesare"])
@@ -285,20 +230,30 @@ def pregatire_date_raport(date_raport: dict, format_pdf: bool = False) -> dict:
 
 	if "rezultate_modele" in date_raport and date_raport["rezultate_modele"] is not None:
 		rezultate_modele: dict = date_raport["rezultate_modele"]
-		date_raport_html["rezultate_modele"] = pregatire_rezultate_modele(rezultate_modele, format_pdf)
+		date_raport_html["rezultate_modele"] = pregatire_rezultate_modele(rezultate_modele)
 
-	if "comparatii_modele" in date_raport:
+	if "comparatii_modele" in date_raport and date_raport["comparatii_modele"] is not None:
 		comparatii_modele: dict = date_raport["comparatii_modele"]
-		date_raport_html["comparatii_modele"] = pregatire_comparatii_modele(comparatii_modele, format_pdf)
+		date_raport_html["comparatii_modele"] = pregatire_comparatii_modele(comparatii_modele)
 
-	if "xai_test" in date_raport and "instante_test" in date_raport:
+	if (
+		"xai_test" in date_raport
+		and "instante_test" in date_raport
+		and date_raport["xai_test"] is not None
+		and date_raport["instante_test"] is not None
+	):
 		xai_test: dict = date_raport["xai_test"]
 		instante_test: dict = date_raport["instante_test"]
-		date_raport_html["xai_test"] = pregatire_xai(instante_test, xai_test, format_pdf)
+		date_raport_html["xai_test"] = pregatire_xai(instante_test, xai_test)
 
-	if "xai_predictii" in date_raport and "instante_predictii" in date_raport:
+	if (
+		"xai_predictii" in date_raport
+		and "instante_predictii" in date_raport
+		and date_raport["xai_predictii"] is not None
+		and date_raport["instante_predictii"] is not None
+	):
 		xai_predictii: dict = date_raport["xai_predictii"]
 		instante_predictii: dict = date_raport["instante_predictii"]
-		date_raport_html["xai_predictii"] = pregatire_xai(instante_predictii, xai_predictii, format_pdf)
+		date_raport_html["xai_predictii"] = pregatire_xai(instante_predictii, xai_predictii)
 
 	return date_raport_html

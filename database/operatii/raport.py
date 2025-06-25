@@ -1,16 +1,14 @@
-from datetime import datetime, timezone
-
 from ..modele import Raport
 from ..utils import get_session
 
 
-def create_raport(id_set_date_procesat, url: str):
+def create_raport(id_set_date_procesat, url: str, data_generare: str):
 	db = get_session()
 
 	raport = Raport(
 		id_set_date_procesat=id_set_date_procesat,
 		url=url,
-		data_generare=datetime.now(timezone.utc),
+		data_generare=data_generare,
 	)
 	db.add(raport)
 	db.commit()
@@ -18,7 +16,7 @@ def create_raport(id_set_date_procesat, url: str):
 	return raport.id
 
 
-def get_rapoarte(id_set_date_procesat: int) -> list:
+def get_raport(id_set_date_procesat: int) -> list:
 	db = get_session()
 	lista = (
 		db.query(Raport)

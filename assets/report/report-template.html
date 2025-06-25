@@ -2,58 +2,66 @@
 <html lang="ro">
 
 <head>
-	<meta charset="UTF-8">
-	<title>Raport</title>
+    <meta charset="UTF-8">
+    <title>Raport</title>
 </head>
 
 <body>
     {{ logo | safe }}
 
-	<h1>Raport</h1>
+    <h1>Raport</h1>
 
-	<div class="cuprins">
-		<h2>Cuprins</h2>
-	</div>
+    <div class="cuprins">
+        <h2>Cuprins</h2>
+        <ul>
+            <li><a href="#set_date">Set de date</a></li>
+            <li><a href="#eda">Analiza exploratorie a datelor</a>
+            <li><a href="#procesare">Procesarea datelor</a></li>
+            <li><a href="#modele_antrenate">Antrenarea modelelor de ML</a></li>
+            <li><a href="#rezultate_modele">Rezultatele modelelor</a></li>
+            <li><a href="#comparatii_modele">Comparații între modele</a></li>
+            <li><a href="#xai_test">Explainable AI pe setul de testare</a></li>
+            <li><a href="#xai_predictii">Explainable AI pe predicții individuale</a></li>
+        </ul>
+    </div>
 
-	{% if set_date %}
-	<div class="sectiune" id="set_date">
-		<h2>Set de date</h2>
-        {{ set_date | safe }}
-	</div>
-	{% endif %}
+    {% if set_date %}
+    <div class="sectiune" id="set_date">
+        <h2>Set de date</h2>
+        <p><span class="atribut">Denumire set de date:</span> <code>{{set_date.denumire}}</code></p>
+        <p><span class="atribut">Sursă:</span> <code>{{set_date.sursa}}</code></p>
+        <p><span class="atribut">Variabilă țintă:</span> <code>{{set_date.tinta}}</code></p>
+    </div>
+    {% endif %}
 
     {% if eda %}
     <div class="sectiune" id="eda">
         <h2>Analiza exploratorie a datelor</h2>
-    
+
         {% if eda.valori_lipsa %}
-        <h3 id="valori_lipsa">Valori lipsă</h3>
+        <h3>Analiza valorilor lipsă</h3>
         {{ eda.valori_lipsa | safe }}
         {% endif %}
-    
+
         {% if eda.plot_tipuri_variabile %}
-        <h3 id="tipuri_variabile">Tipuri de variabile</h3>
+        <h3>Tipuri de variabile</h3>
         {{ eda.plot_tipuri_variabile | safe }}
         {% endif %}
-    
+
         {% if eda.distributie_tinta %}
-        <h3 id="distributie_tinta">Distribuția variabilei țintă</h3>
+        <h3>Distribuția variabilei țintă</h3>
         {{ eda.distributie_tinta.pie_chart_tinta | safe }}
-        <div class="interpretare">
-            {{ eda.distributie_tinta.interpretare | safe }}
-        </div>
+        <div class="interpretare">{{ eda.distributie_tinta.interpretare | safe }}</div>
         {% endif %}
-    
+
         {% if eda.descrieri %}
-        <h3 id="descrieri">Descrierea variabilelor</h3>
+        <h3>Descrierea variabilelor</h3>
         {% for variabila, info in eda.descrieri.items() %}
-        <div class="variabila">
-            <h4><code>{{ variabila }}</code> (tip: <code>{{ info.tip }}</code>)</h4>
-            <div class="interpretare">
-                {{ info.interpretare | safe }}
-            </div>
+        <div>
+            <h4><code class="variabila">{{ variabila }}</code></h4>
             {% if info.statistici %}
             <h5>Statistici</h5>
+            <p><strong>Tipul variabilei:</strong> {{ info.tip }}</p>
             {{ info.statistici | safe }}
             {% endif %}
             {% if info.plot_distributie_temporala %}
@@ -72,87 +80,185 @@
             <h5>Box plot</h5>
             {{ info.box_plot | safe }}
             {% endif %}
+            <h5>Interpretare</h5>
+            <div class="interpretare">{{ info.interpretare | safe }}</div>
         </div>
         {% endfor %}
         {% endif %}
-    
+
         {% if eda.matrice_corelatie %}
-        <h3 id="matrice_corelatie">Matricea de corelație</h3>
+        <h3>Matricea de corelație</h3>
         {{ eda.matrice_corelatie | safe }}
         {% endif %}
-    
+
         {% if eda.plot_variabile_puternic_corelate %}
-        <h3 id="variabile_corelate">Variabile puternic corelate cu ținta</h3>
+        <h3>Variabile puternic corelate cu ținta</h3>
         {{ eda.plot_variabile_puternic_corelate | safe }}
         {% endif %}
     </div>
     {% endif %}
 
-	{% if procesare %}
-	<div class="sectiune" id="procesare">
-		<h2>Procesarea datelor</h2>
-        {{ procesare | safe }}
-	</div>
-	{% endif %}
+    {% if procesare %}
+    <div class="sectiune" id="procesare">
+        <h2>Procesarea datelor</h2>
 
-	{% if modele_antrenate %}
-	<div class="sectiune" id="modele_antrenate">
-		<h2>Antrenarea modelelor de ML</h2>
-        {{ modele_antrenate | safe }}
-	</div>
-	{% endif %}
+        {% if procesare.coloane_eliminate %}
+        <p>
+            <strong>Coloane eliminate:</strong>
+            {% for col in procesare.coloane_eliminate %}<code>{{ col }}</code>
+            {% if not loop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% endif %}
 
-	{% if rezultate_modele %}
-	<div class="sectiune" id="rezultate_modele">
-		<h2>Rezultatele modelelor</h2>
+        {% if procesare.eliminare_duplicate %}
+        <p><strong>Eliminare duplicate:</strong> <code>Activată</code></p>
+        {% endif %}
 
-		{% for nume_model, info in rezultate_modele.items() %}
-		<h3>{{ nume_model }}</h3>
+        {% if procesare.eliminare_randuri_nan %}
+        <p><strong>Eliminare rânduri cu valori lipsă:</strong> <code>Activată</code></p>
+        {% endif %}
 
-		{% if info.raport_clasificare %}
-		<h4>Raport de clasificare</h4>
-		<pre>{{ info.raport_clasificare }}</pre>
-		{% endif %}
+        {% if procesare.outlieri %}
+        <p><strong>Tratament outlieri:</strong> Detectare cu <code>{{ procesare.outlieri.detectie }}</code>, acțiune:
+            <code>{{ procesare.outlieri.actiune }}</code>
+        </p>
+        {% endif %}
 
-		{% if info.metrici %}
-		<h4>Metrici</h4>
-		<ul>
-			{% for cheie, valoare in info.metrici.items() %}
-			<li><b>{{ cheie }}:</b> {{ valoare }}</li>
-			{% endfor %}
-		</ul>
-		{% endif %}
+        {% if procesare.valori_lipsa %}
+        <p><strong>Imputarea valorilor lipsă:</strong><br>
+            - Strategie pentru variabilele numerice: <code>{{ procesare.valori_lipsa.strategie_numerice }}</code>,
+            valoare fixă: <code>{{ procesare.valori_lipsa.valoare_fixa_numerice }}</code><br>
+            - Strategie pentru variabilele categoriale: <code>{{ procesare.valori_lipsa.strategie_categoriale }}</code>,
+            valoare fixă: <code>{{ procesare.valori_lipsa.valoare_fixa_categoriale }}</code>
+        </p>
+        {% endif %}
 
-		{% if info.matrice_confuzie %}
-		<h4>Matrice de confuzie</h4>
-		{{ info.matrice_confuzie | safe }}
-		{% endif %}
+        {% if procesare.coloane_binare %}
+        <p><strong>Conversii binare:</strong>
+            {% for col, val in procesare.coloane_binare.items() %}
+            {% if val %}<code>{{ col }}=True</code>{% if not loop.last %}, {% endif %}{% endif %}
+            {% endfor %}
+        </p>
+        {% endif %}
 
-		{% if info.roc %}
-		<h4>Curba ROC</h4>
-		{{ info.roc | safe }}
-		{% endif %}
+        {% if procesare.datetime %}
+        <p><strong>Conversii dată/timp:</strong>
+            coloane: {% for c in procesare.datetime.coloane %}<code>{{ c }}</code>{% if not loop.last %}, {% endif %}{%
+            endfor %};
+            componente extrase: {% for c in procesare.datetime.componente %}<code>{{ c }}</code>{% if not loop.last %},
+            {%
+            endif %}{% endfor %}
+        </p>
+        {% endif %}
 
-		{% if info.pr %}
-		<h4>Curba Precision-Recall (PR)</h4>
-		{{ info.pr | safe }}
-		{% endif %}
+        {% if procesare.encoding %}
+        <p><strong>Codificare pentru variabilele categoriale:</strong>
+            Variabilele vor fi codificate folosind One Hot Encoding, cu limita:
+            <code>{{ procesare.encoding.max_categorii }}</code> categorii
+        </p>
+        {% if procesare.encoding.coloane_label %}
+        <p><strong>Label encoding aplicat pe:</strong>
+        <ul>
+            {% for var, ord in procesare.encoding.coloane_label.items() %}
+            <li><code>{{ var }}</code>: [ {% for et in ord %}<code>{{ et }}</code>{% if not loop.last %}, {% endif %}{%
+                endfor %} ]</li>
+            {% endfor %}
+        </ul>
+        </p>
+        {% endif %}
+        {% endif %}
 
-		{% endfor %}
-	</div>
-	{% endif %}
+        <p><strong>Tratament pentru dezechilibrul dintre clase:</strong> <code>{{ procesare.dezechilibru }}</code></p>
+
+        <p><strong>Tehnică de scalare a variabilelor numerice:</strong> <code>{{ procesare.scalare }}</code></p>
+
+        {% if procesare.impartire %}
+        <p><strong>Împărțire train/test:</strong>
+            proporție set de testare = <code>{{ procesare.impartire.proportie_test }}</code>,
+            împărțire stratificată = <code>{{ procesare.impartire.stratificat }}</code>,
+        </p>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    {% if modele_antrenate %}
+    <div class="sectiune" id="modele_antrenate">
+        <h2>Antrenarea modelelor de ML</h2>
+    
+        <div class="grid-modele">
+            {% for model, date in modele_antrenate.items() %}
+            <div class="card-model">
+                <h3>{{ model }}</h3>
+    
+                {% if date.hiperparametri %}
+                <p><strong>Hiperparametri:</strong></p>
+                <pre><code>{{ date.hiperparametri | tojson(indent=2) }}</code></pre>
+                {% endif %}
+    
+                {% if date.durata_antrenare is not none %}
+                <p><strong>Durata antrenării:</strong> <code>{{ date.durata_antrenare }}</code> secunde</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rezultate_modele %}
+    <div class="sectiune" id="rezultate_modele">
+        <h2>Rezultatele modelelor</h2>
+
+        {% for nume_model, info in rezultate_modele.items() %}
+        <h3>{{ nume_model }}</h3>
+
+        {% if info.raport_clasificare %}
+        <h4>Raport de clasificare</h4>
+        <pre>{{ info.raport_clasificare }}</pre>
+        {% endif %}
+
+        {% if info.metrici %}
+        <h4>Metrici</h4>
+        <div class="metrici-grid">
+            {% for cheie, valoare in info.metrici.items() %}
+            <div class="metric-box">
+                <strong>{{ cheie }}</strong>
+                {{ '{:.4f}'.format(valoare) }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if info.matrice_confuzie %}
+        <h4>Matrice de confuzie</h4>
+        {{ info.matrice_confuzie | safe }}
+        {% endif %}
+
+        {% if info.roc %}
+        <h4>Curba ROC</h4>
+        {{ info.roc | safe }}
+        {% endif %}
+
+        {% if info.pr %}
+        <h4>Curba Precision-Recall (PR)</h4>
+        {{ info.pr | safe }}
+        {% endif %}
+
+        {% endfor %}
+    </div>
+    {% endif %}
 
     {% if comparatii_modele %}
     <div class="sectiune" id="comparatii_modele">
         <h2>Comparații între modele</h2>
-    
+
         {% if comparatii_modele.df_comparatii %}
-        <h3 id="tabel_comparatii">Tabel comparativ</h3>
+        <h3>Tabel comparativ</h3>
         {{ comparatii_modele.df_comparatii | safe }}
         {% endif %}
-    
+
         {% if comparatii_modele.grafic %}
-        <h3 id="grafic_comparativ">Grafic comparativ</h3>
+        <h3>Grafic comparativ</h3>
         {{ comparatii_modele.grafic | safe }}
         {% endif %}
     </div>
@@ -160,37 +266,37 @@
 
     {% if xai_test %}
     <div class="sectiune" id="xai_test">
-        <h2>Explainable AI (XAI) pe setul de testare</h2>
-    
+        <h2>Explainable AI pe setul de testare</h2>
+
         {% for idx, instanta in xai_test.items() %}
-        <div class="subsectiune" id="xai_test_{{ idx }}">
+        <div>
             <h3>Instanța {{ idx }}</h3>
-    
+
             {% if instanta.date %}
             <h4>Datele instanței</h4>
             <pre>{{ instanta.date }}</pre>
             {% endif %}
-    
+
             <p><strong>Valoare reală (y_true):</strong> <code>{{ instanta.y_true }}</code></p>
-    
+
             {% for model, info in instanta.items() %}
             {% if model not in ("date", "y_true") %}
-            <div class="model-xai" id="xai_model_{{ idx }}_{{ model|replace(' ', '_') }}">
+            <div>
                 <h4>Model: {{ model }}</h4>
                 <p>
                     <strong>Predicție:</strong> <code>{{ info.y_pred }}</code> &nbsp;
                     <strong>Probabilitate:</strong> <code>{{ info.y_prob }}%</code>
                 </p>
-    
+
                 {% for metoda, detalii in info.items() %}
                 {% if metoda not in ("y_pred", "y_prob") %}
-                <div class="xai-metoda">
+                <div>
                     <h5>{{ metoda }}</h5>
                     {% if detalii.figura %}
-                    <div class="xai-figura">{{ detalii.figura | safe }}</div>
+                    <div>{{ detalii.figura | safe }}</div>
                     {% endif %}
                     {% if detalii.interpretare %}
-                    <div class="xai-interpretare">{{ detalii.interpretare | safe }}</div>
+                    <div>{{ detalii.interpretare | safe }}</div>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -202,38 +308,38 @@
         {% endfor %}
     </div>
     {% endif %}
-    
+
 
     {% if xai_predictii %}
     <div class="sectiune" id="xai_predictii">
-        <h2>Explainable AI (XAI) pe predicții individuale</h2>
+        <h2>Explainable AI pe predicții individuale</h2>
         {% for idx, instanta in xai_predictii.items() %}
-        <div class="subsectiune" id="xai_predictii_{{ idx }}">
+        <div>
             <h3>Instanța {{ idx }}</h3>
-        
+
             {% if instanta.date %}
             <h4>Datele instanței</h4>
             <pre>{{ instanta.date }}</pre>
             {% endif %}
-        
+
             {% for model, info in instanta.items() %}
             {% if model not in ("date", "y_true") %}
-            <div class="model-xai" id="xai_model_{{ idx }}_{{ model|replace(' ', '_') }}">
+            <div>
                 <h4>Model: {{ model }}</h4>
                 <p>
                     <strong>Predicție:</strong> <code>{{ info.y_pred }}</code> &nbsp;
                     <strong>Probabilitate:</strong> <code>{{ info.y_prob }}%</code>
                 </p>
-        
+
                 {% for metoda, detalii in info.items() %}
                 {% if metoda not in ("y_pred", "y_prob") %}
-                <div class="xai-metoda">
+                <div>
                     <h5>{{ metoda }}</h5>
                     {% if detalii.figura %}
-                    <div class="xai-figura">{{ detalii.figura | safe }}</div>
+                    <div>{{ detalii.figura | safe }}</div>
                     {% endif %}
                     {% if detalii.interpretare %}
-                    <div class="xai-interpretare">{{ detalii.interpretare | safe }}</div>
+                    <div>{{ detalii.interpretare | safe }}</div>
                     {% endif %}
                 </div>
                 {% endif %}

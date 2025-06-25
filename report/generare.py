@@ -14,40 +14,32 @@ def get_template_html(fisier: str = "report-template.html") -> Template:
 	return template
 
 
-def generare_cod_raport(date_raport: dict, format_pdf: bool = False):
-	date_pregatite: dict = pregatire_date_raport(date_raport, format_pdf)
+def generare_cod_raport(date_raport: dict):
+	date_pregatite: dict = pregatire_date_raport(date_raport)
 
 	template: Template = get_template_html()
 
 	html_final = template.render(
 		logo=image_to_html(Path(__file__).parent.parent / "assets" / "logo" / "logo-text-dark.png"),
-		set_date=date_pregatite.get("set_date"),
-		eda=date_pregatite.get("eda"),
-		procesare=date_pregatite.get("procesare"),
-		modele_antrenate=date_pregatite.get("modele_antrenate"),
-		rezultate_modele=date_pregatite.get("rezultate_modele"),
-		comparatii_modele=date_pregatite.get("comparatii_modele"),
-		xai_test=date_pregatite.get("xai_test"),
-		xai_predictii=date_pregatite.get("xai_predictii"),
+		set_date=date_pregatite.get("set_date", None),
+		eda=date_pregatite.get("eda", None),
+		procesare=date_pregatite.get("procesare", None),
+		modele_antrenate=date_pregatite.get("modele_antrenate", None),
+		rezultate_modele=date_pregatite.get("rezultate_modele", None),
+		comparatii_modele=date_pregatite.get("comparatii_modele", None),
+		xai_test=date_pregatite.get("xai_test", None),
+		xai_predictii=date_pregatite.get("xai_predictii", None),
 	)
 
 	return html_final
 
 
-def generare_raport(date_raport: dict, format_pdf: bool = False) -> bytes:
+def generare_raport(date_raport: dict) -> bytes:
 	cale_css = Path(__file__).parent.parent / "assets" / "report" / "report-style.css"
-	cod_raport = generare_cod_raport(date_raport, format_pdf)
-	if not format_pdf:
-		with open(cale_css, "r", encoding="utf-8") as f:
-			continut_css = f.read()
-		style_tag = f"<style>\n{continut_css}\n</style>"
-		cod_raport = cod_raport.replace("<head>", f"<head>\n{style_tag}")
-		report_bytes: bytes = cod_raport.encode("utf-8")
-	else:
-		report_bytes: bytes = pdfkit.from_string(
-			cod_raport,
-			False,
-			configuration=pdfkit.configuration(wkhtmltopdf="C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"),
-			css=cale_css,
-		)
+	cod_raport = generare_cod_raport(date_raport)
+	with open(cale_css, "r", encoding="utf-8") as f:
+		continut_css = f.read()
+	style_tag = f"<style>\n{continut_css}\n</style>"
+	cod_raport = cod_raport.replace("<head>", f"<head>\n{style_tag}")
+	report_bytes: bytes = cod_raport.encode("utf-8")
 	return report_bytes

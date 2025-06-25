@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -82,8 +83,8 @@ def sectiune_distributie_tinta(y: pd.Series):
 def sectiune_matrice_corelatie(df: pd.DataFrame):
 	coloane_selectate = st.multiselect(
 		"Alege coloanele pentru matricea de corelație",
-		df.columns,
-		help="Selectează variabilele numerice pentru a construi o matrice de corelație între ele.",
+		df.select_dtypes(include=[np.number]).columns,
+		help="Selectează variabile numerice pentru a construi o matrice de corelație.",
 	)
 
 	if coloane_selectate:
@@ -100,13 +101,14 @@ def sectiune_valori_lipsa(df: pd.DataFrame):
 	if "df" not in valori_lipsa:
 		valori_lipsa["df"] = df_valori_lipsa(df)
 
-	st.dataframe(valori_lipsa["df"], use_container_width=False)
+	if valori_lipsa["df"] is not None and "fig" not in valori_lipsa:
+		valori_lipsa["fig"] = plot_valori_lipsa(valori_lipsa["df"])
 
 	if valori_lipsa["df"] is not None:
-		if "fig" not in valori_lipsa:
-			valori_lipsa["fig"] = plot_valori_lipsa(valori_lipsa["df"])
-
+		st.dataframe(valori_lipsa["df"], use_container_width=False)
 		st.plotly_chart(valori_lipsa["fig"], use_container_width=False)
+	else:
+		st.success("Nu există valori lipsă în dataset!")
 
 
 def sectiune_corelatie_tinta(X, y):
