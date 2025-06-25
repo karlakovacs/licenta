@@ -4,11 +4,11 @@ from streamlit_sortables import sort_items
 
 from database import create_set_date_procesat
 from dataset import citire_set_date
-from preprocessing import procesare_dataset
+from preprocessing import preprocesare_dataset
 from ui import *
 
 
-initializare_pagina("FlagML", "centered", "Procesarea datelor")
+initializare_pagina("Preprocesare", "centered", "Preprocesarea datelor")
 
 
 def sectiune_eliminare_coloane(df: pd.DataFrame):
@@ -64,7 +64,7 @@ def sectiune_outlieri(df: pd.DataFrame):
 		return
 
 	eliminare_outlieri = st.checkbox(
-		"Aplică procesarea outlierilor",
+		"Aplică preprocesarea outlierilor",
 		help="Activează acest pas pentru a detecta și elimina valorile extreme din setul de date.",
 		key="eliminare_outlieri",
 	)
@@ -249,24 +249,24 @@ def sectiune_impartire():
 	)
 
 
-def creare_dict_procesare():
-	procesare = {}
+def creare_dict_preprocesare():
+	preprocesare = {}
 
-	procesare["coloane_eliminate"] = st.session_state.get("coloane_eliminate", [])
+	preprocesare["coloane_eliminate"] = st.session_state.get("coloane_eliminate", [])
 
 	if st.session_state.get("eliminare_duplicate"):
-		procesare["eliminare_duplicate"] = True
+		preprocesare["eliminare_duplicate"] = True
 	if st.session_state.get("eliminare_randuri_nan"):
-		procesare["eliminare_randuri_nan"] = True
+		preprocesare["eliminare_randuri_nan"] = True
 
 	if st.session_state.get("eliminare_outlieri"):
-		procesare["outlieri"] = {
+		preprocesare["outlieri"] = {
 			"detectie": st.session_state.get("outlieri_detectie"),
 			"actiune": st.session_state.get("outlieri_actiune"),
 		}
 
 	if "strategie_numerice" in st.session_state or "strategie_categoriale" in st.session_state:
-		procesare["valori_lipsa"] = {
+		preprocesare["valori_lipsa"] = {
 			"strategie_numerice": st.session_state.get("strategie_numerice"),
 			"valoare_fixa_numerice": st.session_state.get("valoare_fixa_numerice"),
 			"strategie_categoriale": st.session_state.get("strategie_categoriale"),
@@ -279,31 +279,31 @@ def creare_dict_procesare():
 		if k.startswith("binar_valoare_true_")
 	}
 	if conversii:
-		procesare["coloane_binare"] = conversii
+		preprocesare["coloane_binare"] = conversii
 
 	if st.session_state.get("datetime_coloane"):
-		procesare["datetime"] = {
+		preprocesare["datetime"] = {
 			"coloane": st.session_state.get("datetime_coloane", []),
 			"componente": st.session_state.get("datetime_componente", []),
 		}
 
 	if st.session_state.get("encoding_dorit"):
-		procesare["encoding"] = {
+		preprocesare["encoding"] = {
 			"max_categorii": 10,
 			"coloane_label": st.session_state.get("label_ordine_sortare", {}),
 		}
 
-	procesare["dezechilibru"] = st.session_state.get("dezechilibru", "Niciuna")
+	preprocesare["dezechilibru"] = st.session_state.get("dezechilibru", "Niciuna")
 
-	procesare["scalare"] = st.session_state.get("scalare", "Niciuna")
+	preprocesare["scalare"] = st.session_state.get("scalare", "Niciuna")
 
-	procesare["impartire"] = {
+	preprocesare["impartire"] = {
 		"proportie_test": st.session_state.get("impartire_proportie_test", 0.2),
 		"stratificat": st.session_state.get("impartire_stratificat", True),
 		"tinta": st.session_state["set_date"].get("tinta", None),
 	}
 
-	st.session_state["procesare"] = procesare
+	st.session_state["preprocesare"] = preprocesare
 
 
 @require_auth
@@ -345,16 +345,16 @@ def main():
 	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
 		sectiune_impartire()
 
-	if st.button("Procesare", type="primary", disabled=verificare_flag("processed_dataset")):
-		creare_dict_procesare()
-		# st.json(st.session_state["procesare"])
-		df = procesare_dataset(df, st.session_state["procesare"])
-		st.session_state.id_set_procesat = create_set_date_procesat(
-			st.session_state.get("id_utilizator"),
-			st.session_state.get("id_set_date", 1),
-			st.session_state.get("procesare"),
-			df,
-		)
+	if st.button("Preprocesare", type="primary", disabled=verificare_flag("processed_dataset")):
+		creare_dict_preprocesare()
+		df = preprocesare_dataset(df, st.session_state["preprocesare"])
+		if st.session_state.set_date["sursa"] != "Seturi predefinite":
+			st.session_state.id_set_procesat = create_set_date_procesat(
+				st.session_state.get("id_utilizator"),
+				st.session_state.get("id_set_date", 1),
+				st.session_state.get("preprocesare"),
+				df,
+			)
 		setare_flag("processed_dataset")
 		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
 

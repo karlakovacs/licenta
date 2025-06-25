@@ -36,7 +36,6 @@ def handle_predefinite():
 
 	selectie = st.selectbox("📁 Alege un set predefinit", options=seturi, format_func=lambda s: s.denumire)
 	df = citire_date_predefinite(selectie.denumire)
-	# sursa = get_sursa_by_id_set_date_brut(selectie.id)
 	return "Seturi predefinite", df, selectie
 
 
@@ -56,7 +55,7 @@ def handle_seturi_brute():
 
 
 def handle_seturi_procesate():
-	seturi = get_seturi_date_procesate(st.session_state.id_utilizator)
+	seturi = get_seturi_date_procesate_utilizator(st.session_state.id_utilizator)
 	if not seturi:
 		st.info("Nu ai niciun set de date procesat. Încearcă să alegi unul brut.")
 		return "Seturile mele procesate", None, None
@@ -136,12 +135,13 @@ def actualizare_bd(df, id, denumire, tinta, sursa, selectie):
 		st.session_state.id_set_date = create_set_date_brut(st.session_state.id_utilizator, sursa, denumire, tinta, df)
 		st.toast("Setul de date a fost încărcat în baza de date", icon="✅")
 	else:
-		if selectie.denumire != denumire or selectie.tinta != tinta:
-			rezultat, mesaj = update_set_date_brut(
-				st.session_state.id_utilizator, selectie.id, denumire=denumire, tinta=tinta
-			)
-			st.toast(mesaj, icon="✅" if rezultat else "❌")
-		st.session_state.id_set_date = selectie.id
+		if sursa != "Seturile mele procesate":
+			if selectie.denumire != denumire or selectie.tinta != tinta:
+				rezultat, mesaj = update_set_date_brut(
+					st.session_state.id_utilizator, selectie.id, denumire=denumire, tinta=tinta
+				)
+				st.toast(mesaj, icon="✅" if rezultat else "❌")
+			st.session_state.id_set_date = selectie.id
 
 
 def selectie_set_date():

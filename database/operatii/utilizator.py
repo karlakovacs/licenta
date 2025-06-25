@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from ..modele import Utilizator
 from ..utils import get_session
@@ -11,7 +11,7 @@ def login(id_auth0: str) -> int:
 		utilizator = Utilizator(id_auth0=id_auth0)
 		db.add(utilizator)
 	else:
-		utilizator.data_ultima_conectare = datetime.now(timezone.utc)
+		utilizator.data_ultima_conectare = datetime.now()
 	db.commit()
 	db.refresh(utilizator)
 

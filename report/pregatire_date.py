@@ -90,8 +90,8 @@ def este_valoare_valida(v):
 	return v not in (None, "", [], {}, "Niciuna")
 
 
-def pregatire_procesare(procesare: dict) -> dict:
-	rezultat = {cheie: valoare for cheie, valoare in procesare.items() if este_valoare_valida(valoare)}
+def pregatire_preprocesare(preprocesare: dict) -> dict:
+	rezultat = {cheie: valoare for cheie, valoare in preprocesare.items() if este_valoare_valida(valoare)}
 	return rezultat
 
 
@@ -221,8 +221,8 @@ def pregatire_date_raport(date_raport: dict) -> dict:
 		eda: dict = date_raport["eda"]
 		date_raport_html["eda"] = pregatire_eda(eda)
 
-	if "procesare" in date_raport and date_raport["procesare"] is not None:
-		date_raport_html["procesare"] = pregatire_procesare(date_raport["procesare"])
+	if "preprocesare" in date_raport and date_raport["preprocesare"] is not None:
+		date_raport_html["preprocesare"] = pregatire_preprocesare(date_raport["preprocesare"])
 
 	if "modele_antrenate" in date_raport and date_raport["modele_antrenate"] is not None:
 		modele_antrenate: dict = date_raport["modele_antrenate"]

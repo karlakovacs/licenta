@@ -6,7 +6,7 @@ PAGES = [
 	(0, "Acasă", "pages/0_acasa.py", "🏠"),
 	(1, "Alegerea setului de date", "pages/1_dataset.py", "💳"),
 	(2, "Analiza datelor", "pages/2_eda.py", "📊"),
-	(3, "Procesarea datelor", "pages/3_procesare.py", "🛠️"),
+	(3, "Preprocesarea datelor", "pages/3_preprocesare.py", "🛠️"),
 	(4, "Alegerea modelelor ML", "pages/4_modele.py", "🧠"),
 	(5, "Antrenarea modelelor ML", "pages/5_antrenare.py", "⚙️"),
 	(6, "Rezultate", "pages/6_rezultate.py", "🎯"),

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import or_
 
@@ -23,7 +23,8 @@ def create_set_date_procesat(id_utilizator: int, id_set_date: int, configuratie:
 	if not set_brut:
 		raise ValueError("Setul de date brut nu există sau nu aparține utilizatorului.")
 
-	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+	data = datetime.now()
+	timestamp = data.strftime("%Y-%m-%d-%H-%M-%S")
 	noua_denumire = f"{set_brut.denumire}_procesat_{timestamp}"
 
 	url = upload_dataset_to_storage(df, id_utilizator, noua_denumire)
@@ -33,7 +34,7 @@ def create_set_date_procesat(id_utilizator: int, id_set_date: int, configuratie:
 		denumire=noua_denumire,
 		configuratie=configuratie,
 		url=url,
-		data_procesare=datetime.now(timezone.utc),
+		data_procesare=data,
 	)
 
 	db.add(set_date_procesat)
@@ -55,6 +56,18 @@ def get_seturi_date_procesate(id_set_date_brut: int) -> list:
 
 	return lista
 
+def get_seturi_date_procesate_utilizator(id_utilizator: int) -> list:
+	db = get_session()
+
+	lista = (
+		db.query(SetDateProcesat)
+		.join(SetDateBrut, SetDateProcesat.set_date_brut)
+		.filter(SetDateBrut.id_utilizator == id_utilizator)
+		.order_by(SetDateProcesat.data_procesare.desc())
+		.all()
+	)
+
+	return lista
 
 def delete_set_date_procesat(id_set_date_procesat: int) -> str:
 	db = get_session()

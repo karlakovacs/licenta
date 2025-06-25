@@ -2,7 +2,7 @@ from imblearn.over_sampling import ADASYN, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, OneHotEncoder, RobustScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, RobustScaler, StandardScaler
 import streamlit as st
 
 from dataset import generare_metadate_set_procesat, salvare_date_temp
@@ -67,13 +67,6 @@ def completare_valori_lipsa(df: pd.DataFrame, setari: dict) -> pd.DataFrame:
 	return df_nou
 
 
-# def conversie_coloane_binare(df: pd.DataFrame, conversii: dict) -> pd.DataFrame:
-# 	for col, true_val in conversii.items():
-# 		if col in df.columns:
-# 			df[col] = df[col] == true_val
-# 	return df
-
-
 def conversie_coloane_binare(df: pd.DataFrame, conversii: dict, tinta: str = None) -> pd.DataFrame:
 	for col, true_val in conversii.items():
 		if col in df.columns:
@@ -113,33 +106,9 @@ def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
 	coloane_label = setari.get("coloane_label", {})
 	max_categorii = setari.get("max_categorii", 10)
 
-	# for col in coloane_label.keys():
-	# 	le = LabelEncoder()
-	# 	le.fit(df[col].astype(str))
-	# 	encoders["label_encoders"][col] = le
-
-	# for col, ordine in coloane_label.items():
-	# 	mapping = {val: i for i, val in enumerate(ordine)}
-	# 	df[col] = df[col].map(mapping)
-	# 	encoders["label_encoders"][col] = mapping
-
 	for col, ordine in coloane_label.items():
 		mapping = {val: i for i, val in enumerate(ordine)}
 		encoders["label_encoders"][col] = mapping
-
-	# potentiale_categorice = df.select_dtypes(include=["object", "category"]).columns.tolist()
-	# coloane_one_hot = [col for col in potentiale_categorice if col not in coloane_label]
-	# encoders["coloane_one_hot"] = coloane_one_hot
-
-	# if coloane_one_hot:
-	# 	one_hot_encoder = OneHotEncoder(
-	# 		drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
-	# 	)
-	# 	one_hot_encoder.fit(df[coloane_one_hot].astype(str))
-	# 	encoders["one_hot_encoder"] = one_hot_encoder
-
-	# Identifică coloanele de tip categoric care nu sunt deja incluse pentru label encoding
-
 
 	categoriale = df.select_dtypes(include=["object", "category"]).columns
 	coloane_one_hot = [col for col in categoriale if col not in coloane_label]
@@ -163,7 +132,7 @@ def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:
 
 	for col, mapping in encoders["label_encoders"].items():
 		if col in df.columns:
-			df[col] = df[col].map(mapping).fillna(-1).astype(int)  # df[col] = df[col].map(mapping)
+			df[col] = df[col].map(mapping).fillna(-1).astype(int)
 
 	coloane_one_hot = encoders.get("coloane_one_hot", [])
 	one_hot_encoder: OneHotEncoder = encoders.get("one_hot_encoder")
@@ -253,67 +222,67 @@ def impartire_train_test(X: pd.DataFrame, y: pd.Series, setari: dict):
 		salvare_date_temp(df, nume)
 
 
-def procesare_dataset(df: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:
-	if dict_procesare.get("coloane_eliminate"):
-		df = eliminare_coloane(df, dict_procesare["coloane_eliminate"])
+def preprocesare_dataset(df: pd.DataFrame, dict_preprocesare: dict) -> pd.DataFrame:
+	if dict_preprocesare.get("coloane_eliminate"):
+		df = eliminare_coloane(df, dict_preprocesare["coloane_eliminate"])
 
-	if dict_procesare.get("eliminare_duplicate"):
+	if dict_preprocesare.get("eliminare_duplicate"):
 		df = eliminare_duplicate(df)
 
-	if dict_procesare.get("eliminare_randuri_nan"):
+	if dict_preprocesare.get("eliminare_randuri_nan"):
 		df = eliminare_randuri_nan(df)
 
-	if "outlieri" in dict_procesare:
-		metoda = dict_procesare["outlieri"]["detectie"]
-		actiune = dict_procesare["outlieri"]["actiune"]
+	if "outlieri" in dict_preprocesare:
+		metoda = dict_preprocesare["outlieri"]["detectie"]
+		actiune = dict_preprocesare["outlieri"]["actiune"]
 		df = tratare_outlieri(df, metoda, actiune)
 
-	if "valori_lipsa" in dict_procesare or df.isna().any().any():
-		df = completare_valori_lipsa(df, dict_procesare["valori_lipsa"])
+	if "valori_lipsa" in dict_preprocesare or df.isna().any().any():
+		df = completare_valori_lipsa(df, dict_preprocesare["valori_lipsa"])
 
-	tinta = dict_procesare["impartire"]["tinta"]
+	tinta = dict_preprocesare["impartire"]["tinta"]
 
-	if "coloane_binare" in dict_procesare:
-		df = conversie_coloane_binare(df, dict_procesare["coloane_binare"], tinta)
+	if "coloane_binare" in dict_preprocesare:
+		df = conversie_coloane_binare(df, dict_preprocesare["coloane_binare"], tinta)
 
-	if "datetime" in dict_procesare:
-		df = aplicare_datetime(df, dict_procesare["datetime"])
+	if "datetime" in dict_preprocesare:
+		df = aplicare_datetime(df, dict_preprocesare["datetime"])
 
 	X = df.drop(columns=[tinta])
 	y = df[tinta]
 
-	if "encoding" in dict_procesare:
-		X = aplicare_encoding(X, dict_procesare["encoding"])
+	if "encoding" in dict_preprocesare:
+		X = aplicare_encoding(X, dict_preprocesare["encoding"])
 
-	if dict_procesare.get("dezechilibru") != "Niciuna":
-		X, y = aplicare_dezechilibru(X, y, dict_procesare["dezechilibru"])
+	if dict_preprocesare.get("dezechilibru") != "Niciuna":
+		X, y = aplicare_dezechilibru(X, y, dict_preprocesare["dezechilibru"])
 
-	if dict_procesare.get("scalare") != "Niciuna":
-		X = aplicare_scalare(X, dict_procesare["scalare"])
+	if dict_preprocesare.get("scalare") != "Niciuna":
+		X = aplicare_scalare(X, dict_preprocesare["scalare"])
 
 	metadate_set_procesat = generare_metadate_set_procesat(X)
 	st.session_state.metadate_set_procesat = metadate_set_procesat
-	setari_split = dict_procesare["impartire"]
+	setari_split = dict_preprocesare["impartire"]
 	setari_split["tinta"] = tinta
 	impartire_train_test(X, y, setari_split)
 
 	return pd.concat([X, y], axis=1)
 
 
-def procesare_instanta(instanta: pd.DataFrame, dict_procesare: dict) -> pd.DataFrame:
-	if dict_procesare.get("coloane_eliminate"):
-		instanta = eliminare_coloane(instanta, dict_procesare["coloane_eliminate"])
+def preprocesare_instanta(instanta: pd.DataFrame, dict_preprocesare: dict) -> pd.DataFrame:
+	if dict_preprocesare.get("coloane_eliminate"):
+		instanta = eliminare_coloane(instanta, dict_preprocesare["coloane_eliminate"])
 
-	if "coloane_binare" in dict_procesare:
-		instanta = conversie_coloane_binare(instanta, dict_procesare["coloane_binare"])
+	if "coloane_binare" in dict_preprocesare:
+		instanta = conversie_coloane_binare(instanta, dict_preprocesare["coloane_binare"])
 
-	if "datetime" in dict_procesare:
-		instanta = aplicare_datetime(instanta, dict_procesare["datetime"])
+	if "datetime" in dict_preprocesare:
+		instanta = aplicare_datetime(instanta, dict_preprocesare["datetime"])
 
-	if "encoding" in dict_procesare:
-		instanta = aplicare_encoding(instanta, dict_procesare["encoding"])
+	if "encoding" in dict_preprocesare:
+		instanta = aplicare_encoding(instanta, dict_preprocesare["encoding"])
 
-	if dict_procesare.get("scalare") != "Niciuna":
-		instanta = aplicare_scalare(instanta, dict_procesare["scalare"])
+	if dict_preprocesare.get("scalare") != "Niciuna":
+		instanta = aplicare_scalare(instanta, dict_preprocesare["scalare"])
 
 	return instanta

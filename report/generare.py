@@ -23,7 +23,7 @@ def generare_cod_raport(date_raport: dict):
 		logo=image_to_html(Path(__file__).parent.parent / "assets" / "logo" / "logo-text-dark.png"),
 		set_date=date_pregatite.get("set_date", None),
 		eda=date_pregatite.get("eda", None),
-		procesare=date_pregatite.get("procesare", None),
+		preprocesare=date_pregatite.get("preprocesare", None),
 		modele_antrenate=date_pregatite.get("modele_antrenate", None),
 		rezultate_modele=date_pregatite.get("rezultate_modele", None),
 		comparatii_modele=date_pregatite.get("comparatii_modele", None),

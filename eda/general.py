@@ -17,8 +17,8 @@ def descriere_variabile(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 	return describe_numeric, describe_categorical
 
 
-
-def plot_tipuri_variabile(X: pd.DataFrame) -> go.Figure:
+@with_random_color
+def plot_tipuri_variabile(X: pd.DataFrame, culoare: str=None) -> go.Figure:
 	titlu = "Distribuția tipurilor de variabile"
 	tip_coloana = "Tip de coloană"
 	nr_variabile = "Număr de variabile"
@@ -33,10 +33,7 @@ def plot_tipuri_variabile(X: pd.DataFrame) -> go.Figure:
 			x=tipuri_variabile[tip_coloana],
 			y=tipuri_variabile[nr_variabile],
 			text=tipuri_variabile[nr_variabile],
-			marker=dict(
-				color=tipuri_variabile[nr_variabile],
-				colorscale="viridis",
-			),
+			marker=dict(color=culoare),
 			hoverinfo="x+y",
 		)
 	)

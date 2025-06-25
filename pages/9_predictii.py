@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 from dataset import citire_date_temp
-from preprocessing import procesare_instanta
+from preprocessing import preprocesare_instanta
 from ui import *
 from xai import ui_predictii
 
@@ -105,8 +105,8 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 
 		if st.form_submit_button("Selectează", type="primary", use_container_width=True):
 			st.session_state.counter_idx += 1
-			st.session_state.instanta_procesata = procesare_instanta(
-				pd.DataFrame([valori_introduse]), st.session_state.procesare
+			st.session_state.instanta_procesata = preprocesare_instanta(
+				pd.DataFrame([valori_introduse]), st.session_state.preprocesare
 			)
 
 

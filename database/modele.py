@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,8 +13,8 @@ class Utilizator(Base):
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_auth0 = Column(String, unique=True, nullable=False)
-	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
-	data_ultima_conectare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_creare = Column(DateTime, default=datetime.now())
+	data_ultima_conectare = Column(DateTime, default=datetime.now())
 
 	seturi_date = relationship("SetDateBrut", back_populates="utilizator", cascade="all, delete-orphan")
 
@@ -37,8 +37,8 @@ class SetDateBrut(Base):
 	denumire = Column(String, nullable=False)
 	tinta = Column(String, nullable=False)
 	url = Column(String, nullable=False)
-	data_creare = Column(DateTime, default=datetime.now(timezone.utc))
-	data_actualizare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_creare = Column(DateTime, default=datetime.now())
+	data_actualizare = Column(DateTime, default=datetime.now())
 
 	utilizator = relationship("Utilizator", back_populates="seturi_date")
 	sursa_date = relationship("SursaDate", back_populates="seturi_date")
@@ -53,7 +53,7 @@ class SetDateProcesat(Base):
 	denumire = Column(String, nullable=False)
 	configuratie = Column(JSON)
 	url = Column(String, nullable=False)
-	data_procesare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_procesare = Column(DateTime, default=datetime.now())
 
 	set_date_brut = relationship("SetDateBrut", back_populates="seturi_procesate")
 	modele = relationship("Model", back_populates="set_date_procesat", cascade="all, delete-orphan")
@@ -101,7 +101,7 @@ class Model(Base):
 	hiperparametri = Column(JSON, nullable=False)
 	durata_antrenare = Column(Float, nullable=False)
 	url = Column(String, nullable=False)
-	data_antrenare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_antrenare = Column(DateTime, default=datetime.now())
 
 	set_date_procesat = relationship("SetDateProcesat", back_populates="modele")
 	tip_model = relationship("TipModel", back_populates="modele")
@@ -114,6 +114,6 @@ class Raport(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_set_date_procesat = Column(Integer, ForeignKey("seturi_date_procesate.id", ondelete="CASCADE"), nullable=False)
 	url = Column(String, nullable=False)
-	data_generare = Column(DateTime, default=datetime.now(timezone.utc))
+	data_generare = Column(DateTime, default=datetime.now())
 
 	set_date_procesat = relationship("SetDateProcesat", back_populates="rapoarte")

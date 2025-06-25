@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pandas as pd
 from sqlalchemy.orm import joinedload
@@ -29,7 +29,7 @@ def create_set_date_brut(id_utilizator: int, sursa: str, denumire: str, tinta: s
 		denumire=denumire,
 		tinta=tinta,
 		url=url,
-		data_creare=datetime.now(timezone.utc),
+		data_creare=datetime.now(),
 	)
 
 	db.add(set_date)
@@ -41,6 +41,7 @@ def create_set_date_brut(id_utilizator: int, sursa: str, denumire: str, tinta: s
 
 def get_seturi_date_brute(id_utilizator: int) -> list:
 	db = get_session()
+
 	lista = (
 		db.query(SetDateBrut)
 		.options(joinedload(SetDateBrut.sursa_date))
@@ -48,17 +49,13 @@ def get_seturi_date_brute(id_utilizator: int) -> list:
 		.order_by(SetDateBrut.data_creare.desc())
 		.all()
 	)
+
 	return lista
 
 
 def get_seturi_date_predefinite() -> list:
 	db = get_session()
-	lista = (
-		db.query(SetDateBrut)
-		.filter(SetDateBrut.id_sursa == 3)
-		.order_by(SetDateBrut.data_creare.asc())
-		.all()
-	)
+	lista = db.query(SetDateBrut).filter(SetDateBrut.id_sursa == 3).order_by(SetDateBrut.data_creare.asc()).all()
 	return lista
 
 
@@ -81,7 +78,7 @@ def update_set_date_brut(
 	if tinta is not None:
 		set_date.tinta = tinta
 
-	set_date.data_actualizare = datetime.now(timezone.utc)
+	set_date.data_actualizare = datetime.now()
 	db.commit()
 
 	return True, "Setul de date a fost modificat"

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 import streamlit as st
 from supabase import create_client
@@ -12,13 +12,14 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 def upload_report_to_storage(id_utilizator: int, html_bytes: bytes, bucket: str = "reports") -> dict:
-	date = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M-%S")
-	path = f"{id_utilizator}/raport_{date}.html"
+	date = datetime.now()
+	date_str = date.strftime("%Y-%m-%d-%H-%M-%S")
+	path = f"{id_utilizator}/raport_{date_str}.html"
 	supabase.storage.from_(bucket).upload(path, html_bytes, {"content-type": "text/html"})
 	return path, date
 
 
-def get_report_urls_from_storage(raport, bucket: str = "reports"):
+def get_report_url_from_storage(raport, bucket: str = "reports"):
 	url = raport.url
 	denumire_fisier = f"raport_{url.split('/')[-1]}"
 	html_url = (

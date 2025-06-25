@@ -5,6 +5,7 @@ import streamlit as st
 from dataset import *
 from eda import *
 from ui import *
+from ui import DETALII_EDA
 
 
 initializare_pagina("EDA", "wide", "Analiza exploratorie a datelor", {"eda": {}})
@@ -108,7 +109,7 @@ def sectiune_valori_lipsa(df: pd.DataFrame):
 		st.dataframe(valori_lipsa["df"], use_container_width=False)
 		st.plotly_chart(valori_lipsa["fig"], use_container_width=False)
 	else:
-		st.success("Nu există valori lipsă în dataset!")
+		st.success("Nu există valori lipsă în setul de date.")
 
 
 def sectiune_corelatie_tinta(X, y):
@@ -137,16 +138,6 @@ def main():
 		"Variabilele puternic corelate cu ținta": lambda: sectiune_corelatie_tinta(X, y),
 	}
 
-	detalii = {
-		"Setul de date": "Afișează setul de date în mod interactiv.\n\nPermite o primă verificare a consistenței datelor.\n\nUtil pentru a înțelege structura brută a fișierului încărcat.",
-		"Analiza valorilor lipsă": "Evaluează câte valori lipsesc pe coloană, atât în număr absolut, cât și procentual.\n\nEste utilă pentru luarea deciziilor de curățare a datelor sau imputare.",
-		"Distribuția tipurilor de variabile": "Arată câte variabile sunt de tip numeric, categoric, boolean, text sau dată.\n\nAceastă informație este crucială pentru alegerea corectă a metodelor de preprocesare și analiză.",
-		"Distribuția variabilei țintă": "Afișează distribuția clasei țintă (`target`), importantă pentru detectarea dezechilibrelor între clase.\n\nUn dezechilibru sever poate afecta performanța modelelor de clasificare.",
-		"Statistici descriptive": "Oferă statistici relevante pentru fiecare variabilă, în funcție de tipul ei: medii, extreme, dispersie, modă, distribuție etc.\n\nAjută la înțelegerea comportamentului fiecărei variabile în mod individual.",
-		"Matricea de corelație": "Prezintă corelațiile între variabile numerice. Coeficientul Pearson este folosit pentru a detecta relații liniare.\n\nPoate evidenția redundanțe sau relații utile pentru modelare.",
-		"Variabilele puternic corelate cu ținta": "Identifică variabilele numerice care au o corelație puternică (pozitivă sau negativă) cu variabila țintă.\n\nAcestea pot fi predictori relevanți în modelele de clasificare.",
-	}
-
 	selectie = None
 
 	col1, col2 = st.columns([1, 3])
@@ -154,7 +145,7 @@ def main():
 	with col1:
 		selectie = st.selectbox("Ce vrei să vizualizezi?", functii.keys())
 		with st.expander("Informații despre analiza curentă"):
-			st.write(detalii[selectie])
+			st.write(DETALII_EDA[selectie])
 
 	with col2:
 		functii[selectie]()

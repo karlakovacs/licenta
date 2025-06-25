@@ -1,3 +1,5 @@
+from storage import delete_report_from_storage
+
 from ..modele import Raport
 from ..utils import get_session
 
@@ -16,7 +18,7 @@ def create_raport(id_set_date_procesat, url: str, data_generare: str):
 	return raport.id
 
 
-def get_raport(id_set_date_procesat: int) -> list:
+def get_rapoarte(id_set_date_procesat: int) -> list:
 	db = get_session()
 	lista = (
 		db.query(Raport)
@@ -27,13 +29,15 @@ def get_raport(id_set_date_procesat: int) -> list:
 	return lista
 
 
-def delete_raport(id_raport: int) -> str:
+def delete_raport(id_utilizator: int, id_raport: int) -> str:
 	db = get_session()
 
 	raport = db.query(Raport).filter_by(id=id_raport).first()
 
 	if raport is None:
 		return False, "Raportul nu există sau nu aparține utilizatorului"
+	
+	delete_report_from_storage(id_utilizator, raport.id)
 
 	db.delete(raport)
 	db.commit()

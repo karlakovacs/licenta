@@ -21,19 +21,15 @@ def main():
 	col1, col2 = st.columns([1, 2])
 
 	with col1:
-		if st.button("✨ *Începe o analiză nouă*", type="primary"):
+		if st.button("✨ Începe o analiză nouă", type="primary"):
 			st.session_state.clear()
 			st.switch_page("pages/1_dataset.py")
 
 	with col2:
-		if st.button("🗂️ *Vizualizează rapoartele și modelele personale*", type="secondary"):
+		if st.button("🗂️ Vizualizează rapoartele și modelele personale", type="secondary"):
 			st.switch_page("pages/11_date.py")
 
 	st.image("assets/home/ai.png")
-
-	if st.button("Clear session state"):
-		st.session_state.clear()
-		st.balloons()
 
 
 if __name__ == "__main__":

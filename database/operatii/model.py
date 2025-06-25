@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy.orm import joinedload
 
@@ -19,7 +19,7 @@ def create_model(
 		hiperparametri=hiperparametri,
 		durata_antrenare=durata_antrenare,
 		url=url,
-		data_antrenare=datetime.now(timezone.utc),
+		data_antrenare=datetime.now(),
 	)
 
 	db.add(model)
@@ -36,7 +36,7 @@ def create_modele(id_utilizator: int, id_set_date_procesat: int, modele_antrenat
 	denumire_to_id = {t.denumire: t.id for t in tipuri}
 
 	modele_de_salvat = []
-	now = datetime.now(timezone.utc)
+	now = datetime.now()
 	dict_rezultat = {}
 
 	for denumire_model, valori in modele_antrenate.items():
@@ -51,7 +51,7 @@ def create_modele(id_utilizator: int, id_set_date_procesat: int, modele_antrenat
 			id_set_date_procesat=id_set_date_procesat,
 			id_tip_model=id_tip_model,
 			hiperparametri=valori.get("hiperparametri", {}),
-			durata_antrenare=valori.get("timp", 0.0),
+			durata_antrenare=valori.get("durata_antrenare", 0.0),
 			url=url,
 			data_antrenare=now,
 		)
@@ -64,29 +64,6 @@ def create_modele(id_utilizator: int, id_set_date_procesat: int, modele_antrenat
 	db.flush()
 
 	return {nume: obj.id for nume, obj in dict_rezultat.items()}
-
-
-# ids modele-> dict cu nume modele si ids
-# metrici -> dict cu nume modele si un alt dict imbricat de metrici
-# def create_metrici(ids_modele: dict, metrici: dict) -> None:
-# 	db = get_session()
-
-# 	toate_metricile = db.query(Metrici).all()
-# 	prescurtare_to_id = {m.prescurtare: m.id for m in toate_metricile}
-
-# 	metrici_de_salvat = []
-
-# 	for prescurtare, valoare in metrici.items():
-# 		id_metrica = prescurtare_to_id.get(prescurtare)
-# 		if id_metrica is None:
-# 			print(f"Metrica '{prescurtare}' nu există în tabela 'metrici'.")
-# 			continue
-
-# 		metrica_model = ModeleMetrici(id_model=id_model, id_metrica=id_metrica, valoare=valoare)
-# 		metrici_de_salvat.append(metrica_model)
-
-# 	db.add_all(metrici_de_salvat)
-# 	db.commit()
 
 
 def create_metrici(ids_modele: dict[str, int], metrici: dict[str, dict[str, float]]) -> None:

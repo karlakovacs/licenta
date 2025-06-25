@@ -13,7 +13,7 @@ def creare_date_raport():
 	keys = [
 		"set_date",
 		"eda",
-		"procesare",
+		"preprocesare",
 		"modele_antrenate",
 		"rezultate_modele",
 		"comparatii_modele",

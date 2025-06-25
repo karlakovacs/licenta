@@ -16,7 +16,7 @@
         <ul>
             <li><a href="#set_date">Set de date</a></li>
             <li><a href="#eda">Analiza exploratorie a datelor</a>
-            <li><a href="#procesare">Procesarea datelor</a></li>
+            <li><a href="#preprocesare">Preprocesarea datelor</a></li>
             <li><a href="#modele_antrenate">Antrenarea modelelor de ML</a></li>
             <li><a href="#rezultate_modele">Rezultatele modelelor</a></li>
             <li><a href="#comparatii_modele">Comparații între modele</a></li>
@@ -98,84 +98,98 @@
     </div>
     {% endif %}
 
-    {% if procesare %}
-    <div class="sectiune" id="procesare">
-        <h2>Procesarea datelor</h2>
+    {% if preprocesare %}
+    <div class="sectiune" id="preprocesare">
+        <h2>Preprocesarea datelor</h2>
 
-        {% if procesare.coloane_eliminate %}
+        {% if preprocesare.coloane_eliminate %}
         <p>
             <strong>Coloane eliminate:</strong>
-            {% for col in procesare.coloane_eliminate %}<code>{{ col }}</code>
+            {% for col in preprocesare.coloane_eliminate %}<code>{{ col }}</code>
             {% if not loop.last %}, {% endif %}{% endfor %}
         </p>
         {% endif %}
 
-        {% if procesare.eliminare_duplicate %}
+        {% if preprocesare.eliminare_duplicate %}
         <p><strong>Eliminare duplicate:</strong> <code>Activată</code></p>
         {% endif %}
 
-        {% if procesare.eliminare_randuri_nan %}
+        {% if preprocesare.eliminare_randuri_nan %}
         <p><strong>Eliminare rânduri cu valori lipsă:</strong> <code>Activată</code></p>
         {% endif %}
 
-        {% if procesare.outlieri %}
-        <p><strong>Tratament outlieri:</strong> Detectare cu <code>{{ procesare.outlieri.detectie }}</code>, acțiune:
-            <code>{{ procesare.outlieri.actiune }}</code>
+        {% if preprocesare.outlieri %}
+        <p><strong>Tratament outlieri:</strong> Detectare cu <code>{{ preprocesare.outlieri.detectie }}</code>, acțiune:
+            <code>{{ preprocesare.outlieri.actiune }}</code>
         </p>
         {% endif %}
 
-        {% if procesare.valori_lipsa %}
+        {% if preprocesare.valori_lipsa %}
         <p><strong>Imputarea valorilor lipsă:</strong><br>
-            - Strategie pentru variabilele numerice: <code>{{ procesare.valori_lipsa.strategie_numerice }}</code>,
-            valoare fixă: <code>{{ procesare.valori_lipsa.valoare_fixa_numerice }}</code><br>
-            - Strategie pentru variabilele categoriale: <code>{{ procesare.valori_lipsa.strategie_categoriale }}</code>,
-            valoare fixă: <code>{{ procesare.valori_lipsa.valoare_fixa_categoriale }}</code>
+            - Strategie pentru variabilele numerice: <code>{{ preprocesare.valori_lipsa.strategie_numerice }}</code>,
+            valoare fixă: <code>{{ preprocesare.valori_lipsa.valoare_fixa_numerice }}</code><br>
+            - Strategie pentru variabilele categoriale:
+            <code>{{ preprocesare.valori_lipsa.strategie_categoriale }}</code>,
+            valoare fixă: <code>{{ preprocesare.valori_lipsa.valoare_fixa_categoriale }}</code>
         </p>
         {% endif %}
 
-        {% if procesare.coloane_binare %}
+        {% if preprocesare.coloane_binare %}
         <p><strong>Conversii binare:</strong>
-            {% for col, val in procesare.coloane_binare.items() %}
+            {% for col, val in preprocesare.coloane_binare.items() %}
             {% if val %}<code>{{ col }}=True</code>{% if not loop.last %}, {% endif %}{% endif %}
             {% endfor %}
         </p>
         {% endif %}
 
-        {% if procesare.datetime %}
+        {% if preprocesare.datetime %}
         <p><strong>Conversii dată/timp:</strong>
-            coloane: {% for c in procesare.datetime.coloane %}<code>{{ c }}</code>{% if not loop.last %}, {% endif %}{%
-            endfor %};
-            componente extrase: {% for c in procesare.datetime.componente %}<code>{{ c }}</code>{% if not loop.last %},
-            {%
-            endif %}{% endfor %}
+            coloane:
+            {% for c in preprocesare.datetime.coloane %}
+            <code>{{ c }}</code>
+            {% if not loop.last %},
+            {% endif %}
+            {% endfor %};
+            componente extrase:
+            {% for c in preprocesare.datetime.componente %}
+            <code>{{ c }}</code>
+            {% if not loop.last %}, {% endif %}
+            {% endfor %}
         </p>
         {% endif %}
 
-        {% if procesare.encoding %}
+        {% if preprocesare.encoding %}
         <p><strong>Codificare pentru variabilele categoriale:</strong>
             Variabilele vor fi codificate folosind One Hot Encoding, cu limita:
-            <code>{{ procesare.encoding.max_categorii }}</code> categorii
+            <code>{{ preprocesare.encoding.max_categorii }}</code> categorii
         </p>
-        {% if procesare.encoding.coloane_label %}
+
+        {% if preprocesare.encoding.coloane_label %}
         <p><strong>Label encoding aplicat pe:</strong>
         <ul>
-            {% for var, ord in procesare.encoding.coloane_label.items() %}
-            <li><code>{{ var }}</code>: [ {% for et in ord %}<code>{{ et }}</code>{% if not loop.last %}, {% endif %}{%
-                endfor %} ]</li>
+            {% for var, ord in preprocesare.encoding.coloane_label.items() %}
+            <li><code>{{ var }}</code>: [
+                {% for et in ord %}
+                <code>{{ et }}</code>
+                {% if not loop.last %}, {% endif %}
+                {% endfor %}
+                ]
+            </li>
             {% endfor %}
         </ul>
         </p>
         {% endif %}
         {% endif %}
 
-        <p><strong>Tratament pentru dezechilibrul dintre clase:</strong> <code>{{ procesare.dezechilibru }}</code></p>
+        <p><strong>Tratament pentru dezechilibrul dintre clase:</strong> <code>{{ preprocesare.dezechilibru }}</code>
+        </p>
 
-        <p><strong>Tehnică de scalare a variabilelor numerice:</strong> <code>{{ procesare.scalare }}</code></p>
+        <p><strong>Tehnică de scalare a variabilelor numerice:</strong> <code>{{ preprocesare.scalare }}</code></p>
 
-        {% if procesare.impartire %}
+        {% if preprocesare.impartire %}
         <p><strong>Împărțire train/test:</strong>
-            proporție set de testare = <code>{{ procesare.impartire.proportie_test }}</code>,
-            împărțire stratificată = <code>{{ procesare.impartire.stratificat }}</code>,
+            proporție set de testare = <code>{{ preprocesare.impartire.proportie_test }}</code>,
+            împărțire stratificată = <code>{{ preprocesare.impartire.stratificat }}</code>,
         </p>
         {% endif %}
 
@@ -185,17 +199,17 @@
     {% if modele_antrenate %}
     <div class="sectiune" id="modele_antrenate">
         <h2>Antrenarea modelelor de ML</h2>
-    
+
         <div class="grid-modele">
             {% for model, date in modele_antrenate.items() %}
             <div class="card-model">
                 <h3>{{ model }}</h3>
-    
+
                 {% if date.hiperparametri %}
                 <p><strong>Hiperparametri:</strong></p>
                 <pre><code>{{ date.hiperparametri | tojson(indent=2) }}</code></pre>
                 {% endif %}
-    
+
                 {% if date.durata_antrenare is not none %}
                 <p><strong>Durata antrenării:</strong> <code>{{ date.durata_antrenare }}</code> secunde</p>
                 {% endif %}

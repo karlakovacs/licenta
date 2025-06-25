@@ -16,7 +16,7 @@ if not st.user.is_logged_in:
 	if st.sidebar.button("**Autentificare**", type="primary", use_container_width=True):
 		st.login("auth0")
 
-	col1, col2 = st.columns([3,1])
+	col1, col2 = st.columns([3, 1])
 	with col1:
 		st.title("Bun venit în platforma :red-background[FlagML]!")
 
@@ -24,7 +24,7 @@ if not st.user.is_logged_in:
 			"""
 			**FlagML 🏁** este o aplicație educațională interactivă care oferă o experiență completă în :red-background[**detectarea fraudei bancare 🚨**] folosind învățarea automată (*Machine Learning*) și explicabilitatea modelelor (*Explainable AI*).
 			
-			**Scopul principal al aplicației🎯** este aplicarea tehnicilor moderne de ML în contextul combaterii fraudei.
+			**Scopul principal al aplicației** este aplicarea tehnicilor moderne de ML în contextul combaterii fraudei.
 
 			Fie că ești student, practician sau pasionat de date, **FlagML** îți oferă tot ce ai nevoie pentru a construi un **proiect ML complet🤖**: de la date brute până la modele inteligente și rapoarte clare.
 			"""
@@ -65,8 +65,8 @@ if not st.user.is_logged_in:
 			"img": "assets/landing-page/5.png",
 		},
 		{
-			"titlu": "Exportul rapoartelor",
-			"text": "Generează rapoarte clare, în format HTML sau PDF.",
+			"titlu": "Exportul datelor",
+			"text": "Descarcă date, modele antrenate și rapoarte HTML.",
 			"img": "assets/landing-page/6.png",
 		},
 	]
