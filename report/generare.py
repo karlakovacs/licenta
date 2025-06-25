@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, Template
-import pdfkit
 
 from .conversii import image_to_html
 from .pregatire_date import pregatire_date_raport

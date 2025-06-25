@@ -6,7 +6,7 @@ catboost_info/
 
 # data/
 
-pyproject.toml
+# pyproject.toml
 
 db_init.py
 
