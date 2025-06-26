@@ -145,7 +145,7 @@ def plot_curba_roc(y_true, y_prob):
 			y=[0, 1],
 			mode="lines",
 			name="Clasificator aleatoriu",
-			line=dict(color="yellow", dash="dash", width=3),
+			line=dict(color="orange", dash="dash", width=3),
 		)
 	)
 

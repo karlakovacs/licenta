@@ -236,6 +236,7 @@ def ui_shap(
 ):
 	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
 	date = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
+	# del st.session_state[dictionar]
 
 	if instanta_idx not in date:
 		with st.spinner("Generăm explicația SHAP..."):
