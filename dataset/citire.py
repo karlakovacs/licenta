@@ -30,7 +30,7 @@ def citire_fisier_local():
 def citire_kaggle(link: str) -> pd.DataFrame:
 	prefix = "https://www.kaggle.com/datasets/"
 	if not link.startswith(prefix):
-		raise ValueError("Linkul trebuie să înceapă cu 'https://www.kaggle.com/datasets/'")
+		raise ValueError("Link-ul trebuie să înceapă cu 'https://www.kaggle.com/datasets/'")
 	dataset_path = link.replace(prefix, "").strip("/")
 	api = KaggleApi()
 	api.authenticate()

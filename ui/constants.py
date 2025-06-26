@@ -1,7 +1,7 @@
 DETALII_EDA = {
 	"Setul de date": "Afișează setul de date în mod interactiv.\n\nPermite o primă verificare a consistenței datelor.\n\nUtil pentru a înțelege structura brută a fișierului încărcat.",
 	"Analiza valorilor lipsă": "Evaluează câte valori lipsesc pe coloană, atât în număr absolut, cât și procentual.\n\nEste utilă pentru luarea deciziilor de curățare a datelor sau imputare.",
-	"Distribuția tipurilor de variabile": "Arată câte variabile sunt de tip numeric, categoric, boolean, text sau dată.\n\nAceastă informație este crucială pentru alegerea corectă a metodelor de preprocesare și analiză.",
+	"Distribuția tipurilor de variabile": "Arată câte variabile sunt de tip numeric, categorial, boolean, obiect (text) sau dată.\n\nAceastă informație este esențială pentru alegerea corectă a metodelor de preprocesare și analiză.",
 	"Distribuția variabilei țintă": "Afișează distribuția clasei țintă (`target`), importantă pentru detectarea dezechilibrelor între clase.\n\nUn dezechilibru sever poate afecta performanța modelelor de clasificare.",
 	"Statistici descriptive": "Oferă statistici relevante pentru fiecare variabilă, în funcție de tipul ei: medii, extreme, dispersie, modă, distribuție etc.\n\nAjută la înțelegerea comportamentului fiecărei variabile în mod individual.",
 	"Matricea de corelație": "Prezintă corelațiile între variabile numerice. Coeficientul Pearson este folosit pentru a detecta relații liniare.\n\nPoate evidenția redundanțe sau relații utile pentru modelare.",

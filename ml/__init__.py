@@ -10,4 +10,4 @@ from .metrici import (
 	plot_matrice_confuzie,
 )
 from .model_factory import get_model
-from .utils import predictie_individuala, train_and_test
+from .functii import predictie_individuala, train_and_test

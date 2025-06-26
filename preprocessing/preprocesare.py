@@ -116,15 +116,14 @@ def fit_encoders(df: pd.DataFrame, setari: dict) -> dict:
 
 	if coloane_one_hot:
 		one_hot_encoder = OneHotEncoder(
-			drop="first", max_categories=max_categorii, sparse_output=False, handle_unknown="ignore"
+			drop="first", max_categories=max_categorii + 1, min_frequency=1, sparse_output=False, handle_unknown="ignore"
 		)
 		df_categorice = df[coloane_one_hot].astype(str)
 		one_hot_encoder.fit(df_categorice)
 
 		encoders["one_hot_encoder"] = one_hot_encoder
-		encoders["one_hot_feature_names"] = one_hot_encoder.get_feature_names_out(coloane_one_hot).tolist()
 
-		return encoders
+	return encoders
 
 
 def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:
@@ -148,6 +147,8 @@ def folosire_encoding(df: pd.DataFrame, encoders: dict) -> pd.DataFrame:
 		encoded_df = pd.DataFrame(
 			encoded.astype(bool), columns=one_hot_encoder.get_feature_names_out(coloane_one_hot), index=df.index
 		)
+
+		encoded_df.columns = [col.replace("_infrequent_sklearn", "_Others") for col in encoded_df.columns]
 
 		df = df.drop(columns=[col for col in coloane_one_hot if col in df.columns])
 		df = pd.concat([df, encoded_df], axis=1)

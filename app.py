@@ -22,11 +22,11 @@ if not st.user.is_logged_in:
 
 		st.write(
 			"""
-			**FlagML 🏁** este o aplicație educațională interactivă care oferă o experiență completă în :red-background[**detectarea fraudei bancare 🚨**] folosind învățarea automată (*Machine Learning*) și explicabilitatea modelelor (*Explainable AI*).
+			**FlagML 🏁** este o aplicație educațională interactivă care oferă o experiență completă în :red-background[**detectarea fraudei bancare 🚨**] folosind învățarea automată (*Machine Learning*) și interpretabilitatea modelelor (*Explainable AI*).
 			
 			**Scopul principal al aplicației** este aplicarea tehnicilor moderne de ML în contextul combaterii fraudei.
 
-			Fie că ești student, practician sau pasionat de date, **FlagML** îți oferă tot ce ai nevoie pentru a construi un **proiect ML complet🤖**: de la date brute până la modele inteligente și rapoarte clare.
+			Fie că ești student, expert sau pasionat de date, **FlagML** îți oferă tot ce ai nevoie pentru a realiza un proiect ML complet: de la date brute până la modele interpretabile și rapoarte clare.
 			"""
 		)
 
@@ -56,7 +56,7 @@ if not st.user.is_logged_in:
 		},
 		{
 			"titlu": "Evaluarea algoritmilor",
-			"text": "Folosește metrici și grafice clasice pentru a interpreta rezultatele.",
+			"text": "Folosește metrici și grafice pentru a interpreta rezultatele.",
 			"img": "assets/landing-page/4.png",
 		},
 		{

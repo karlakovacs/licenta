@@ -106,7 +106,7 @@ def sectiune_valori_lipsa(df: pd.DataFrame):
 		valori_lipsa["fig"] = plot_valori_lipsa(valori_lipsa["df"])
 
 	if valori_lipsa["df"] is not None:
-		st.dataframe(valori_lipsa["df"], use_container_width=False)
+		st.dataframe(valori_lipsa["df"], hide_index=True, use_container_width=False)
 		st.plotly_chart(valori_lipsa["fig"], use_container_width=False)
 	else:
 		st.success("Nu există valori lipsă în setul de date.")

@@ -23,8 +23,12 @@ def handle_fisier_local():
 
 def handle_kaggle():
 	link = st.text_input("🔗 Link Kaggle")
-	df = citire_kaggle(link) if link else None
-	return "Link Kaggle", df, None
+	try:
+		df = citire_kaggle(link) if link else None
+		return "Link Kaggle", df, None
+	except Exception as e:
+		st.error(e)
+		return "Link Kaggle", None, None
 
 
 def handle_predefinite():

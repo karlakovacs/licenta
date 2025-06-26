@@ -53,6 +53,9 @@ def afisare_set_date_procesat(set_date_procesat):
 	st.write("**Configurație**")
 	st.json(set_date_procesat.configuratie, expanded=False)
 
+	df: pd.DataFrame = get_dataset_sample_from_storage(set_date_procesat.url)
+	st.dataframe(df)
+
 	st.download_button(
 		"💾 Descarcă",
 		type="primary",
@@ -102,6 +105,20 @@ def afisare_rapoarte(rapoarte: list):
 					st.rerun()
 
 
+@st.dialog("Confirmă ștergerea contului")
+def confirmare_stergere_cont():
+	st.write("Scrie `STERGERE` mai jos pentru a șterge contul definitiv.")
+	confirm_input = st.text_input("Confirmare:", key="confirm_delete_input")
+
+	if st.button("Confirmă", type="primary"):
+		if confirm_input.strip().upper() == "STERGERE":
+			delete_utilizator(st.session_state.id_utilizator)
+			st.session_state.clear()
+			st.logout()
+		else:
+			st.error("Confirmarea nu este corectă. Nu s-a șters contul.")
+
+
 @require_auth
 def main():
 	id_utilizator = obtinere_cheie("id_utilizator")
@@ -111,9 +128,13 @@ def main():
 		unsafe_allow_html=True,
 	)
 	st.write(st.user.email)
-	if st.button("Deconectare", type="primary"):
+
+	if st.button("🔒 Deconectează-te", type="secondary"):
 		st.session_state.clear()
 		st.logout()
+
+	if st.button("🗑️ Șterge contul", type="primary"):
+		confirmare_stergere_cont()
 
 	st.divider()
 

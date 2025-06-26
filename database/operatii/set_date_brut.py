@@ -84,25 +84,28 @@ def update_set_date_brut(
 	return True, "Setul de date a fost modificat"
 
 
-def delete_set_date_brut(id_utilizator: int, id_set_date: int):
+def delete_set_date_brut(id_utilizator: int, id_set_date: int) -> tuple[bool, str]:
 	db = get_session()
 
 	set_date = db.query(SetDateBrut).filter_by(id=id_set_date, id_utilizator=id_utilizator).first()
 
 	if set_date is None:
-		return False, "Setul de date nu există sau nu aparține utilizatorului"
+		return False, "Setul de date nu există sau nu aparține utilizatorului."
 
-	delete_dataset_from_storage(set_date.url)
+	succes_storage, mesaj_storage = delete_dataset_from_storage(set_date.url)
+	if not succes_storage:
+		return succes_storage, mesaj_storage
 
 	seturi_date_procesate = get_seturi_date_procesate(id_set_date)
-
 	for set_procesat in seturi_date_procesate:
-		delete_set_date_procesat(id_set_date_procesat=set_procesat.id)
+		succes_proc, mesaj_proc = delete_set_date_procesat(id_set_date_procesat=set_procesat.id)
+		if not succes_proc:
+			return succes_proc, f"Eroare la ștergerea setului procesat {set_procesat.id}: {mesaj_proc}"
 
 	db.delete(set_date)
 	db.commit()
 
-	return True, "Setul de date a fost șters"
+	return True, "Setul de date a fost șters cu succes."
 
 
 def check_denumire_set_date_brut(id_utilizator: int, denumire: str) -> bool:

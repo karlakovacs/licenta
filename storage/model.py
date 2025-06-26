@@ -86,3 +86,12 @@ def get_model_url_from_storage(model, bucket: str = "models") -> str:
 	path = model.url
 	filename = os.path.basename(path)
 	return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}?download={filename}"
+
+
+def delete_model_from_storage(model, bucket: str = "models"):
+	try:
+		url = model.url
+		supabase.storage.from_(bucket).remove(url)
+		return True, "Raportul a fost șters."
+	except:
+		return False, "A avut loc o eroare la ștergerea raportului."

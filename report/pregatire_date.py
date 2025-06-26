@@ -1,6 +1,3 @@
-import html
-import json
-
 import pandas as pd
 
 from .conversii import dataframe_to_html, markdown_to_html, matplotlib_to_html, plotly_to_html
@@ -232,15 +229,18 @@ def pregatire_date_raport(date_raport: dict) -> dict:
 		rezultate_modele: dict = date_raport["rezultate_modele"]
 		date_raport_html["rezultate_modele"] = pregatire_rezultate_modele(rezultate_modele)
 
-	if "comparatii_modele" in date_raport and date_raport["comparatii_modele"] is not None:
+	if (
+		"comparatii_modele" in date_raport
+		and date_raport.get("comparatii_modele") is not None
+	):
 		comparatii_modele: dict = date_raport["comparatii_modele"]
 		date_raport_html["comparatii_modele"] = pregatire_comparatii_modele(comparatii_modele)
 
 	if (
 		"xai_test" in date_raport
 		and "instante_test" in date_raport
-		and date_raport["xai_test"] is not None
-		and date_raport["instante_test"] is not None
+		and date_raport.get("xai_test", None) is not None
+		and date_raport.get("instante_test", None) is not None
 	):
 		xai_test: dict = date_raport["xai_test"]
 		instante_test: dict = date_raport["instante_test"]

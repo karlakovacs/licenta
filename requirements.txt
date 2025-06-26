@@ -2,6 +2,7 @@ streamlit==1.45.1
 streamlit-sortables==0.3.1
 
 Authlib==1.5.2
+auth0-python==4.10.0
 
 llvmlite==0.44.0
 numba==0.61.0

@@ -311,36 +311,38 @@ def creare_dict_preprocesare():
 def main():
 	set_date: dict = st.session_state.get("set_date", None)
 	df: pd.DataFrame = citire_set_date(set_date)
+	sursa = set_date.get("sursa", None)
 
 	st.header(set_date["denumire"])
 	st.dataframe(df.head())
 
-	with st.expander("🧹 Eliminarea coloanelor inutile"):
-		sectiune_eliminare_coloane(df)
+	if sursa != "Seturile mele procesate":
+		with st.expander("🧹 Eliminarea coloanelor inutile"):
+			sectiune_eliminare_coloane(df)
 
-	with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
-		sectiune_eliminare_randuri(df)
+		with st.expander("🧹 Eliminarea rândurilor inutile (duplicate & valori lipsă)"):
+			sectiune_eliminare_randuri(df)
 
-	with st.expander("🔬 Detectarea și tratarea outlierilor"):
-		sectiune_outlieri(df)
+		with st.expander("🔬 Detectarea și tratarea outlierilor"):
+			sectiune_outlieri(df)
 
-	with st.expander("🧩 Înlocuirea valorilor lipsă"):
-		sectiune_valori_lipsa_coloane(df)
+		with st.expander("🧩 Înlocuirea valorilor lipsă"):
+			sectiune_valori_lipsa_coloane(df)
 
-	with st.expander("🟢 Procesarea coloanelor binare"):
-		sectiune_coloane_binare(df)
+		with st.expander("🟢 Procesarea coloanelor binare"):
+			sectiune_coloane_binare(df)
 
-	with st.expander("📅 Procesarea coloanelor datetime"):
-		sectiune_datetime(df)
+		with st.expander("📅 Procesarea coloanelor datetime"):
+			sectiune_datetime(df)
 
-	with st.expander("🏷️ Encoding pentru coloanele categoriale"):
-		sectiune_encoding(df)
+		with st.expander("🏷️ Encoding pentru coloanele categoriale"):
+			sectiune_encoding(df)
 
-	with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
-		sectiune_dezechilibru()
+		with st.expander("⚖️ Gestionarea dezechilibrului dintre clase"):
+			sectiune_dezechilibru()
 
-	with st.expander("📏 Scalarea datelor"):
-		sectiune_scalare()
+		with st.expander("📏 Scalarea datelor"):
+			sectiune_scalare()
 
 	with st.expander("🍰 Împărțirea în seturi de antrenare și testare"):
 		sectiune_impartire()
@@ -348,13 +350,15 @@ def main():
 	if st.button("Preprocesare", type="primary", disabled=verificare_flag("processed_dataset")):
 		creare_dict_preprocesare()
 		df = preprocesare_dataset(df, st.session_state["preprocesare"])
-		if st.session_state.set_date["sursa"] != "Seturi predefinite":
+		if sursa not in ["Seturi predefinite", "Seturile mele procesate"]:
 			st.session_state.id_set_procesat = create_set_date_procesat(
-				st.session_state.get("id_utilizator"),
-				st.session_state.get("id_set_date", 1),
-				st.session_state.get("preprocesare"),
+				st.session_state.get("id_utilizator", None),
+				st.session_state.get("id_set_date", None),
+				st.session_state.get("preprocesare", None),
 				df,
 			)
+		if sursa == "Seturile mele procesate":
+			st.session_state.id_set_procesat = st.session_state.get("id_set_date", None)
 		setare_flag("processed_dataset")
 		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
 

@@ -17,6 +17,7 @@ class Utilizator(Base):
 	data_ultima_conectare = Column(DateTime, default=datetime.now())
 
 	seturi_date = relationship("SetDateBrut", back_populates="utilizator", cascade="all, delete-orphan")
+	rapoarte = relationship("Raport", back_populates="utilizator", cascade="all, delete-orphan")
 
 
 class SursaDate(Base):
@@ -25,7 +26,7 @@ class SursaDate(Base):
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	denumire = Column(String, nullable=False)
 
-	seturi_date = relationship("SetDateBrut", back_populates="sursa_date", cascade="all, delete-orphan")
+	seturi_date = relationship("SetDateBrut", back_populates="sursa_date")
 
 
 class SetDateBrut(Base):
@@ -33,7 +34,7 @@ class SetDateBrut(Base):
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
 	id_utilizator = Column(Integer, ForeignKey("utilizatori.id", ondelete="CASCADE"), nullable=True)
-	id_sursa = Column(Integer, ForeignKey("surse_date.id", ondelete="CASCADE"), nullable=False)
+	id_sursa = Column(Integer, ForeignKey("surse_date.id", ondelete="SET NULL"), nullable=True)
 	denumire = Column(String, nullable=False)
 	tinta = Column(String, nullable=False)
 	url = Column(String, nullable=False)
@@ -57,7 +58,6 @@ class SetDateProcesat(Base):
 
 	set_date_brut = relationship("SetDateBrut", back_populates="seturi_procesate")
 	modele = relationship("Model", back_populates="set_date_procesat", cascade="all, delete-orphan")
-	rapoarte = relationship("Raport", back_populates="set_date_procesat", cascade="all, delete-orphan")
 
 
 class Metrici(Base):
@@ -67,7 +67,7 @@ class Metrici(Base):
 	prescurtare = Column(String, nullable=False)
 	denumire = Column(String, nullable=False)
 
-	metrici_model = relationship("ModeleMetrici", back_populates="metrica", cascade="all, delete-orphan")
+	metrici_model = relationship("ModeleMetrici", back_populates="metrica")
 
 
 class ModeleMetrici(Base):
@@ -112,8 +112,8 @@ class Raport(Base):
 	__tablename__ = "rapoarte"
 
 	id = Column(Integer, primary_key=True, autoincrement=True)
-	id_set_date_procesat = Column(Integer, ForeignKey("seturi_date_procesate.id", ondelete="CASCADE"), nullable=False)
+	id_utilizator = Column(Integer, ForeignKey("utilizatori.id", ondelete="CASCADE"), nullable=False)
 	url = Column(String, nullable=False)
 	data_generare = Column(DateTime, default=datetime.now())
 
-	set_date_procesat = relationship("SetDateProcesat", back_populates="rapoarte")
+	utilizator = relationship("Utilizator", back_populates="rapoarte")

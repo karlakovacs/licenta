@@ -577,6 +577,7 @@ HIPERPARAMETRI = {
 	},
 }
 
+
 def get_hiperparametri(denumire_model: str) -> dict:
 	hiperparametri_model = HIPERPARAMETRI.get(denumire_model, None)
 	return hiperparametri_model

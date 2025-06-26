@@ -10,7 +10,7 @@ initializare_pagina("Acasă", "centered", "Acasă")
 def main():
 	st.write(
 		"""
-		FlagML este o aplicație dedicată detectării fraudei bancare, utilizând metode moderne de învățare automată (machine learning).
+		FlagML este o aplicație dedicată detectării fraudei bancare, utilizând metode moderne de ML.
 
 		Fiecare tranzacție bancară poate fi clasificată ca frauduloasă sau legitimă, ceea ce face ca această sarcină să fie una tipică de clasificare binară.
 

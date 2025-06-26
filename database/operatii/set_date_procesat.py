@@ -77,7 +77,9 @@ def delete_set_date_procesat(id_set_date_procesat: int) -> str:
 	if set_date_procesat is None:
 		return False, "Setul de date nu există sau nu aparține utilizatorului"
 
-	delete_dataset_from_storage(set_date_procesat.url)
+	succes_storage, mesaj_storage = delete_dataset_from_storage(set_date_procesat.url)
+	if not succes_storage:
+		return succes_storage, mesaj_storage
 
 	db.delete(set_date_procesat)
 	db.commit()
