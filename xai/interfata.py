@@ -93,12 +93,12 @@ def ui_selectie_instanta(X_test):
 
 
 def init_explainer(denumire_model: str, tehnica_xai: str, model, X_train: pd.DataFrame, y_train: pd.Series = None):
-	if (
-		"explainers" in st.session_state
-		and denumire_model in st.session_state["explainers"]
-		and tehnica_xai in st.session_state["explainers"][denumire_model]
-	):
-		del st.session_state["explainers"][denumire_model][tehnica_xai]
+	# if (
+	# 	"explainers" in st.session_state
+	# 	and denumire_model in st.session_state["explainers"]
+	# 	and tehnica_xai in st.session_state["explainers"][denumire_model]
+	# ):
+	# 	del st.session_state["explainers"][denumire_model][tehnica_xai]
 
 	if denumire_model in st.session_state.get("explainers", {}) and tehnica_xai in st.session_state["explainers"].get(
 		denumire_model, {}
@@ -236,7 +236,6 @@ def ui_shap(
 ):
 	dictionar = "xai_predictii" if instanta_utilizator else "xai_test"
 	date = st.session_state.setdefault(dictionar, {}).setdefault(denumire_model, {}).setdefault(tehnica_xai, {})
-	# del st.session_state[dictionar]
 
 	if instanta_idx not in date:
 		with st.spinner("Generăm explicația SHAP..."):
