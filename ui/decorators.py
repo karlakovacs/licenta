@@ -9,7 +9,8 @@ def require_auth(func):
 	@wraps(func)
 	def wrapper(*args, **kwargs):
 		if not getattr(st.user, "sub", None):
-			st.warning("🔐 Nu ești autentificat.")
+			st.warning("🔐 Nu ești autentificat. Te rugăm să accesezi pagina de start pentru autentificare.")
+			st.switch_page("app.py")
 			st.stop()
 		return func(*args, **kwargs)
 

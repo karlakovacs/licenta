@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 
 from database import get_id_utilizator
@@ -49,7 +51,9 @@ def configurare(dictionar_configurare: dict):
 
 def verificare_utilizator_logat():
 	if not getattr(st.user, "sub", None):
-		st.warning("Nu ești autentificat.")
+		st.warning("🔐 Nu ești autentificat. Te rugăm să accesezi pagina de start pentru autentificare.")
+		time.sleep(3)
+		st.switch_page("app.py")
 		st.stop()
 
 

@@ -34,7 +34,7 @@ def get_explanation(model, explainer: LimeTabularExplainer, X_explicat: pd.DataF
 		if hasattr(model, "predict_proba"):
 			predict_fn = model.predict_proba
 
-		else:  # keras-style predict
+		else:  # keras
 
 			def predict_fn(X):
 				probs = model.predict(X)

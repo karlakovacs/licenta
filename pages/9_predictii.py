@@ -40,7 +40,7 @@ def generare_valori_random(metadate: dict, tinta: str):
 			valori_random[coloana] = random.choice(info.get("valori", []))
 
 		elif tip == "T":
-			valori_random[coloana] = f"Text_{random.randint(100, 999)}"
+			valori_random[coloana] = random.choice(info.get("valori", []))
 
 		elif tip == "D":
 			try:
@@ -117,7 +117,7 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 @require_trained_models
 def main():
 	modele_antrenate = st.session_state.get("modele_antrenate", {})
-	X_train, y_train = (citire_date_temp("X_train"), citire_date_temp("y_train"))
+	X_train, y_train = citire_date_temp("X_train"), citire_date_temp("y_train")
 	metadate: dict = st.session_state.metadate
 	tinta = st.session_state.get("set_date", {}).get("tinta", "")
 

@@ -22,7 +22,7 @@ def pregatire_date(df: pd.DataFrame) -> pd.DataFrame:
 			try:
 				df[col] = pd.to_numeric(df[col])
 			except ValueError:
-				df[col] = df[col].astype("category").cat.codes  # Encode categoric
+				df[col] = df[col].astype("category").cat.codes
 
 	return df
 
@@ -63,10 +63,10 @@ def get_shap_explainer(model, X_train: pd.DataFrame, denumire_model: str):
 
 def calculate_shap_values(explainer, X_test: pd.DataFrame) -> shap.Explanation:
 	X_test = pregatire_date(X_test)
-	
+
 	if explainer is None:
 		return None
-	if  isinstance(explainer, shap.TreeExplainer):
+	if isinstance(explainer, shap.TreeExplainer):
 		shap_values = explainer(X_test, check_additivity=False)
 	else:
 		shap_values = explainer(X_test)
@@ -80,6 +80,7 @@ def shap_plot(shap_values):
 	shap.plots.waterfall(shap_values[0])
 	return fig
 
+
 def shap_interpretation(shap_values) -> str:
 	if shap_values is None or len(shap_values) == 0:
 		return "Nu s-a putut genera interpretarea SHAP."
@@ -92,7 +93,9 @@ def shap_interpretation(shap_values) -> str:
 	features = shap_vals.feature_names
 	base_value = shap_vals.base_values
 
-	interpretari = ["Cele mai influente caracteristici:",]
+	interpretari = [
+		"Cele mai influente caracteristici:",
+	]
 
 	contributii = sorted(zip(features, valori), key=lambda x: abs(x[1]), reverse=True)
 	for feature, val in contributii[:8]:

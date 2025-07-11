@@ -554,7 +554,7 @@ HIPERPARAMETRI = {
 		},
 		"loss": {
 			"type": "categorical",
-			"values": ["binary_crossentropy", "categorical_crossentropy", "mse"],
+			"values": ["binary_crossentropy", "mse"],
 			"default": "binary_crossentropy",
 			"help": "Funcția de loss care ghidează antrenarea.",
 		},

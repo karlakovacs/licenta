@@ -39,7 +39,7 @@ def afisare_set_date_brut(id_utilizator: int, set_date):
 
 
 def afisare_seturi_date_procesate(set_date):
-	seturi_date_procesate = get_seturi_date_procesate(set_date.id)
+	seturi_date_procesate = get_seturi_date_procesate_by_set_brut(set_date.id)
 
 	if seturi_date_procesate:
 		st.divider()

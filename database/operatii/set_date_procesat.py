@@ -44,7 +44,7 @@ def create_set_date_procesat(id_utilizator: int, id_set_date: int, configuratie:
 	return set_date_procesat.id
 
 
-def get_seturi_date_procesate(id_set_date_brut: int) -> list:
+def get_seturi_date_procesate_by_set_brut(id_set_date_brut: int) -> list:
 	db = get_session()
 
 	lista = (
@@ -56,7 +56,7 @@ def get_seturi_date_procesate(id_set_date_brut: int) -> list:
 
 	return lista
 
-def get_seturi_date_procesate_utilizator(id_utilizator: int) -> list:
+def get_seturi_date_procesate(id_utilizator: int) -> list:
 	db = get_session()
 
 	lista = (

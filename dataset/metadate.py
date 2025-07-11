@@ -48,7 +48,8 @@ def generare_metadate(df: pd.DataFrame, max_valori_unice: int = 15):
 			categorii = serie.value_counts().sort_values(ascending=False).index.tolist()
 			metadate[col] = {"tip": "C", "valori": list(map(str, categorii))}
 		else:
-			metadate[col] = {"tip": "T"}
+			categorii = serie.value_counts().nlargest(max_valori_unice).index.tolist()
+			metadate[col] = {"tip": "T", "valori": list(map(str, categorii))}
 
 	return metadate
 

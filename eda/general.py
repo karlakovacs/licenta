@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from scipy.stats import chi2_contingency
 from sklearn.preprocessing import LabelEncoder
 import streamlit as st
 
@@ -11,14 +12,8 @@ TIPURI_NUMERICE = [np.number]  # [float, int]
 TIPURI_CATEGORIALE = ["object", "category", "bool"]
 
 
-def descriere_variabile(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-	describe_numeric = df.describe(include=TIPURI_NUMERICE)
-	describe_categorical = df.describe(include=TIPURI_CATEGORIALE)
-	return describe_numeric, describe_categorical
-
-
 @with_random_color
-def plot_tipuri_variabile(X: pd.DataFrame, culoare: str=None) -> go.Figure:
+def plot_tipuri_variabile(X: pd.DataFrame, culoare: str = None) -> go.Figure:
 	titlu = "Distribuția tipurilor de variabile"
 	tip_coloana = "Tip de coloană"
 	nr_variabile = "Număr de variabile"
@@ -93,16 +88,71 @@ def get_df_encoded(X: pd.DataFrame):
 	return X_encoded
 
 
-@st.cache_data
-def calcul_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series):
+# def calcul_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series):
+# 	variabila = "Variabilă"
+# 	corelatie_absoluta = "Corelație absolută"
+# 	X_encoded = get_df_encoded(X)
+# 	if not pd.api.types.is_numeric_dtype(y):
+# 		y = y.astype("category")
+# 	corelatii_tinta = X_encoded.corrwith(y).abs().sort_values(ascending=False).reset_index()
+# 	corelatii_tinta.columns = [variabila, corelatie_absoluta]
+# 	return corelatii_tinta
+
+
+def cramers_v(x, y):
+	confusion_matrix = pd.crosstab(x, y)
+	chi2, _, _, _ = chi2_contingency(confusion_matrix)
+	n = confusion_matrix.sum().sum()
+	phi2 = chi2 / n
+	r, k = confusion_matrix.shape
+	phi2corr = max(0, phi2 - ((k - 1) * (r - 1)) / (n - 1))
+	rcorr = r - ((r - 1) ** 2) / (n - 1)
+	kcorr = k - ((k - 1) ** 2) / (n - 1)
+	return np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1)))
+
+
+def calculeaza_corelatie(x: pd.Series, y: pd.Series) -> float:
+	try:
+		if pd.api.types.is_numeric_dtype(x):
+			return abs(x.corr(y))
+		else:
+			return cramers_v(x.astype(str), y)
+	except Exception:
+		return np.nan
+
+def calcul_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series, max_categorii: int = 100) -> pd.DataFrame:
 	variabila = "Variabilă"
 	corelatie_absoluta = "Corelație absolută"
-	X_encoded = get_df_encoded(X)
+
 	if not pd.api.types.is_numeric_dtype(y):
-		y = y.astype("category")
-	corelatii_tinta = X_encoded.corrwith(y).abs().sort_values(ascending=False).reset_index()
-	corelatii_tinta.columns = [variabila, corelatie_absoluta]
-	return corelatii_tinta
+		y = pd.factorize(y)[0]
+
+	rezultate = []
+
+	for col in X.columns:
+		x = X[col]
+
+		if pd.api.types.is_datetime64_any_dtype(x):
+			continue
+
+		if x.isnull().all():
+			continue
+
+		if x.nunique(dropna=True) <= 1:
+			continue
+
+		if (not pd.api.types.is_numeric_dtype(x)) and x.nunique(dropna=True) > max_categorii:
+			continue
+
+		valid_idx = x.notna() & pd.Series(y).notna()
+		x_valid = x[valid_idx]
+		y_valid = pd.Series(y)[valid_idx]
+
+		coef = calculeaza_corelatie(x_valid, y_valid)
+		rezultate.append({variabila: col, corelatie_absoluta: coef})
+
+	df_rezultat = pd.DataFrame(rezultate).sort_values(corelatie_absoluta, ascending=False).reset_index(drop=True)
+	return df_rezultat
 
 
 def plot_variabile_puternic_corelate(X: pd.DataFrame, y: pd.Series) -> go.Figure:

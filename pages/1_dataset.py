@@ -1,6 +1,15 @@
+import pandas as pd
 import streamlit as st
 
-from database import *
+from database import (
+	check_denumire_set_date_brut,
+	create_set_date_brut,
+	get_seturi_date_brute,
+	get_seturi_date_predefinite,
+	get_seturi_date_procesate,
+	get_tinta_by_id_set_date_procesat,
+	update_set_date_brut,
+)
 from dataset import (
 	citire_date_predefinite,
 	citire_fisier_local,
@@ -9,26 +18,57 @@ from dataset import (
 	generare_metadate,
 	salvare_date_temp,
 )
-from storage import *
-from ui import *
+from storage import get_dataset_from_storage
+from ui import initializare_cheie, initializare_pagina, require_auth, setare_cheie, setare_flag
 
 
-initializare_pagina("Set de date", "centered", "Setul de date", {"set_date": {}})
+initializare_pagina(
+	titlu_pagina="Set de date",
+	layout="centered",
+	titlu_interfata="Setul de date",
+	dictionar_configurare={"set_date": {}},
+)
+
+
+# def handle_fisier_local():
+# 	df = citire_fisier_local()
+# 	return "Fișier local", df, None
 
 
 def handle_fisier_local():
-	df = citire_fisier_local()
-	return "Fișier local", df, None
+	if st.session_state.get("df_temporar") is None:
+		df = citire_fisier_local()
+		if df is not None:
+			st.session_state.df_temporar = df
+	return "Fișier local", st.session_state.get("df_temporar"), None
+
+
+# def handle_kaggle():
+# 	link = st.text_input("🔗 Link Kaggle")
+# 	try:
+# 		df = citire_kaggle(link) if link else None
+# 		return "Link Kaggle", df, None
+# 	except Exception as e:
+# 		st.error(e)
+# 		return "Link Kaggle", None, None
 
 
 def handle_kaggle():
 	link = st.text_input("🔗 Link Kaggle")
-	try:
-		df = citire_kaggle(link) if link else None
-		return "Link Kaggle", df, None
-	except Exception as e:
-		st.error(e)
-		return "Link Kaggle", None, None
+
+	if "kaggle_link" not in st.session_state or st.session_state.kaggle_link != link:
+		st.session_state.df_temporar = None
+		st.session_state.kaggle_link = link
+
+	if link and st.session_state.df_temporar is None:
+		try:
+			df = citire_kaggle(link)
+			st.session_state.df_temporar = df
+		except Exception as e:
+			st.error(e)
+			st.session_state.df_temporar = None
+
+	return "Link Kaggle", st.session_state.get("df_temporar"), None
 
 
 def handle_predefinite():
@@ -54,12 +94,11 @@ def handle_seturi_brute():
 		return "Seturile mele", None, None
 
 	df = get_dataset_from_storage(selectie.url)
-	# sursa = get_sursa_by_id_set_date_brut(selectie.id)
 	return "Seturile mele", df, selectie
 
 
 def handle_seturi_procesate():
-	seturi = get_seturi_date_procesate_utilizator(st.session_state.id_utilizator)
+	seturi = get_seturi_date_procesate(st.session_state.id_utilizator)
 	if not seturi:
 		st.info("Nu ai niciun set de date procesat. Încearcă să alegi unul brut.")
 		return "Seturile mele procesate", None, None
@@ -69,7 +108,6 @@ def handle_seturi_procesate():
 		return "Seturile mele procesate", None, None
 
 	df = get_dataset_from_storage(selectie.url)
-	# sursa = get_sursa_by_id_set_date_procesat(selectie.id)
 	return "Seturile mele procesate", df, selectie
 
 
@@ -160,6 +198,10 @@ def selectie_set_date():
 	}
 
 	optiune = st.selectbox("🌱 Alege sursa setului de date", handler_map.keys())
+
+	if "sursa" not in st.session_state or st.session_state.sursa != optiune:
+		st.session_state.df_temporar = None
+		st.session_state.sursa = optiune
 
 	handler = handler_map.get(optiune)
 
