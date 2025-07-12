@@ -30,11 +30,6 @@ initializare_pagina(
 )
 
 
-# def handle_fisier_local():
-# 	df = citire_fisier_local()
-# 	return "Fișier local", df, None
-
-
 def handle_fisier_local():
 	if st.session_state.get("df_temporar") is None:
 		df = citire_fisier_local()
@@ -183,7 +178,7 @@ def actualizare_bd(df, id, denumire, tinta, sursa, selectie):
 					st.session_state.id_utilizator, selectie.id, denumire=denumire, tinta=tinta
 				)
 				st.toast(mesaj, icon="✅" if rezultat else "❌")
-			st.session_state.id_set_date = selectie.id
+		st.session_state.id_set_date = selectie.id
 
 
 def selectie_set_date():

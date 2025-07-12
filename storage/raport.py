@@ -21,9 +21,9 @@ def upload_report_to_storage(id_utilizator: int, html_bytes: bytes, bucket: str 
 
 def get_report_url_from_storage(raport, bucket: str = "reports"):
 	url = raport.url
-	denumire_fisier = f"raport_{url.split('/')[-1]}"
+	denumire_fisier = url.split('/')[-1]
 	html_url = (
-		f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{url}?download={denumire_fisier}.html"
+		f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{url}?download={denumire_fisier}"
 	)
 	return html_url
 

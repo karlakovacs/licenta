@@ -1,4 +1,5 @@
 import base64
+import copy
 from io import BytesIO
 import re
 
@@ -13,6 +14,7 @@ def dataframe_to_html(df: pd.DataFrame, index: bool = False) -> str:
 
 
 def plotly_to_html(plot: go.Figure) -> str:
+	fig = copy.deepcopy(plot)
 	plot.update_layout(
 		template="plotly_dark", paper_bgcolor="#1e1e1e", plot_bgcolor="#1e1e1e", font=dict(color="#FFFFFF")
 	)

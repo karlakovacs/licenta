@@ -37,7 +37,7 @@ def delete_raport(id_utilizator: int, id_raport: int):
 	if raport is None:
 		return False, "Raportul nu există sau nu aparține utilizatorului"
 	
-	succes_storage, mesaj_storage = delete_report_from_storage(id_utilizator, raport.id)
+	succes_storage, mesaj_storage = delete_report_from_storage(raport)
 	if not succes_storage:
 		return succes_storage, mesaj_storage
 

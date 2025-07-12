@@ -14,13 +14,7 @@ initializare_pagina("Preprocesare", "centered", "Preprocesarea datelor")
 def sectiune_eliminare_coloane(df: pd.DataFrame):
 	st.session_state.setdefault(
 		"coloane_irelevante",
-		[
-			col
-			for col in df.columns
-			if df[col].nunique() > 15
-			and (pd.api.types.is_integer_dtype(df[col]) or pd.api.types.is_object_dtype(df[col]))
-			and not pd.api.types.is_float_dtype(df[col])
-		],
+		[col for col in df.columns if pd.api.types.is_object_dtype(df[col])],
 	)
 
 	st.multiselect(
@@ -88,7 +82,7 @@ def sectiune_outlieri(df: pd.DataFrame):
 
 def sectiune_valori_lipsa_coloane(df: pd.DataFrame):
 	are_nan = df.isnull().any().any()
-	if are_nan:
+	if are_nan or st.session_state.get("outlieri_actiune") == "Înlocuire cu NaN":
 		strategie_numerice = st.selectbox(
 			"Strategie pentru variabilele numerice",
 			["medie", "mediană", "mod", "valoare fixă"],
@@ -288,9 +282,11 @@ def creare_dict_preprocesare():
 		}
 
 	if st.session_state.get("encoding_dorit"):
+		dict_label = st.session_state.get("label_ordine_sortare", {})
+		coloane_label = st.session_state.get("encoding_coloane_label", [])
 		preprocesare["encoding"] = {
 			"max_categorii": 10,
-			"coloane_label": st.session_state.get("label_ordine_sortare", {}),
+			"coloane_label": {col: dict_label.get(col) for col in coloane_label if col in dict_label},
 		}
 
 	preprocesare["dezechilibru"] = st.session_state.get("dezechilibru", "Niciuna")
@@ -359,6 +355,7 @@ def main():
 			)
 		if sursa == "Seturile mele procesate":
 			st.session_state.id_set_procesat = st.session_state.get("id_set_date", None)
+			st.write(st.session_state.id_set_procesat)
 		setare_flag("processed_dataset")
 		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
 

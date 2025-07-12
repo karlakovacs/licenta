@@ -101,8 +101,7 @@ def afisare_rapoarte(rapoarte: list):
 			if st.button(f"🗑️ Șterge", type="primary", key=f"stergere_raport_{raport.id}"):
 				succes, mesaj = delete_raport(st.session_state.id_utilizator, raport.id)
 				st.toast(mesaj, icon="✅" if succes else "❌")
-				if succes:
-					st.rerun()
+				st.rerun()
 
 
 @st.dialog("Confirmă ștergerea contului")
