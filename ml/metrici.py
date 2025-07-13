@@ -100,8 +100,8 @@ def plot_matrice_confuzie(y_true, y_pred):
 	fig = go.Figure(
 		data=go.Heatmap(
 			z=cm,
-			x=["Prezis 0", "Prezis 1"],
-			y=["Actual 0", "Actual 1"],
+			x=["Prezis: Legitimă", "Prezis: Fraudă"],
+			y=["Actual: Fraudă", "Actual: Legitimă"],
 			colorscale="Blues",
 			showscale=False,
 			text=cm.astype(str),
@@ -113,8 +113,8 @@ def plot_matrice_confuzie(y_true, y_pred):
 		title=f"Matrice de confuzie",
 		xaxis_title="Prezis",
 		yaxis_title="Actual",
-		xaxis=dict(tickmode="array", tickvals=[0, 1], ticktext=["Prezis 0", "Prezis 1"]),
-		yaxis=dict(tickmode="array", tickvals=[0, 1], ticktext=["Actual 0", "Actual 1"]),
+		xaxis=dict(tickmode="array", tickvals=[0, 1], ticktext=["Prezis: Legitimă", "Prezis: Fraudă"]),
+		yaxis=dict(tickmode="array", tickvals=[0, 1], ticktext=["Actual: Fraudă", "Actual: Legitimă"]),
 		width=500,
 		height=500,
 		template="plotly_white",

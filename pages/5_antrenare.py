@@ -121,10 +121,10 @@ def main():
 			}
 
 		st.session_state.modele_antrenate = modele_antrenate
-		if st.session_state.set_date["sursa"] != "Seturi predefinite":
-			salvare_modele_in_bd()
 		setare_flag("trained_models")
 		st.success("Modelele au fost antrenate!")
+		if st.session_state.set_date["sursa"] != "Seturi predefinite":
+			salvare_modele_in_bd()
 
 
 if __name__ == "__main__":

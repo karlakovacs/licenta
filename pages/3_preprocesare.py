@@ -12,14 +12,16 @@ initializare_pagina("Preprocesare", "centered", "Preprocesarea datelor")
 
 
 def sectiune_eliminare_coloane(df: pd.DataFrame):
+	tinta = st.session_state["set_date"]["tinta"]
+
 	st.session_state.setdefault(
 		"coloane_irelevante",
-		[col for col in df.columns if pd.api.types.is_object_dtype(df[col])],
+		[col for col in df.columns if pd.api.types.is_object_dtype(df[col]) and df[col].nunique() > 15],
 	)
 
 	st.multiselect(
 		"Alege coloanele de eliminat",
-		options=df.columns,
+		options = [col for col in df.columns if col != tinta],
 		default=st.session_state.coloane_irelevante,
 		help="Coloane care nu aduc valoare, cum ar fi ID-uri, coduri, etc.",
 		key="coloane_eliminate",
@@ -355,7 +357,6 @@ def main():
 			)
 		if sursa == "Seturile mele procesate":
 			st.session_state.id_set_procesat = st.session_state.get("id_set_date", None)
-			st.write(st.session_state.id_set_procesat)
 		setare_flag("processed_dataset")
 		st.toast("Preprocesarea a fost aplicată cu succes!", icon="✅")
 

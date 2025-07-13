@@ -16,9 +16,10 @@ initializare_pagina(
 
 
 def generare_valori_random(metadate: dict, tinta: str):
+	coloane_irelevante = obtinere_cheie("coloane_irelevante", [])
 	valori_random: dict = {}
 	for coloana, info in metadate.items():
-		if coloana == tinta:
+		if coloana == tinta or coloana in coloane_irelevante:
 			continue
 
 		tip = info["tip"]
@@ -61,8 +62,10 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 	valori_random = valori_random or {}
 
 	with st.form("date_predictie"):
+		coloane_irelevante = obtinere_cheie("coloane_irelevante", [])
+
 		for coloana, info in metadate.items():
-			if coloana == tinta:
+			if coloana == tinta or coloana in coloane_irelevante:
 				continue
 
 			tip = info["tip"]
