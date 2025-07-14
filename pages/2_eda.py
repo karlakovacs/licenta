@@ -90,7 +90,8 @@ def sectiune_matrice_corelatie(df: pd.DataFrame):
 
 	if coloane_selectate:
 		st.session_state.eda["matrice_corelatie"] = plot_matrice_corelatie(df, coloane_selectate)
-		st.plotly_chart(st.session_state.eda["matrice_corelatie"], use_container_width=True)
+		if st.session_state.eda["matrice_corelatie"] is not None:
+			st.plotly_chart(st.session_state.eda["matrice_corelatie"], use_container_width=True)
 	else:
 		st.info("Selectează cel puțin două coloane numerice pentru a genera graficul.")
 

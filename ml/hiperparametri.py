@@ -231,7 +231,7 @@ HIPERPARAMETRI = {
 		"n_estimators": {
 			"type": "numerical",
 			"min": 10,
-			"max": 500,
+			"max": 200,
 			"step": 10,
 			"default": 100,
 			"help": "Numărul total de arbori în pădure. Mai mulți arbori pot îmbunătăți performanța, dar cresc timpul de antrenare.",

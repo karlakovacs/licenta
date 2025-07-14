@@ -1,9 +1,9 @@
 import mimetypes
 import os
-import pickle
 import tempfile
 import uuid
 
+import joblib
 import streamlit as st
 from supabase import create_client
 
@@ -15,26 +15,25 @@ SUPABASE_KEY = st.secrets.supabase.SUPABASE_KEY
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-def serialize_model(model, denumire_model: str, format_hint: str = None) -> str:
+def serialize_model(model, denumire_model: str) -> str:
 	try:
 		import sklearn.base
 
-		if isinstance(model, sklearn.base.BaseEstimator) or format_hint == "pickle":
+		if isinstance(model, sklearn.base.BaseEstimator):
 			temp_path = os.path.join(tempfile.gettempdir(), f"{denumire_model}.pkl")
-			with open(temp_path, "wb") as f:
-				pickle.dump(model, f)
+			joblib.dump(model, temp_path, compress=3)
 			return temp_path
 
 		import xgboost as xgb
 
-		if isinstance(model, xgb.XGBModel) or format_hint == "xgboost":
+		if isinstance(model, xgb.XGBModel):
 			temp_path = os.path.join(tempfile.gettempdir(), f"{denumire_model}.json")
 			model.save_model(temp_path)
 			return temp_path
 
 		import lightgbm as lgb
 
-		if isinstance(model, lgb.LGBMModel) or format_hint == "lightgbm":
+		if isinstance(model, lgb.LGBMModel):
 			temp_path = os.path.join(tempfile.gettempdir(), f"{denumire_model}.txt")
 			model_str = model.booster_.model_to_string()
 			with open(temp_path, "w", encoding="utf-8") as f:
@@ -43,19 +42,19 @@ def serialize_model(model, denumire_model: str, format_hint: str = None) -> str:
 
 		import catboost
 
-		if isinstance(model, catboost.CatBoost) or format_hint == "catboost":
+		if isinstance(model, catboost.CatBoost):
 			temp_path = os.path.join(tempfile.gettempdir(), f"{denumire_model}.cbm")
 			model.save_model(temp_path)
 			return temp_path
 
 		from keras.api.models import Sequential
 
-		if isinstance(model, Sequential) or format_hint == "keras":
+		if isinstance(model, Sequential):
 			temp_path = os.path.join(tempfile.gettempdir(), f"{denumire_model}.keras")
 			model.save(temp_path)
 			return temp_path
 
-		raise ValueError("Tip de model nesuportat automat. Specifică manual `format_hint`.")
+		raise ValueError("Tip de model nesuportat automat..")
 
 	except Exception as e:
 		raise RuntimeError(f"Eroare la serializarea modelului: {e}")

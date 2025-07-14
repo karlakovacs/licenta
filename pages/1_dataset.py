@@ -224,6 +224,8 @@ def procesare_selectie_set_date(sursa, df, selectie=None):
 
 		initializare_cheie("metadate", generare_metadate(df))
 		setare_flag("selected_dataset")
+		if "df_temporar" in st.session_state:
+			del st.session_state["df_temporar"]
 		st.toast("Setul de date este gata de utilizare", icon="✅")
 
 

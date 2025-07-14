@@ -46,7 +46,7 @@ def plot_tipuri_variabile(X: pd.DataFrame, culoare: str = None) -> go.Figure:
 def plot_matrice_corelatie(df: pd.DataFrame, coloane_selectate: list) -> go.Figure:
 	if len(coloane_selectate) < 2:
 		st.warning("Selectează cel puțin două coloane pentru a genera heatmap-ul.")
-		return
+		return None
 
 	if df.dtypes.isin(TIPURI_CATEGORIALE).any():
 		df = get_df_encoded(df)

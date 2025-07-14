@@ -16,7 +16,7 @@ initializare_pagina(
 
 
 def generare_valori_random(metadate: dict, tinta: str):
-	coloane_irelevante = obtinere_cheie("coloane_irelevante", [])
+	coloane_irelevante = obtinere_cheie_imbricata("preprocesare", "coloane_eliminate", [])
 	valori_random: dict = {}
 	for coloana, info in metadate.items():
 		if coloana == tinta or coloana in coloane_irelevante:
@@ -45,14 +45,15 @@ def generare_valori_random(metadate: dict, tinta: str):
 
 		elif tip == "D":
 			try:
-				start_date = datetime.datetime.strptime(info.get("min"), "%Y-%m-%d %H:%M:%S").date()
-				end_date = datetime.datetime.strptime(info.get("max"), "%Y-%m-%d %H:%M:%S").date()
+				start_date = datetime.datetime.strptime(info.get("min"), "%Y-%m-%d %H:%M:%S")
+				end_date = datetime.datetime.strptime(info.get("max"), "%Y-%m-%d %H:%M:%S")
 			except Exception:
-				start_date = datetime.date(2000, 1, 1)
-				end_date = datetime.date(2024, 12, 31)
+				start_date = datetime.datetime(2000, 1, 1, 0, 0)
+				end_date = datetime.datetime(2024, 12, 31, 23, 59)
 
-			random_days = random.randint(0, (end_date - start_date).days)
-			valori_random[coloana] = start_date + datetime.timedelta(days=random_days)
+			total_seconds = int((end_date - start_date).total_seconds())
+			random_offset = random.randint(0, total_seconds)
+			valori_random[coloana] = start_date + datetime.timedelta(seconds=random_offset)
 
 	return valori_random
 
@@ -62,7 +63,7 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 	valori_random = valori_random or {}
 
 	with st.form("date_predictie"):
-		coloane_irelevante = obtinere_cheie("coloane_irelevante", [])
+		coloane_irelevante = obtinere_cheie_imbricata("preprocesare", "coloane_eliminate", [])
 
 		for coloana, info in metadate.items():
 			if coloana == tinta or coloana in coloane_irelevante:
@@ -99,9 +100,21 @@ def formular_predictie(metadate: dict, tinta: str, valori_random: dict = None):
 				valori_introduse[coloana] = st.text_input(label=coloana, value=valoare_implicita or "")
 
 			elif tip == "D":
-				valori_introduse[coloana] = st.date_input(
-					label=coloana, value=valoare_implicita or datetime.date.today()
+				valoare_data = st.date_input(
+					label=f"{coloana} - dată",
+					value=valoare_implicita.date()
+					if isinstance(valoare_implicita, datetime.datetime)
+					else (valoare_implicita or datetime.date.today()),
 				)
+				valoare_ora = st.time_input(
+					label=f"{coloana} - oră",
+					value=valoare_implicita.time()
+					if isinstance(valoare_implicita, datetime.datetime)
+					else datetime.time(0, 0),
+					step=60,
+				)
+
+				valori_introduse[coloana] = datetime.datetime.combine(valoare_data, valoare_ora)
 
 			else:
 				st.warning(f"Tip necunoscut pentru coloana: {coloana}")
