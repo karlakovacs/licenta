@@ -137,7 +137,7 @@
         {% if preprocesare.coloane_binare %}
         <p><strong>Conversii binare:</strong>
             {% for col, val in preprocesare.coloane_binare.items() %}
-            {% if val %}<code>{{ col }}=True</code>{% if not loop.last %}, {% endif %}{% endif %}
+            <code>{{ col }} → {{ val }} == True</code>{% if not loop.last %}, {% endif %}
             {% endfor %}
         </p>
         {% endif %}
@@ -189,7 +189,7 @@
         {% if preprocesare.impartire %}
         <p><strong>Împărțire train/test:</strong>
             proporție set de testare = <code>{{ preprocesare.impartire.proportie_test }}</code>,
-            împărțire stratificată = <code>{{ preprocesare.impartire.stratificat }}</code>,
+            împărțire stratificată = <code>{{ preprocesare.impartire.stratificat }}</code>
         </p>
         {% endif %}
 

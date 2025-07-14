@@ -60,7 +60,7 @@ def sectiune_descriere(df: pd.DataFrame):
 	variabila = st.selectbox("Alege o variabilă", df.columns)
 	tip = get_tip_variabila(variabila)
 	if variabila not in descrieri:
-		with st.spinner("Calculam statistici..."):
+		with st.spinner("Calculăm statistici..."):
 			descrieri[variabila] = descriere_variabila(tip, df[variabila])
 
 	afisare_descriere(variabila, descrieri[variabila])

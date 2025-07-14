@@ -13,21 +13,21 @@ def descriere_variabila_numerica(tip: str, serie: pd.Series):
 	rezultate["histograma"] = plot_histograma(serie)
 	rezultate["box_plot"] = plot_box_plot(serie)
 	rezultate["statistici"] = {
-		"count": int(serie.count()),
-		"min": float(serie.min()),
-		"max": float(serie.max()),
-		"medie": float(serie.mean()),
-		"mediana": float(serie.median()),
-		"mod": float(serie.mode().iloc[0]) if not serie.mode().empty else None,
-		"std_dev": float(serie.std()),
-		"varianta": float(serie.var()),
-		"coef_variatie": float(serie.std() / serie.mean()) if serie.mean() != 0 else None,
-		"asimetrie": float(skew(serie)),
-		"kurtosis": float(kurtosis(serie)),
-		"q1": float(serie.quantile(0.25)),
-		"q3": float(serie.quantile(0.75)),
-		"iqr": float(serie.quantile(0.75) - serie.quantile(0.25)),
-		"nunique": int(serie.nunique()),
+		"Număr obs.": int(serie.count()),
+		"Minim": float(serie.min()),
+		"Maxim": float(serie.max()),
+		"Medie": float(serie.mean()),
+		"Mediană": float(serie.median()),
+		"Mod": float(serie.mode().iloc[0]) if not serie.mode().empty else None,
+		"Abatere standard": float(serie.std()),
+		"Varianță": float(serie.var()),
+		"Coeficient de variație": float(serie.std() / serie.mean()) if serie.mean() != 0 else None,
+		"Asimetrie": float(skew(serie)),
+		"Kurtosis": float(kurtosis(serie)),
+		"Q1": float(serie.quantile(0.25)),
+		"Q3": float(serie.quantile(0.75)),
+		"IQR": float(serie.quantile(0.75) - serie.quantile(0.25)),
+		"Număr valori unice": int(serie.nunique()),
 	}
 	rezultate["interpretare"] = interpretare_variabila_numerica(rezultate["statistici"])
 	return rezultate
@@ -73,17 +73,17 @@ def interpretare_variabila_numerica(statistici: dict) -> str:
 	if not statistici:
 		return "Nu există suficiente date pentru interpretare."
 
-	medie = statistici["medie"]
-	mediana = statistici["mediana"]
-	std = statistici["std_dev"]
-	cv = statistici["coef_variatie"]
-	skewness = statistici["asimetrie"]
-	kurt = statistici["kurtosis"]
-	iqr = statistici["iqr"]
-	q1 = statistici["q1"]
-	q3 = statistici["q3"]
-	min_val = statistici["min"]
-	max_val = statistici["max"]
+	medie = statistici["Medie"]
+	mediana = statistici["Mediană"]
+	std = statistici["Abatere standard"]
+	cv = statistici["Coeficient de variație"]
+	skewness = statistici["Asimetrie"]
+	kurt = statistici["Kurtosis"]
+	iqr = statistici["IQR"]
+	q1 = statistici["Q1"]
+	q3 = statistici["Q3"]
+	min_val = statistici["Minim"]
+	max_val = statistici["Maxim"]
 
 	interpretari = []
 
