@@ -137,7 +137,7 @@ def selectie_denumire_si_tinta(df: pd.DataFrame, sursa: str, selectie) -> tuple[
 	with col2:
 		coloane_binare = extragere_coloane_binare(df)
 		if not coloane_binare:
-			st.error("Nicio coloană binară disponibilă.")
+			st.error("Nicio coloană binară disponibilă. Selectați un alt set de date.")
 			tinta = None
 		else:
 			tinta_implicita = obtinere_tinta_implicita(sursa, selectie)
