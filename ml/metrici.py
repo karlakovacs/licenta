@@ -36,6 +36,80 @@ METRICI = [
 ]
 
 
+METRICI_INFO = {
+	"Acuratețe": {
+		"descriere": "Proporția totală de predicții corecte.",
+		"formula": r"Accuracy = \frac{TP + TN}{TP + TN + FP + FN}",
+		"utilitate": "Utilă când clasele sunt echilibrate. Poate fi înșelătoare pe date dezechilibrate.",
+	},
+	"Sensibilitate": {
+		"descriere": "Proporția de exemple pozitive detectate corect.",
+		"formula": r"Recall = \frac{TP}{TP + FN}",
+		"utilitate": "Critică atunci când rata de detecție a clasei pozitive este importantă (ex: boli).",
+	},
+	"Precizie": {
+		"descriere": "Proporția de predicții pozitive care sunt corecte.",
+		"formula": r"Precision = \frac{TP}{TP + FP}",
+		"utilitate": "Importantă când costul unui fals pozitiv e mare (ex: alarme false).",
+	},
+	"Scor F1": {
+		"descriere": "Media armonică dintre precizie și sensibilitate.",
+		"formula": r"F1 = 2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}",
+		"utilitate": "Utile când ai nevoie de echilibru între precizie și sensibilitate.",
+	},
+	"Aria de sub curba ROC": {
+		"descriere": "Măsoară capacitatea modelului de a separa clasele.",
+		"formula": None,
+		"utilitate": "Furnizează o imagine de ansamblu, dar poate ascunde probleme în seturi dezechilibrate.",
+	},
+	"Precizie medie (AUPRC)": {
+		"descriere": "Aria sub curba Precizie-Recall.",
+		"formula": None,
+		"utilitate": "Mult mai relevant decât ROC-AUC pentru date dezechilibrate.",
+	},
+	"Rata de clasificare echilibrată": {
+		"descriere": "Media dintre sensibilitate și specificitate.",
+		"formula": r"Balanced\ Accuracy = \frac{TPR + TNR}{2}",
+		"utilitate": "Ajustează acuratețea pentru dezechilibre de clasă.",
+	},
+	"Coeficientul Cohen's Kappa": {
+		"descriere": "Acuratețe ajustată pentru șansă.",
+		"formula": r"Kappa = \frac{p_o - p_e}{1 - p_e}",
+		"utilitate": "Evaluează performanța față de clasificare întâmplătoare.",
+	},
+	"Coeficientul de corelație Matthews": {
+		"descriere": "Măsoară corelația între predicții și etichete reale.",
+		"formula": r"MCC = \frac{TP \cdot TN - FP \cdot FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}",
+		"utilitate": "Recomandat pentru clasificare binară dezechilibrată.",
+	},
+	"Medie geometrică": {
+		"descriere": "Rădăcina pătrată din TPR × TNR.",
+		"formula": r"G\_mean = \sqrt{TPR \cdot TNR}",
+		"utilitate": "Penalizează dezechilibrele mari între clase.",
+	},
+	"TPR": {
+		"descriere": "Rata de detecție a clasei pozitive.",
+		"formula": r"TPR = \frac{TP}{TP + FN}",
+		"utilitate": "Sinonim cu sensibilitatea. Important în detectarea corectă a clasei pozitive.",
+	},
+	"TNR": {
+		"descriere": "Proporția de negative clasificate corect.",
+		"formula": r"TNR = \frac{TN}{TN + FP}",
+		"utilitate": "Important pentru a evita alarme false (fals pozitive).",
+	},
+	"FPR": {
+		"descriere": "Proporția de negative clasificate greșit ca pozitive.",
+		"formula": r"FPR = \frac{FP}{FP + TN}",
+		"utilitate": "Importantă când falsurile pozitive au cost mare.",
+	},
+	"FNR": {
+		"descriere": "Proporția de pozitive ratate.",
+		"formula": r"FNR = \frac{FN}{FN + TP}",
+		"utilitate": "Importantă în aplicații unde ratele de rată trebuie minimizate (ex: boli).",
+	},
+}
+
+
 def calcul_raport_clasificare(y_true, y_pred):
 	report = classification_report(y_true, y_pred, output_dict=True)
 	df = pd.DataFrame(report).transpose()
@@ -90,7 +164,14 @@ def afisare_metrici(metrici: dict):
 	col1, col2, col3, col4 = st.columns(4)
 	for idx, (key, value) in enumerate(zip(METRICI, metrici.values())):
 		col = [col1, col2, col3, col4][idx % 4]
-		col.metric(label=key, value=f"{value:.4f}")
+		info = METRICI_INFO.get(key, {})
+		formula = info.get("formula", "")
+		if formula:
+			formula_text = f"${formula}$"
+		else:
+			formula_text = ""
+		help_text = f"{info.get('descriere', '')}\n\n{formula_text}\n\n{info.get('utilitate', '')}"
+		col.metric(label=key, value=f"{value:.4f}", help=help_text)
 
 
 def plot_matrice_confuzie(y_true, y_pred):
